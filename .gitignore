@@ -1,8 +1,12 @@
 node_modules/
 .next/
 out/
-.env*.local
+.env
+.env.*
+!.env.production.example
+!.env.fly.example
 .env.fly
+.env.vapid.generated
 *.log
 .DS_Store
 Thumbs.db
