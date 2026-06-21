@@ -12,6 +12,9 @@ export async function register() {
     const { initSentry } = await import('@/lib/monitoring/sentry');
     initSentry();
 
+    const { seedDatabaseIfEmpty } = await import('@/lib/server/seed');
+    await seedDatabaseIfEmpty();
+
     const { warmTcmbCache } = await import('@/lib/server/exchange-rates-service');
     const { startTcmbDailyScheduler } = await import('@/lib/server/tcmb-scheduler');
     void warmTcmbCache();

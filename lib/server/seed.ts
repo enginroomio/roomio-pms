@@ -169,13 +169,22 @@ async function performSeed(): Promise<boolean> {
     }),
   ]);
     return true;
-  } catch {
+  } catch (err) {
     if ((await prisma.property.count()) > 0) return false;
-    throw new Error('Seed failed');
+    const code = err && typeof err === 'object' && 'code' in err ? String((err as { code: string }).code) : '';
+    if (code === 'P2002' || code === 'P2003') return false;
+    throw err;
   }
 }
 
 export async function seedDatabaseIfEmpty(): Promise<boolean> {
-  seedPromise ??= performSeed();
+  if (!seedPromise) {
+    seedPromise = performSeed().catch(async (err) => {
+      if ((await prisma.property.count()) > 0) return false;
+      const code = err && typeof err === 'object' && 'code' in err ? String((err as { code: string }).code) : '';
+      if (code === 'P2002' || code === 'P2003') return false;
+      throw err;
+    });
+  }
   return seedPromise;
 }
