@@ -21,14 +21,11 @@ export function RoleSwitcher() {
 
   return (
     <div className="roomio-role-switch">
+      <span className="roomio-role-switch__label" title={user.id}>{user.name}</span>
       {authenticated ? (
-        <>
-          <span className="roomio-role-switch__label" title={user.id}>{user.name}</span>
-          <button type="button" className="roomio-btn roomio-btn--ghost roomio-btn--xs" onClick={logout}>Çıkış</button>
-        </>
+        <button type="button" className="roomio-btn roomio-btn--ghost roomio-btn--xs" onClick={logout}>Çıkış</button>
       ) : (
         <>
-          <span className="roomio-role-switch__label">Demo rol:</span>
           <select
             className="roomio-select roomio-select--sm"
             value={user.role}

@@ -8,7 +8,6 @@ import {
   CalendarDays,
   HelpCircle,
 } from 'lucide-react';
-import { DEMO_USER } from '@/lib/navigation';
 import { SyncStatusBar } from '@/components/SyncStatusBar';
 import { LicenseBadge } from '@/components/LicenseBadge';
 import { CommandPalette } from '@/components/CommandPalette';
@@ -17,6 +16,7 @@ import { TopMenuNav } from '@/components/TopMenuNav';
 import { ShortcutBar } from '@/components/ShortcutBar';
 import { ReleaseNotice } from '@/components/ReleaseNotice';
 import { RoleSwitcher } from '@/components/auth/RoleSwitcher';
+import { HeaderUser } from '@/components/auth/HeaderUser';
 import { PropertySwitcher } from '@/components/property/PropertySwitcher';
 import { LocaleSwitcher } from '@/components/i18n/LocaleSwitcher';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
@@ -61,13 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <LocaleSwitcher />
                   <RoleSwitcher />
                   <SyncStatusBar />
-                  <div className="roomio-header-user">
-                    <div className="roomio-avatar">{DEMO_USER.initials}</div>
-                    <div>
-                      <div>{DEMO_USER.name}</div>
-                      <div className="roomio-header-user-role">{DEMO_USER.role}</div>
-                    </div>
-                  </div>
+                  <HeaderUser />
                 </div>
               </div>
 

@@ -27,6 +27,20 @@ const LOCALE_SEED = [
 
 let seedPromise: Promise<boolean> | null = null;
 
+async function ensureDemoUsers(): Promise<boolean> {
+  if ((await prisma.user.count()) > 0) return false;
+  const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
+  await prisma.user.createMany({
+    data: [
+      { id: 'user-arda', email: 'arda@hotelsapphire.com', name: 'Arda Yılmaz', role: 'fo_manager', passwordHash: hash },
+      { id: 'user-admin', email: 'admin@roomio.local', name: 'Sistem Admin', role: 'admin', passwordHash: hash },
+      { id: 'user-hk', email: 'hk@hotelsapphire.com', name: 'Elif Kaya', role: 'hk', passwordHash: hash },
+      { id: 'user-acc', email: 'muhasebe@hotelsapphire.com', name: 'Selin Demir', role: 'accounting', passwordHash: hash },
+    ],
+  });
+  return true;
+}
+
 async function performSeed(): Promise<boolean> {
   const count = await prisma.property.count();
   if (count > 0) return false;
@@ -179,12 +193,16 @@ async function performSeed(): Promise<boolean> {
 
 export async function seedDatabaseIfEmpty(): Promise<boolean> {
   if (!seedPromise) {
-    seedPromise = performSeed().catch(async (err) => {
-      if ((await prisma.property.count()) > 0) return false;
-      const code = err && typeof err === 'object' && 'code' in err ? String((err as { code: string }).code) : '';
-      if (code === 'P2002' || code === 'P2003') return false;
-      throw err;
-    });
+    seedPromise = (async () => {
+      const full = await performSeed().catch(async (err) => {
+        if ((await prisma.property.count()) > 0) return false;
+        const code = err && typeof err === 'object' && 'code' in err ? String((err as { code: string }).code) : '';
+        if (code === 'P2002' || code === 'P2003') return false;
+        throw err;
+      });
+      const users = await ensureDemoUsers();
+      return full || users;
+    })();
   }
   return seedPromise;
 }
