@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { HK_ONLINE_REFRESH_EVENT } from '@/lib/client/hk-online-refresh';
 
 type HkSubscriber = {
   id: string;
@@ -29,14 +30,19 @@ export function HkOnlinePanel() {
 
   useEffect(() => {
     void refresh();
-    const id = window.setInterval(() => void refresh(), 30_000);
+    const id = window.setInterval(() => void refresh(), 15_000);
     const onVisible = () => {
       if (document.visibilityState === 'visible') void refresh();
     };
+    const onOnlineRefresh = () => void refresh();
+
     document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener(HK_ONLINE_REFRESH_EVENT, onOnlineRefresh);
+
     return () => {
       window.clearInterval(id);
       document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener(HK_ONLINE_REFRESH_EVENT, onOnlineRefresh);
     };
   }, [refresh]);
 

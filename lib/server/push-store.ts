@@ -143,9 +143,23 @@ export async function touchPushPresence(endpoint: string): Promise<boolean> {
   return result.count > 0;
 }
 
+function roleWhere(role?: string) {
+  if (!role) return undefined;
+  if (role === 'hk') {
+    return {
+      OR: [
+        { role: 'hk' },
+        { role: null },
+        { deviceLabel: { contains: 'HK Mobil' } },
+      ],
+    };
+  }
+  return { role };
+}
+
 export async function listPushSubscriptions(role?: string): Promise<PushSubscriptionRecord[]> {
   const rows = await prisma.pushSubscription.findMany({
-    where: role ? { role } : undefined,
+    where: roleWhere(role),
     orderBy: [{ createdAt: 'desc' }],
   });
   return rows.map(toRecord);
@@ -153,7 +167,7 @@ export async function listPushSubscriptions(role?: string): Promise<PushSubscrip
 
 export async function listPushSubscriberViews(role?: string): Promise<PushSubscriberView[]> {
   const rows = await prisma.pushSubscription.findMany({
-    where: role ? { role } : undefined,
+    where: roleWhere(role),
     orderBy: [{ createdAt: 'desc' }],
   });
   return rows.map((row) => toSubscriberView(row));
@@ -164,7 +178,7 @@ export async function removePushSubscription(endpoint: string): Promise<void> {
 }
 
 export async function countPushSubscriptions(role?: string): Promise<number> {
-  return prisma.pushSubscription.count({ where: role ? { role } : undefined });
+  return prisma.pushSubscription.count({ where: roleWhere(role) });
 }
 
 export function pushConfigured(): boolean {

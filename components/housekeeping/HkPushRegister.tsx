@@ -5,6 +5,7 @@ import { Bell, Loader2 } from 'lucide-react';
 import { useSession } from '@/components/auth/SessionProvider';
 import { browserHasPushSubscription, showHkBrowserNotification } from '@/lib/client/show-hk-notification';
 import { emitHkPushAlert } from '@/lib/client/hk-push-alert';
+import { notifyHkOnlineRefresh } from '@/lib/client/hk-online-refresh';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -69,6 +70,7 @@ async function syncSubscriptionToServer(sub: PushSubscription, deviceLabel: stri
   if (!saveRes.ok || !saveBody.ok) {
     throw new Error(saveBody.message ?? 'Sunucu kaydı başarısız');
   }
+  notifyHkOnlineRefresh();
 }
 
 async function sendPresenceHeartbeat(): Promise<void> {
@@ -79,6 +81,7 @@ async function sendPresenceHeartbeat(): Promise<void> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ endpoint: sub.endpoint }),
   }).catch(() => undefined);
+  notifyHkOnlineRefresh();
 }
 
 export function HkPushRegister() {
