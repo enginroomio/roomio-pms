@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
-import { showHkBrowserNotification } from '@/lib/client/show-hk-notification';
+import { browserHasPushSubscription, showHkBrowserNotification } from '@/lib/client/show-hk-notification';
 import { emitHkPushAlert } from '@/lib/client/hk-push-alert';
 
 type PushStatus =
@@ -82,6 +82,16 @@ export function HkPushRegister() {
   const [hint, setHint] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const [serverCount, setServerCount] = useState<number | null>(null);
+  const [browserLinked, setBrowserLinked] = useState<boolean | null>(null);
+
+  const refreshBrowserLinked = useCallback(async () => {
+    const linked = await browserHasPushSubscription();
+    setBrowserLinked(linked);
+    if (linked && Notification.permission === 'granted') {
+      setStatus('ready');
+    }
+    return linked;
+  }, []);
 
   const refreshServerCount = useCallback(async () => {
     const count = await fetchServerSubscriberCount();
@@ -111,10 +121,6 @@ export function HkPushRegister() {
     };
   }
 
-  async function showLocalNotification(body: string, title = 'Roomio HK') {
-    return showHkBrowserNotification(body, title);
-  }
-
   async function syncBrowserSubscriptionToServer(): Promise<boolean> {
     const reg = await ensureServiceWorker();
     if (!('pushManager' in reg)) return false;
@@ -123,11 +129,12 @@ export function HkPushRegister() {
 
     const count = await syncSubscriptionToServer(existing);
     await refreshServerCount();
+    await refreshBrowserLinked();
     setStatus('ready');
     setHint(
       count >= 0
-        ? `Sunucuya kaydedildi (${count} cihaz) — Test bildirimi ile deneyin`
-        : 'Sunucuya kaydedildi — Test bildirimi ile deneyin',
+        ? `Tarayıcı + sunucu eşleşti (${count} cihaz) — Test bildirimi deneyin`
+        : 'Tarayıcı + sunucu eşleşti — Test bildirimi deneyin',
     );
     return true;
   }
@@ -151,64 +158,78 @@ export function HkPushRegister() {
     }
 
     void (async () => {
-      const count = await refreshServerCount();
+      const [count, linked] = await Promise.all([refreshServerCount(), refreshBrowserLinked()]);
       try {
-        const synced = await syncBrowserSubscriptionToServer();
-        if (synced) return;
-        if (count > 0) {
-          setHint('Tarayıcı kaydı yok — Bildirimleri aç veya Yeniden kaydol');
-        } else if (Notification.permission === 'granted') {
-          setHint('Sunucuda kayıt yok — Bildirimleri aç ile kaydolun');
+        if (linked) {
+          const synced = await syncBrowserSubscriptionToServer();
+          if (synced) return;
+        }
+        if (count > 0 && !linked) {
+          setHint('Sunucuda kayıt var ama BU tarayıcı bağlı değil — Bildirimleri aç');
+        } else if (!linked && Notification.permission === 'granted') {
+          setHint('Bildirim izni var — Bildirimleri aç ile kaydolun');
+        } else if (!linked) {
+          setHint('Bildirimleri aç ile başlayın');
         }
       } catch (err) {
-        if (Notification.permission === 'granted') {
-          setHint(
-            err instanceof Error
-              ? `Sunucu senkron hatası: ${err.message} — Yeniden kaydol deneyin`
-              : 'Sunucu senkron hatası — Yeniden kaydol deneyin',
-          );
-        }
+        setHint(err instanceof Error ? err.message : 'Kayıt hatası — Bildirimleri aç');
       }
     })();
-  }, [refreshServerCount]);
+  }, [refreshBrowserLinked, refreshServerCount]);
+
+  async function sendLocalTestOnly() {
+    setTesting(true);
+    const title = 'Roomio Yerel Test';
+    const body = 'Mac sağ üstte bu metin görünmeli';
+    emitHkPushAlert({ title, body });
+    const ok = await showHkBrowserNotification(body, title);
+    setHint(
+      ok
+        ? 'Yerel bildirim gönderildi — Mac sağ üst / Bildirim Merkezi. Görmüyorsanız: Sistem Ayarları → Bildirimler → Google Chrome → Uyarılar'
+        : 'Yerel bildirim başarısız — izin veya Chrome bildirim ayarını kontrol edin',
+    );
+    setTesting(false);
+  }
 
   async function sendTestNotification() {
     setTesting(true);
     const title = 'Roomio HK Test';
     const body = 'Bildirimler çalışıyor — Oda 108 kirli';
     emitHkPushAlert({ title, body });
-    setHint('Yeşil kutu sayfada görünmeli — macOS bildirimi sağ üstte');
+
+    const linked = await refreshBrowserLinked();
+    if (!linked) {
+      setHint('Tarayıcı kaydı yok — önce Bildirimleri aç, sonra test edin');
+      setTesting(false);
+      return;
+    }
+
+    setHint('Test gönderiliyor…');
 
     try {
-      const localOk = await showLocalNotification(body, title);
+      const localOk = await showHkBrowserNotification(body, title);
       const { status: httpStatus, body: sendBody } = await pushTestFromServer();
       await refreshServerCount();
 
-      if (httpStatus === 200 && sendBody.ok && (sendBody.sent ?? 0) > 0) {
-        setHint(
-          localOk
-            ? 'Tamam — sayfadaki yeşil kutu + macOS sağ üst bildirimi'
-            : 'Sunucu gönderdi — macOS sağ üst köşe / Bildirim Merkezi',
-        );
-        return;
-      }
-      if ((sendBody.failed ?? 0) > 0 && sendBody.errors?.length) {
-        setStatus('idle');
-        setHint(`Push hatası: ${sendBody.errors[0]} — Yeniden kaydol`);
-        return;
-      }
-      if (sendBody.message?.includes('Kayıtlı cihaz yok')) {
-        setStatus('idle');
-        setHint('Sunucuda kayıt yok — Bildirimleri aç veya Yeniden kaydol');
+      if (localOk && httpStatus === 200 && sendBody.ok && (sendBody.sent ?? 0) > 0) {
+        setHint('Tamam — yeşil kutu + yerel + sunucu push (sağ üst)');
         return;
       }
       if (localOk) {
-        setHint('Yerel bildirim çalıştı (sağ üst); sunucu push için Yeniden kaydol');
+        setHint('Yerel bildirim OK (sağ üst). Sunucu: ' + (sendBody.message ?? `sent=${sendBody.sent ?? 0}`));
         return;
       }
-      setHint(sendBody.message ?? 'Sunucu push başarısız — yeşil kutu yine de görünmeli');
+      if (httpStatus === 200 && sendBody.ok && (sendBody.sent ?? 0) > 0) {
+        setHint('Sunucu push gönderdi — arka planda sağ üst / Bildirim Merkezi');
+        return;
+      }
+      if ((sendBody.failed ?? 0) > 0 && sendBody.errors?.length) {
+        setHint(`Push hatası: ${sendBody.errors[0]} — Yeniden kaydol`);
+        return;
+      }
+      setHint(sendBody.message ?? 'Test tamamlanamadı — önce Yerel test deneyin');
     } catch {
-      setHint('Sunucu hatası — yeşil kutu göründüyse bildirimler kısmen çalışıyor');
+      setHint('Sunucu hatası — Yerel test ile Mac ayarını kontrol edin');
     } finally {
       setTesting(false);
     }
@@ -228,13 +249,13 @@ export function HkPushRegister() {
       setStatus('denied');
       setHint(
         permission === 'denied'
-          ? 'Bildirim izni reddedildi — adres çubuğundaki kilit simgesinden izin verin'
+          ? 'Bildirim izni reddedildi — kilit simgesinden İzin ver'
           : 'Bildirim izni verilmedi',
       );
       return;
     }
 
-    setHint(forceNew ? 'Yeniden kaydediliyor…' : 'Abonelik oluşturuluyor…');
+    setHint(forceNew ? 'Yeniden kaydediliyor…' : 'Kaydediliyor…');
     const reg = await ensureServiceWorker();
     if (!('pushManager' in reg)) {
       setStatus('unsupported');
@@ -242,17 +263,18 @@ export function HkPushRegister() {
       return;
     }
 
-    let sub = await reg.pushManager.getSubscription();
-
-    if (forceNew && sub) {
-      try {
-        await sub.unsubscribe();
-      } catch {
-        // Eski abonelik kaldırılamasa bile yeni kayıt denenecek
+    if (forceNew) {
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        try {
+          await sub.unsubscribe();
+        } catch {
+          // devam
+        }
       }
-      sub = null;
     }
 
+    let sub = await reg.pushManager.getSubscription();
     if (!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
@@ -262,24 +284,15 @@ export function HkPushRegister() {
 
     const count = await syncSubscriptionToServer(sub);
     await refreshServerCount();
-    await showLocalNotification(forceNew ? 'Yeniden kayıt tamam' : 'Bildirimler açıldı');
+    await refreshBrowserLinked();
+    await showHkBrowserNotification(forceNew ? 'Yeniden kayıt tamam' : 'Bildirimler açıldı', 'Roomio HK');
 
     const { status: sendStatus, body: sendBody } = await pushTestFromServer();
     setStatus('ready');
     if (sendStatus === 200 && sendBody.ok && (sendBody.sent ?? 0) > 0) {
-      setHint(
-        count >= 0
-          ? `Kayıt tamam (${count} cihaz) — macOS sağ üst köşeyi kontrol edin`
-          : 'Kayıt tamam — macOS sağ üst köşeyi kontrol edin',
-      );
-    } else if (sendBody.errors?.length) {
-      setHint(`Kayıt sunucuda (${count} cihaz) ama push hatası: ${sendBody.errors[0]} — tekrar Yeniden kaydol`);
+      setHint(`Kayıt tamam — tarayıcı bağlı, sunucu ${count} cihaz. Sağ üst köşeyi kontrol edin.`);
     } else {
-      setHint(
-        count >= 0
-          ? `Sunucuya kaydedildi (${count} cihaz) — Test bildirimi ile tekrar deneyin`
-          : 'Kayıt tamam — Test bildirimi ile tekrar deneyin',
-      );
+      setHint(`Kayıt sunucuda (${count} cihaz). Yerel test veya Test bildirimi deneyin.`);
     }
   }
 
@@ -288,17 +301,12 @@ export function HkPushRegister() {
 
     const previousStatus = status;
     setStatus('subscribing');
-    setHint(forceNew ? 'Yeniden kaydediliyor…' : 'İzin isteniyor…');
 
     try {
       await createOrRefreshSubscription(forceNew);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Bildirim açılamadı — sayfayı yenileyip tekrar deneyin';
-      if (Notification.permission === 'granted') {
-        setStatus(previousStatus === 'ready' ? 'ready' : 'idle');
-      } else {
-        setStatus('denied');
-      }
+      const message = err instanceof Error ? err.message : 'Kayıt başarısız — sayfayı yenileyin';
+      setStatus(previousStatus === 'ready' ? 'ready' : 'idle');
       setHint(message);
     }
   }
@@ -310,6 +318,7 @@ export function HkPushRegister() {
   const busy = status === 'subscribing';
   const ready = status === 'ready';
   const needsInstall = status === 'needs-install';
+  const canTest = Notification.permission === 'granted' || ready;
 
   return (
     <div className="roomio-hk-push">
@@ -317,27 +326,38 @@ export function HkPushRegister() {
         <button
           type="button"
           className="roomio-btn roomio-btn--ghost roomio-btn--sm"
-          onClick={() => void subscribe(ready)}
+          onClick={() => void subscribe(ready || browserLinked === true)}
           disabled={busy || needsInstall}
-          title={hint ?? 'HK görev bildirimleri'}
           aria-busy={busy}
         >
           {busy ? <Loader2 size={16} className="roomio-hk-push__spin" /> : ready ? <Bell size={16} /> : <BellOff size={16} />}
-          {busy ? (ready ? 'Kaydediliyor…' : 'Açılıyor…') : ready ? 'Yeniden kaydol' : 'Bildirimleri aç'}
+          {busy ? 'Kaydediliyor…' : ready || browserLinked ? 'Yeniden kaydol' : 'Bildirimleri aç'}
         </button>
-        {ready || Notification.permission === 'granted' ? (
-          <button
-            type="button"
-            className="roomio-btn roomio-btn--ghost roomio-btn--sm"
-            onClick={() => void sendTestNotification()}
-            disabled={testing || busy}
-          >
-            {testing ? 'Gönderiliyor…' : 'Test bildirimi'}
-          </button>
+        {canTest ? (
+          <>
+            <button
+              type="button"
+              className="roomio-btn roomio-btn--ghost roomio-btn--sm"
+              onClick={() => void sendLocalTestOnly()}
+              disabled={testing || busy}
+            >
+              Yerel test
+            </button>
+            <button
+              type="button"
+              className="roomio-btn roomio-btn--ghost roomio-btn--sm"
+              onClick={() => void sendTestNotification()}
+              disabled={testing || busy}
+            >
+              {testing ? '…' : 'Test bildirimi'}
+            </button>
+          </>
         ) : null}
       </div>
-      {serverCount !== null ? (
-        <p className="roomio-hk-push-hint roomio-hk-push-hint--meta">Sunucu: {serverCount} kayıtlı cihaz</p>
+      {serverCount !== null || browserLinked !== null ? (
+        <p className="roomio-hk-push-hint roomio-hk-push-hint--meta">
+          Sunucu: {serverCount ?? '?'} cihaz · Tarayıcı: {browserLinked ? 'bağlı ✓' : 'bağlı değil ✗'}
+        </p>
       ) : null}
       {hint ? <p className="roomio-hk-push-hint">{hint}</p> : null}
     </div>

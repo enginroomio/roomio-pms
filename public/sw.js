@@ -1,4 +1,4 @@
-const CACHE = 'roomio-hk-v5';
+const CACHE = 'roomio-hk-v6';
 const SHELL = [
   '/',
   '/manifest.json',
@@ -92,11 +92,7 @@ self.addEventListener('push', (event) => {
           payload: { title, body, tag: options.tag },
         });
       }
-      try {
-        await self.registration.showNotification(title, options);
-      } catch {
-        await self.registration.showNotification(title, { body });
-      }
+      await self.registration.showNotification(title, options);
     })(),
   );
 });
