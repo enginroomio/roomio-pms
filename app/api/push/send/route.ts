@@ -41,6 +41,6 @@ export async function POST(req: Request) {
     ok: result.sent > 0,
     ...result,
     subscribers: subs.length,
-    message: result.sent > 0 ? undefined : 'Gönderim başarısız — Bildirimleri tekrar açın',
+    message: result.sent > 0 ? undefined : result.errors[0] ?? 'Gönderim başarısız — Bildirimleri tekrar açın',
   });
 }

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { BedDouble, ClipboardList, LayoutGrid } from 'lucide-react';
 import { HousekeepingPano } from '@/components/housekeeping/HousekeepingPano';
 import { HkPushRegister } from '@/components/housekeeping/HkPushRegister';
+import { showHkBrowserNotification } from '@/lib/client/show-hk-notification';
 import { patchHkRoom } from '@/lib/client/hk-update';
 import { roomioFetch } from '@/lib/client/api';
 import { enqueueSync } from '@/lib/sync/engine';
@@ -23,6 +24,7 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [savingRoom, setSavingRoom] = useState<string | null>(null);
   const [queuedCount, setQueuedCount] = useState(0);
+  const [pushAlert, setPushAlert] = useState<{ title: string; body: string } | null>(null);
 
   useEffect(() => {
     setBoard(initialBoard);
@@ -31,13 +33,32 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     const handler = (event: MessageEvent) => {
-      const data = event.data as { type?: string; payload?: { roomNo: string; hkStatus: HousekeepingBoardRow['status'] } };
-      if (data?.type !== 'roomio-hk-offline' || !data.payload) return;
+      const data = event.data as {
+        type?: string;
+        payload?: {
+          roomNo?: string;
+          hkStatus?: HousekeepingBoardRow['status'];
+          title?: string;
+          body?: string;
+          tag?: string;
+        };
+      };
+
+      if (data?.type === 'roomio-hk-push' && data.payload?.body) {
+        const title = data.payload.title ?? 'Roomio HK';
+        const body = data.payload.body;
+        setPushAlert({ title, body });
+        void showHkBrowserNotification(body, title);
+        window.setTimeout(() => setPushAlert(null), 10_000);
+        return;
+      }
+
+      if (data?.type !== 'roomio-hk-offline' || !data.payload?.roomNo || !data.payload.hkStatus) return;
       void enqueueSync({
         entity: 'housekeeping',
         operation: 'update',
         entityId: data.payload.roomNo,
-        payload: data.payload,
+        payload: { roomNo: data.payload.roomNo, hkStatus: data.payload.hkStatus },
       }).then(() => setQueuedCount((n) => n + 1));
     };
     navigator.serviceWorker.addEventListener('message', handler);
@@ -57,6 +78,15 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
 
   return (
     <div className="roomio-hk-mobile">
+      {pushAlert ? (
+        <div className="roomio-hk-push-alert" role="status">
+          <strong>{pushAlert.title}</strong>
+          <span>{pushAlert.body}</span>
+          <button type="button" onClick={() => setPushAlert(null)} aria-label="Kapat">
+            ×
+          </button>
+        </div>
+      ) : null}
       <header className="roomio-hk-mobile__header">
         <div>
           <p className="roomio-hk-mobile__eyebrow">Kat Hizmetleri</p>

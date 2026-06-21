@@ -1,5 +1,5 @@
 import webpush from 'web-push';
-import { listPushSubscriptions, pushConfigured } from '@/lib/server/push-store';
+import { listPushSubscriptions, pushConfigured, removePushSubscription } from '@/lib/server/push-store';
 
 function configureVapid() {
   const publicKey = process.env.VAPID_PUBLIC_KEY?.trim();
@@ -15,14 +15,15 @@ export async function sendHkPush(payload: {
   body: string;
   tag?: string;
   url?: string;
-}): Promise<{ sent: number; failed: number }> {
+}): Promise<{ sent: number; failed: number; errors: string[] }> {
   if (!pushConfigured() || !configureVapid()) {
-    return { sent: 0, failed: 0 };
+    return { sent: 0, failed: 0, errors: ['VAPID yapılandırılmamış'] };
   }
 
   const subs = await listPushSubscriptions();
   let sent = 0;
   let failed = 0;
+  const errors: string[] = [];
   const data = JSON.stringify({
     title: payload.title,
     body: payload.body,
@@ -40,9 +41,17 @@ export async function sendHkPush(payload: {
         data,
       );
       sent += 1;
-    } catch {
+    } catch (err) {
       failed += 1;
+      const status = err && typeof err === 'object' && 'statusCode' in err
+        ? Number((err as { statusCode?: number }).statusCode)
+        : 0;
+      const message = err instanceof Error ? err.message : 'push failed';
+      errors.push(message);
+      if (status === 404 || status === 410) {
+        await removePushSubscription(sub.endpoint);
+      }
     }
   }
-  return { sent, failed };
+  return { sent, failed, errors };
 }

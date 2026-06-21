@@ -49,6 +49,11 @@ export async function listPushSubscriptions(): Promise<PushSubscriptionRecord[]>
   return readAll();
 }
 
+export async function removePushSubscription(endpoint: string): Promise<void> {
+  const items = await readAll();
+  await writeAll(items.filter((x) => x.endpoint !== endpoint));
+}
+
 export function pushConfigured(): boolean {
   return Boolean(process.env.VAPID_PUBLIC_KEY?.trim() && process.env.VAPID_PRIVATE_KEY?.trim());
 }

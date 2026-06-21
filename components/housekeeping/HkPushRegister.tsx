@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
+import { showHkBrowserNotification } from '@/lib/client/show-hk-notification';
 
 type PushStatus =
   | 'idle'
@@ -90,17 +91,8 @@ export function HkPushRegister() {
     };
   }
 
-  async function showLocalNotification(reg: ServiceWorkerRegistration, body: string) {
-    try {
-      await reg.showNotification('Roomio HK', {
-        body,
-        tag: 'roomio-hk-local',
-        renotify: true,
-      });
-      return true;
-    } catch {
-      return false;
-    }
+  async function showLocalNotification(body: string) {
+    return showHkBrowserNotification(body);
   }
 
   async function refreshServerSubscription() {
@@ -144,8 +136,7 @@ export function HkPushRegister() {
     setTesting(true);
     setHint('Test bildirimi gönderiliyor…');
     try {
-      const reg = await ensureServiceWorker();
-      const localOk = await showLocalNotification(reg, 'Yerel test — Chrome bildirimleri açık');
+      const localOk = await showLocalNotification('Yerel test — Chrome bildirimleri açık');
       const { status, body } = await pushTestFromServer();
 
       if (status === 200 && body.ok && (body.sent ?? 0) > 0) {
@@ -219,7 +210,7 @@ export function HkPushRegister() {
       });
 
       await syncSubscriptionToServer(sub);
-      await showLocalNotification(reg, 'Bildirimler açıldı');
+      await showLocalNotification('Bildirimler açıldı');
 
       const { status: sendStatus, body: sendBody } = await pushTestFromServer();
       setStatus('ready');

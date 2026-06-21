@@ -1,4 +1,4 @@
-const CACHE = 'roomio-hk-v3';
+const CACHE = 'roomio-hk-v4';
 const SHELL = [
   '/',
   '/manifest.json',
@@ -84,9 +84,20 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(title, options).catch(() =>
-      self.registration.showNotification(title, { body }),
-    ),
+    (async () => {
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of clients) {
+        client.postMessage({
+          type: 'roomio-hk-push',
+          payload: { title, body, tag: options.tag },
+        });
+      }
+      try {
+        await self.registration.showNotification(title, options);
+      } catch {
+        await self.registration.showNotification(title, { body });
+      }
+    })(),
   );
 });
 

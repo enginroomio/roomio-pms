@@ -63,6 +63,43 @@
   text-align: right;
 }
 
+.roomio-hk-push-alert {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #ecfdf3;
+  border: 1px solid #6ce9a6;
+  color: #027a48;
+  box-shadow: 0 8px 24px rgba(2, 122, 72, 0.12);
+}
+
+.roomio-hk-push-alert strong {
+  display: block;
+  font-size: 0.85rem;
+}
+
+.roomio-hk-push-alert span {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.roomio-hk-push-alert button {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .roomio-hk-push__spin {
   animation: roomio-hk-push-spin 0.8s linear infinite;
 }
