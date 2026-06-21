@@ -12,7 +12,7 @@ RUN apk add --no-cache libc6-compat openssl
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=512"
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 ARG ROOMIO_DB_PROVIDER=sqlite
 ENV ROOMIO_DB_PROVIDER=${ROOMIO_DB_PROVIDER}
 ENV DATABASE_URL="file:/data/roomio.db"
