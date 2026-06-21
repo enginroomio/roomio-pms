@@ -1,4 +1,4 @@
-const CACHE = 'roomio-hk-v2';
+const CACHE = 'roomio-hk-v3';
 const SHELL = [
   '/',
   '/manifest.json',
@@ -68,16 +68,26 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  const payload = event.data?.json?.() ?? {};
+  let payload = {};
+  try {
+    payload = event.data?.json?.() ?? {};
+  } catch {
+    payload = {};
+  }
   const title = payload.title ?? 'Roomio HK';
   const body = payload.body ?? 'Yeni görev veya oda durumu güncellemesi';
-  event.waitUntil(self.registration.showNotification(title, {
+  const options = {
     body,
-    icon: '/icons/icon-192.svg',
-    badge: '/icons/icon-192.svg',
     tag: payload.tag ?? 'roomio-hk',
-    data: payload.data ?? {},
-  }));
+    renotify: true,
+    data: payload.data ?? { url: '/housekeeping/mobile' },
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options).catch(() =>
+      self.registration.showNotification(title, { body }),
+    ),
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {

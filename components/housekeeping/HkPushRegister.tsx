@@ -36,8 +36,6 @@ async function ensureServiceWorker(timeoutMs = 12_000) {
   }
 
   const existing = await navigator.serviceWorker.getRegistration('/');
-  if (existing?.active) return existing;
-
   const registration = existing ?? (await navigator.serviceWorker.register('/sw.js', { scope: '/' }));
 
   await Promise.race([
@@ -70,6 +68,40 @@ export function HkPushRegister() {
   const [status, setStatus] = useState<PushStatus>('idle');
   const [hint, setHint] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+
+  async function pushTestFromServer() {
+    const res = await fetch('/api/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Roomio HK Test',
+        body: 'Bildirimler çalışıyor — Oda 108 kirli',
+      }),
+    });
+    return {
+      status: res.status,
+      body: (await res.json()) as {
+        ok?: boolean;
+        sent?: number;
+        failed?: number;
+        subscribers?: number;
+        message?: string;
+      },
+    };
+  }
+
+  async function showLocalNotification(reg: ServiceWorkerRegistration, body: string) {
+    try {
+      await reg.showNotification('Roomio HK', {
+        body,
+        tag: 'roomio-hk-local',
+        renotify: true,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
   async function refreshServerSubscription() {
     const reg = await ensureServiceWorker();
@@ -112,28 +144,25 @@ export function HkPushRegister() {
     setTesting(true);
     setHint('Test bildirimi gönderiliyor…');
     try {
-      const res = await fetch('/api/push/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: 'Roomio HK Test',
-          body: 'Bildirimler çalışıyor — Oda 108 kirli',
-        }),
-      });
-      const body = (await res.json()) as {
-        ok?: boolean;
-        sent?: number;
-        failed?: number;
-        subscribers?: number;
-        message?: string;
-      };
-      if (res.ok && body.ok && (body.sent ?? 0) > 0) {
-        setHint('Test bildirimi gönderildi — Chrome sağ altta görünmeli');
+      const reg = await ensureServiceWorker();
+      const localOk = await showLocalNotification(reg, 'Yerel test — Chrome bildirimleri açık');
+      const { status, body } = await pushTestFromServer();
+
+      if (status === 200 && body.ok && (body.sent ?? 0) > 0) {
+        setHint(
+          localOk
+            ? 'Yerel + sunucu bildirimi gönderildi — sağ altta veya macOS Bildirim Merkezi'
+            : 'Sunucu bildirimi gönderildi (sent=1) — macOS Bildirim Merkezi\'ni kontrol edin',
+        );
         return;
       }
       if (body.message?.includes('Kayıtlı cihaz yok')) {
         setStatus('idle');
         setHint('Sunucuda kayıt yok — Bildirimleri aç ile tekrar kaydolun');
+        return;
+      }
+      if (localOk) {
+        setHint('Yerel bildirim göründü; sunucu push başarısız — Bildirimleri tekrar açın');
         return;
       }
       setHint(body.message ?? 'Bildirim gönderilemedi — Bildirimleri tekrar açın');
@@ -144,8 +173,9 @@ export function HkPushRegister() {
     }
   }
 
-  async function subscribe() {
-    if (status === 'subscribing' || status === 'ready') return;
+  async function subscribe(force = false) {
+    if (status === 'subscribing') return;
+    if (status === 'ready' && !force) return;
 
     setStatus('subscribing');
     setHint('İzin isteniyor…');
@@ -178,18 +208,26 @@ export function HkPushRegister() {
         return;
       }
 
-      let sub = await reg.pushManager.getSubscription();
-      if (!sub) {
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(keyBody.publicKey),
-        });
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) {
+        await existing.unsubscribe();
       }
 
-      await syncSubscriptionToServer(sub);
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(keyBody.publicKey),
+      });
 
+      await syncSubscriptionToServer(sub);
+      await showLocalNotification(reg, 'Bildirimler açıldı');
+
+      const { status: sendStatus, body: sendBody } = await pushTestFromServer();
       setStatus('ready');
-      setHint('Kayıt tamam — Test bildirimi ile deneyin');
+      if (sendStatus === 200 && sendBody.ok && (sendBody.sent ?? 0) > 0) {
+        setHint('Kayıt tamam — test bildirimi gönderildi (sağ alt / Bildirim Merkezi)');
+      } else {
+        setHint('Kayıt tamam — Test bildirimi ile tekrar deneyin');
+      }
     } catch (err) {
       setStatus('denied');
       setHint(err instanceof Error ? err.message : 'Bildirim açılamadı — sayfayı yenileyip tekrar deneyin');
@@ -210,13 +248,13 @@ export function HkPushRegister() {
         <button
           type="button"
           className="roomio-btn roomio-btn--ghost roomio-btn--sm"
-          onClick={() => void subscribe()}
-          disabled={busy || ready || needsInstall}
+          onClick={() => void subscribe(ready)}
+          disabled={busy || needsInstall}
           title={hint ?? 'HK görev bildirimleri'}
           aria-busy={busy}
         >
           {busy ? <Loader2 size={16} className="roomio-hk-push__spin" /> : ready ? <Bell size={16} /> : <BellOff size={16} />}
-          {busy ? 'Açılıyor…' : ready ? 'Bildirim açık' : 'Bildirimleri aç'}
+          {busy ? 'Açılıyor…' : ready ? 'Yeniden kaydol' : 'Bildirimleri aç'}
         </button>
         {ready ? (
           <button
