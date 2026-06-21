@@ -3,7 +3,11 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  productionBrowserSourceMaps: false,
   eslint: { ignoreDuringBuilds: true },
+  experimental: {
+    webpackMemoryOptimizations: true,
+  },
   webpack: (config, { dev }) => {
     if (dev) {
       config.watchOptions = {
