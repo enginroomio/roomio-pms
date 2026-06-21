@@ -3,7 +3,8 @@ import { getHousekeepingBoard, type HousekeepingBoardRow } from '@/lib/rooms/inv
 import { getAllReservationsServer } from '@/lib/server/pms-store';
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
-import type { RoomHkStatus } from '@/lib/types/room';
+import { sendHkPush } from '@/lib/push/send';
+import { HK_STATUS_LABELS, type RoomHkStatus } from '@/lib/types/room';
 
 export type HkRoomState = HkRoomRecord & {
   roomNo: string;
@@ -85,11 +86,23 @@ export async function updateHkRoom(
       updatedAt: now,
     },
   });
-  return {
+  const result: HkRoomState = {
     roomNo: row.roomNo,
     hkStatus: row.hkStatus as RoomHkStatus,
     assignedTo: row.assignedTo ?? undefined,
     notes: row.notes ?? undefined,
     updatedAt: row.updatedAt,
   };
+
+  if (patch.hkStatus !== undefined) {
+    const label = HK_STATUS_LABELS[patch.hkStatus];
+    void sendHkPush({
+      title: `Oda ${roomNo}`,
+      body: `${label} — HK durumu güncellendi`,
+      tag: `hk-${roomNo}`,
+      url: '/housekeeping/mobile',
+    });
+  }
+
+  return result;
 }

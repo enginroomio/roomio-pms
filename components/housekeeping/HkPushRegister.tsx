@@ -50,9 +50,36 @@ async function ensureServiceWorker(timeoutMs = 12_000) {
   return registration;
 }
 
+async function syncSubscriptionToServer(sub: PushSubscription) {
+  const saveRes = await fetch('/api/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      subscription: sub.toJSON(),
+      role: 'hk',
+      deviceLabel: 'HK Mobil',
+    }),
+  });
+  const saveBody = (await saveRes.json()) as { ok: boolean; message?: string };
+  if (!saveRes.ok || !saveBody.ok) {
+    throw new Error(saveBody.message ?? 'Abonelik sunucuya kaydedilemedi');
+  }
+}
+
 export function HkPushRegister() {
   const [status, setStatus] = useState<PushStatus>('idle');
   const [hint, setHint] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  async function refreshServerSubscription() {
+    const reg = await ensureServiceWorker();
+    const existing = await reg.pushManager.getSubscription();
+    if (!existing) return false;
+    await syncSubscriptionToServer(existing);
+    setStatus('ready');
+    setHint(null);
+    return true;
+  }
 
   useEffect(() => {
     if (!('Notification' in window) || !('serviceWorker' in navigator)) {
@@ -74,17 +101,48 @@ export function HkPushRegister() {
 
     void (async () => {
       try {
-        const reg = await ensureServiceWorker();
-        const existing = await reg.pushManager.getSubscription();
-        if (existing) {
-          setStatus('ready');
-          setHint(null);
-        }
+        if (await refreshServerSubscription()) return;
       } catch {
-        // SW optional until user taps subscribe
+        // Tarayıcıda abonelik var ama sunucu sıfırlanmış olabilir — kullanıcı tekrar açsın
       }
     })();
   }, []);
+
+  async function sendTestNotification() {
+    setTesting(true);
+    setHint('Test bildirimi gönderiliyor…');
+    try {
+      const res = await fetch('/api/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Roomio HK Test',
+          body: 'Bildirimler çalışıyor — Oda 108 kirli',
+        }),
+      });
+      const body = (await res.json()) as {
+        ok?: boolean;
+        sent?: number;
+        failed?: number;
+        subscribers?: number;
+        message?: string;
+      };
+      if (res.ok && body.ok && (body.sent ?? 0) > 0) {
+        setHint('Test bildirimi gönderildi — Chrome sağ altta görünmeli');
+        return;
+      }
+      if (body.message?.includes('Kayıtlı cihaz yok')) {
+        setStatus('idle');
+        setHint('Sunucuda kayıt yok — Bildirimleri aç ile tekrar kaydolun');
+        return;
+      }
+      setHint(body.message ?? 'Bildirim gönderilemedi — Bildirimleri tekrar açın');
+    } catch {
+      setHint('Test bildirimi gönderilemedi');
+    } finally {
+      setTesting(false);
+    }
+  }
 
   async function subscribe() {
     if (status === 'subscribing' || status === 'ready') return;
@@ -128,24 +186,10 @@ export function HkPushRegister() {
         });
       }
 
-      const saveRes = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subscription: sub.toJSON(),
-          role: 'hk',
-          deviceLabel: 'HK Mobil',
-        }),
-      });
-      const saveBody = (await saveRes.json()) as { ok: boolean; message?: string };
-      if (!saveRes.ok || !saveBody.ok) {
-        setStatus('missing-keys');
-        setHint(saveBody.message ?? 'Abonelik sunucuya kaydedilemedi');
-        return;
-      }
+      await syncSubscriptionToServer(sub);
 
       setStatus('ready');
-      setHint(null);
+      setHint('Kayıt tamam — Test bildirimi ile deneyin');
     } catch (err) {
       setStatus('denied');
       setHint(err instanceof Error ? err.message : 'Bildirim açılamadı — sayfayı yenileyip tekrar deneyin');
@@ -162,17 +206,29 @@ export function HkPushRegister() {
 
   return (
     <div className="roomio-hk-push">
-      <button
-        type="button"
-        className="roomio-btn roomio-btn--ghost roomio-btn--sm"
-        onClick={() => void subscribe()}
-        disabled={busy || ready || needsInstall}
-        title={hint ?? 'HK görev bildirimleri'}
-        aria-busy={busy}
-      >
-        {busy ? <Loader2 size={16} className="roomio-hk-push__spin" /> : ready ? <Bell size={16} /> : <BellOff size={16} />}
-        {busy ? 'Açılıyor…' : ready ? 'Bildirim açık' : 'Bildirimleri aç'}
-      </button>
+      <div className="roomio-hk-push__actions">
+        <button
+          type="button"
+          className="roomio-btn roomio-btn--ghost roomio-btn--sm"
+          onClick={() => void subscribe()}
+          disabled={busy || ready || needsInstall}
+          title={hint ?? 'HK görev bildirimleri'}
+          aria-busy={busy}
+        >
+          {busy ? <Loader2 size={16} className="roomio-hk-push__spin" /> : ready ? <Bell size={16} /> : <BellOff size={16} />}
+          {busy ? 'Açılıyor…' : ready ? 'Bildirim açık' : 'Bildirimleri aç'}
+        </button>
+        {ready ? (
+          <button
+            type="button"
+            className="roomio-btn roomio-btn--ghost roomio-btn--sm"
+            onClick={() => void sendTestNotification()}
+            disabled={testing}
+          >
+            {testing ? 'Gönderiliyor…' : 'Test bildirimi'}
+          </button>
+        ) : null}
+      </div>
       {hint ? <p className="roomio-hk-push-hint">{hint}</p> : null}
     </div>
   );
