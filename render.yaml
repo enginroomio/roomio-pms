@@ -1,30 +1,33 @@
-# Render Blueprint — ücretsiz, kredi kartı gerekmez
-# https://dashboard.render.com/ → New → Blueprint → repo bağla
+# Render Blueprint — Node runtime (free tier Docker build OOM önlemi)
 services:
   - type: web
     name: roomio-pms
-    runtime: docker
+    runtime: node
     plan: free
     region: frankfurt
+    buildCommand: npm ci && npm run db:generate && npm run build
+    startCommand: node scripts/render-start.mjs
     healthCheckPath: /api/health
     autoDeployTrigger: commit
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=512
       - key: HOSTNAME
         value: 0.0.0.0
       - key: DATABASE_URL
-        value: file:/data/roomio.db
+        value: file:/tmp/roomio.db
       - key: ROOMIO_DATA_DIR
-        value: /data
+        value: /tmp
       - key: ROOMIO_PUSH_STORE
-        value: /data/push-subscriptions.json
+        value: /tmp/push-subscriptions.json
       - key: ROOMIO_PBX_CONFIG
-        value: /data/pbx-config.json
+        value: /tmp/pbx-config.json
       - key: ROOMIO_TESA_CONFIG
-        value: /data/tesa-config.json
+        value: /tmp/tesa-config.json
       - key: ROOMIO_5651_STORE
-        value: /data/hotspot-5651.enc
+        value: /tmp/hotspot-5651.enc
       - key: ROOMIO_JWT_SECRET
         generateValue: true
       - key: VAPID_PUBLIC_KEY
