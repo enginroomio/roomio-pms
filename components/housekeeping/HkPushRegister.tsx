@@ -31,6 +31,12 @@ async function ensureServiceWorker(timeoutMs = 12_000) {
   const existing = await navigator.serviceWorker.getRegistration('/');
   const registration = existing ?? (await navigator.serviceWorker.register('/sw.js', { scope: '/' }));
 
+  try {
+    await registration.update();
+  } catch {
+    // Güncel SW yoksa mevcut sürüm kullanılır
+  }
+
   await Promise.race([
     navigator.serviceWorker.ready,
     new Promise<never>((_, reject) => {
@@ -92,7 +98,7 @@ export function HkPushRegister() {
   const [testing, setTesting] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (quiet = false) => {
     if (!('Notification' in window)) {
       setBusy(false);
       setHint(null);
@@ -112,20 +118,45 @@ export function HkPushRegister() {
       return;
     }
 
-    setBusy(true);
+    if (!quiet) setBusy(true);
     try {
       const ok = await ensurePushRegistration();
       setReady(ok || (await browserHasPushSubscription()));
       setHint(null);
     } catch {
-      setReady(await browserHasPushSubscription());
+      const linked = await browserHasPushSubscription();
+      setReady(linked);
+      if (!linked) {
+        setHint('Deploy sonrası — sayfayı yenileyin (Cmd+Shift+R) veya Test bildirimi');
+      }
     } finally {
-      setBusy(false);
+      if (!quiet) setBusy(false);
     }
   }, []);
 
   useEffect(() => {
     void refresh();
+
+    const onFocus = () => void refresh(true);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refresh(true);
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisible);
+
+    let swCleanup: (() => void) | undefined;
+    if ('serviceWorker' in navigator) {
+      const onControllerChange = () => void refresh(true);
+      navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+      swCleanup = () => navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+    }
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
+      swCleanup?.();
+    };
   }, [refresh]);
 
   async function sendTestNotification() {
@@ -135,7 +166,7 @@ export function HkPushRegister() {
     emitHkPushAlert({ title, body });
 
     try {
-      if (!ready) await refresh();
+      await refresh(true);
       await showHkBrowserNotification(body, title);
       const res = await fetch('/api/push/send', {
         method: 'POST',
@@ -145,11 +176,12 @@ export function HkPushRegister() {
       const sendBody = (await res.json()) as { ok?: boolean; sent?: number; message?: string };
       if (sendBody.ok && (sendBody.sent ?? 0) > 0) {
         setHint(null);
+        setReady(true);
       } else if (sendBody.message) {
         setHint(sendBody.message);
       }
     } catch {
-      setHint('Test gönderilemedi');
+      setHint('Test gönderilemedi — Cmd+Shift+R ile yenileyin');
     } finally {
       setTesting(false);
     }
