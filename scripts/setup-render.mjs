@@ -26,7 +26,11 @@ console.log(`Proje: ${ROOT}`);
 console.log(`URL:   ${EXPECTED}\n`);
 
 function gitReady() {
-  return existsSync(join(ROOT, '.git', 'HEAD'));
+  try {
+    return spawnSync('git', ['rev-parse', '--git-dir'], { cwd: ROOT }).status === 0;
+  } catch {
+    return false;
+  }
 }
 
 // 1. Git
