@@ -5,7 +5,7 @@ export async function showHkBrowserNotification(body: string, title = 'Roomio HK
   }
 
   try {
-    new Notification(title, { body, tag: 'roomio-hk-page', renotify: true });
+    new Notification(title, { body, tag: 'roomio-hk-page' });
     return true;
   } catch {
     // Page Notification API can fail when SW owns notifications — fall through.
@@ -15,7 +15,7 @@ export async function showHkBrowserNotification(body: string, title = 'Roomio HK
 
   try {
     const reg = await navigator.serviceWorker.ready;
-    await reg.showNotification(title, { body, tag: 'roomio-hk-sw', renotify: true });
+    await reg.showNotification(title, { body, tag: 'roomio-hk-sw' });
     return true;
   } catch {
     return false;

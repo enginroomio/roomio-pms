@@ -9,6 +9,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      DATABASE_URL: file:.roomio-data/ci.db
 
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +24,7 @@ jobs:
         run: npm ci
 
       - name: Sync database schema
-        run: npm run db:push
+        run: mkdir -p .roomio-data && npm run db:push
 
       - name: Typecheck
         run: npm run typecheck

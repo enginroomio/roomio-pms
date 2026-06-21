@@ -35,6 +35,7 @@ jobs:
       # Render "Existing Image" otomatik yenileme — bir kez RENDER_DEPLOY_HOOK_URL secret ekleyin
       - name: Trigger Render deploy
         if: success()
+        continue-on-error: true
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
@@ -42,5 +43,8 @@ jobs:
             echo "::warning::RENDER_DEPLOY_HOOK_URL yok — Render Dashboard → Manual Deploy gerekir"
             exit 0
           fi
-          curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
-          echo "Render deploy tetiklendi"
+          if curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"; then
+            echo "Render deploy tetiklendi"
+          else
+            echo "::warning::Render deploy hook HTTP hatası — image yine de GHCR'da; Manual Deploy gerekebilir"
+          fi
