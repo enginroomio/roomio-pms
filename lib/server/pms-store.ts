@@ -793,3 +793,11 @@ export async function findUserByEmail(email: string) {
   await init();
   return prisma.user.findUnique({ where: { email } });
 }
+
+export async function listUsers() {
+  await init();
+  return prisma.user.findMany({
+    select: { id: true, email: true, name: true, role: true },
+    orderBy: { name: 'asc' },
+  });
+}

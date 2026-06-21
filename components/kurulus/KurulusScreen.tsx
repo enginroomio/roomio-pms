@@ -1,13 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useProperty } from '@/components/property/PropertyProvider';
 import { KURULUS_NAV } from '@/lib/navigation/kurulus-nav';
 import {
   CONFIG_PARAMS,
   DEMO_COMPANIES,
   DEMO_LANGUAGES,
-  DEMO_USERS,
   DEPARTMENTS,
   HOTEL_INFO,
   MARKET_CODES,
@@ -220,24 +219,81 @@ function FloorsScreen() {
 }
 
 function UsersScreen() {
+  const [users, setUsers] = useState<Array<{
+    id: string;
+    username: string;
+    fullName: string;
+    role: string;
+    department: string;
+    email: string;
+    active: boolean;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/users', { cache: 'no-store' });
+        const body = (await res.json()) as {
+          ok?: boolean;
+          users?: Array<{
+            id: string;
+            username: string;
+            fullName: string;
+            role: string;
+            department: string;
+            email: string;
+            active: boolean;
+          }>;
+          message?: string;
+        };
+        if (!res.ok || !body.ok) {
+          setError(body.message ?? 'Kullanıcılar yüklenemedi');
+          return;
+        }
+        setUsers(body.users ?? []);
+      } catch {
+        setError('Kullanıcılar yüklenemedi');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
   return (
     <div className="roomio-card roomio-table-wrap">
-      <KurulusToolbar title="Kullanıcı Tanımları" actions={<Button>Yeni kullanıcı</Button>} />
+      <KurulusToolbar
+        title="Kullanıcı Tanımları"
+        actions={
+          <>
+            <span className="roomio-badge">{loading ? '…' : `${users.length} kullanıcı`}</span>
+            <Button>Yeni kullanıcı</Button>
+          </>
+        }
+      />
+      {error ? <p className="roomio-text-warn" style={{ marginTop: 12 }}>{error}</p> : null}
       <table className="roomio-table" style={{ marginTop: 12 }}>
         <thead>
-          <tr><th>Kullanıcı</th><th>Ad Soyad</th><th>Rol</th><th>Departman</th><th>Son giriş</th><th>Durum</th></tr>
+          <tr><th>Kullanıcı</th><th>Ad Soyad</th><th>E-posta</th><th>Rol</th><th>Departman</th><th>Durum</th></tr>
         </thead>
         <tbody>
-          {DEMO_USERS.map((u) => (
-            <tr key={u.id}>
-              <td><strong>{u.username}</strong></td>
-              <td>{u.fullName}</td>
-              <td>{u.role}</td>
-              <td>{u.department}</td>
-              <td>{u.lastLogin ?? '—'}</td>
-              <td>{u.active ? 'Aktif' : 'Pasif'}</td>
-            </tr>
-          ))}
+          {loading ? (
+            <tr><td colSpan={6}>Yükleniyor…</td></tr>
+          ) : users.length === 0 ? (
+            <tr><td colSpan={6}>Kayıtlı kullanıcı yok — deploy sonrası demo kullanıcılar otomatik eklenir.</td></tr>
+          ) : (
+            users.map((u) => (
+              <tr key={u.id}>
+                <td><strong>{u.username}</strong></td>
+                <td>{u.fullName}</td>
+                <td>{u.email}</td>
+                <td>{u.role}</td>
+                <td>{u.department}</td>
+                <td>{u.active ? 'Aktif' : 'Pasif'}</td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
