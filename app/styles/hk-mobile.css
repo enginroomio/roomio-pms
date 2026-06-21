@@ -40,6 +40,32 @@
   font-weight: 600;
 }
 
+.roomio-hk-push {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  max-width: min(240px, 42vw);
+}
+
+.roomio-hk-push-hint {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: #b54708;
+  text-align: right;
+}
+
+.roomio-hk-push__spin {
+  animation: roomio-hk-push-spin 0.8s linear infinite;
+}
+
+@keyframes roomio-hk-push-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .roomio-hk-mobile .roomio-hk-pano__head {
   position: sticky;
   top: 0;
