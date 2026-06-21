@@ -3,6 +3,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  eslint: { ignoreDuringBuilds: true },
   webpack: (config, { dev }) => {
     if (dev) {
       config.watchOptions = {

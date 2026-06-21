@@ -11,6 +11,7 @@ if (buildDb.startsWith('file:')) {
 }
 
 writeFileSync('.env.production.local', `DATABASE_URL="${buildDb}"\n`, 'utf8');
+console.log(`[render-build] node ${process.version}`);
 console.log(`[render-build] DATABASE_URL=${buildDb}`);
 
 function run(cmd, args, extraEnv = {}) {
@@ -18,13 +19,21 @@ function run(cmd, args, extraEnv = {}) {
   const r = spawnSync(cmd, args, {
     stdio: 'inherit',
     shell: false,
-    env: { ...process.env, DATABASE_URL: buildDb, ...extraEnv },
+    env: {
+      ...process.env,
+      DATABASE_URL: buildDb,
+      NODE_OPTIONS: '--max-old-space-size=512',
+      ...extraEnv,
+    },
   });
-  if (r.status !== 0) process.exit(r.status ?? 1);
+  if (r.status !== 0) {
+    console.error(`\n✗ failed: ${cmd} ${args.join(' ')}`);
+    process.exit(r.status ?? 1);
+  }
 }
 
-// devDependencies (typescript, prisma CLI) build için gerekli — production NODE_ENV ile npm ci dev paketleri atlar
-run('npm', ['ci', '--ignore-scripts'], { NODE_ENV: 'development' });
+run('npm', ['ci', '--ignore-scripts', '--include=dev'], { NODE_ENV: 'development', npm_config_production: 'false' });
 run('npm', ['run', 'db:generate']);
 run('npx', ['prisma', 'db', 'push', '--schema=prisma/schema.prisma', '--skip-generate']);
 run('npm', ['run', 'build'], { NODE_ENV: 'production' });
+console.log('\n✅ render-build tamam');
