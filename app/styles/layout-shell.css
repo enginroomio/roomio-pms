@@ -4,8 +4,8 @@
   inset: 0;
   overflow: hidden;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   background: var(--roomio-surface);
 }
 
@@ -13,11 +13,12 @@
   width: var(--roomio-canvas-w, 100%);
   height: var(--roomio-canvas-h, 100%);
   transform: scale(var(--roomio-fit-scale, 1));
-  transform-origin: center center;
+  transform-origin: top center;
   display: flex;
   flex-direction: column;
   min-height: 0;
   min-width: 0;
+  flex: 1;
 }
 
 .roomio-viewport-canvas > .roomio-app {
@@ -40,12 +41,15 @@
   min-width: 0;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .roomio-content {
   flex: 1;
   min-height: 0;
-  padding: 20px 22px 16px;
+  min-width: 0;
+  width: 100%;
+  padding: 14px 12px 10px;
   overflow: auto;
 }
 
@@ -158,9 +162,11 @@ input {
 .roomio-header-top {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 10px 18px;
+  gap: 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--roomio-border);
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .roomio-header-user-role {
@@ -417,21 +423,21 @@ input {
 }
 
 .roomio-elektra-fx {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(62px, 1fr));
-  gap: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 5px;
   flex: 1;
   min-width: 0;
   width: 100%;
-  overflow-x: auto;
+  overflow: hidden;
   padding: 2px 0;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
 }
 
 .roomio-elektra-fx__box {
-  min-width: 72px;
-  flex-shrink: 0;
+  min-width: 0;
+  flex: 1 1 72px;
+  max-width: 120px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 4px;
   overflow: visible;
@@ -502,7 +508,7 @@ input {
   }
 
   .roomio-elektra-fx {
-    grid-template-columns: repeat(8, minmax(58px, 1fr));
+    justify-content: flex-start;
   }
 }
 

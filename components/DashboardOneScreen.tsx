@@ -6,7 +6,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-/** Ana sayfayı mevcut içerik alanına kaydırmasız sığdırır. */
+/** Ana sayfayı mevcut içerik alanına kaydırmasız sığdırır — yatayda tam genişlik korunur. */
 export function DashboardOneScreen({ children }: Props) {
   const shellRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -31,11 +31,11 @@ export function DashboardOneScreen({ children }: Props) {
       const needed = rootEl.scrollHeight;
       if (!available || needed <= available) return;
 
-      const scale = Math.max(0.6, available / needed);
-      rootEl.style.transform = `scale(${scale})`;
+      const scaleY = Math.max(0.78, available / needed);
+      rootEl.style.transform = `scaleY(${scaleY})`;
       rootEl.style.transformOrigin = 'top left';
-      rootEl.style.width = `${100 / scale}%`;
-      shellEl.style.height = `${Math.floor(needed * scale)}px`;
+      shellEl.style.height = `${Math.floor(needed * scaleY)}px`;
+      shellEl.style.overflow = 'hidden';
     }
 
     fit();

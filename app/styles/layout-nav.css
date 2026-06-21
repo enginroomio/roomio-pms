@@ -610,7 +610,11 @@
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 10px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .roomio-role-switch {

@@ -418,9 +418,10 @@ html[data-density='compact'] .roomio-shortcut-bar__btn span {
   display: none;
 }
 
-html[data-viewport='wide'] .roomio-content {
-  max-width: 1680px;
-  margin: 0 auto;
+html[data-viewport='wide'] .roomio-content,
+html[data-viewport='desktop'] .roomio-content {
+  max-width: none;
+  margin: 0;
   width: 100%;
 }
 
