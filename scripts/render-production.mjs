@@ -8,9 +8,19 @@ import { join } from 'node:path';
 const ROOT = process.cwd();
 const URL_FILE = join(ROOT, '.roomio', 'production-url.txt');
 const SERVICE_NAME = 'roomio-pms-v2';
+const DEFAULT_CUSTOM_DOMAIN = 'pms.roomio.io';
 
 export function defaultRenderUrl(name = SERVICE_NAME) {
   return `https://${name}.onrender.com`;
+}
+
+export function customDomainHost() {
+  const raw = process.env.ROOMIO_CUSTOM_DOMAIN?.trim() || DEFAULT_CUSTOM_DOMAIN;
+  return raw.replace(/^https?:\/\//, '').replace(/\/$/, '');
+}
+
+export function customDomainUrl() {
+  return `https://${customDomainHost()}`;
 }
 
 export function productionUrl() {

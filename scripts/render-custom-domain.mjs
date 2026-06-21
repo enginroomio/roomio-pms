@@ -35,5 +35,12 @@ console.log('📋 Adım 5 — Test\n');
 console.log(`https://${DOMAIN}/api/health`);
 console.log(`https://${DOMAIN}/housekeeping/mobile\n`);
 
+console.log('📋 Adım 6 — URL kaydet + go-live\n');
+console.log(`ROOMIO_PRODUCTION_URL=https://${DOMAIN} npm run render:go-live -- --step 2`);
+console.log('Render Environment (opsiyonel): ROOMIO_PUBLIC_URL=https://' + DOMAIN + '\n');
+
+console.log('📋 Adım 7 — UptimeRobot\n');
+console.log('npm run render:uptime:setup\n');
+
 console.log('ℹ roomio.io Cloudflare ise: Proxy ON (turuncu bulut) genelde çalışır;');
 console.log('  SSL/TLS → Full (strict) önerilir.\n');
