@@ -25,20 +25,23 @@ const LOCALE_SEED = [
   { locale: 'en', key: 'nav.reception', value: 'Front Office' },
 ];
 
-export async function seedDatabaseIfEmpty(): Promise<boolean> {
+let seedPromise: Promise<boolean> | null = null;
+
+async function performSeed(): Promise<boolean> {
   const count = await prisma.property.count();
   if (count > 0) return false;
 
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
   const now = new Date().toISOString().slice(0, 10);
 
-  await prisma.$transaction([
-    prisma.property.createMany({
-      data: [
-        { id: PROP_IST, code: 'SAPPHIRE-IST', name: 'Hotel Sapphire İstanbul', city: 'İstanbul', totalRooms: 77, isDefault: true, createdAt: now },
-        { id: PROP_ANT, code: 'SAPPHIRE-ANT', name: 'Hotel Sapphire Antalya', city: 'Antalya', totalRooms: 120, isDefault: false, createdAt: now },
-      ],
-    }),
+  try {
+    await prisma.$transaction([
+      prisma.property.createMany({
+        data: [
+          { id: PROP_IST, code: 'SAPPHIRE-IST', name: 'Hotel Sapphire İstanbul', city: 'İstanbul', totalRooms: 77, isDefault: true, createdAt: now },
+          { id: PROP_ANT, code: 'SAPPHIRE-ANT', name: 'Hotel Sapphire Antalya', city: 'Antalya', totalRooms: 120, isDefault: false, createdAt: now },
+        ],
+      }),
     prisma.appState.createMany({
       data: [
         { propertyId: PROP_IST, businessDate: PROPERTY.businessDate },
@@ -165,6 +168,14 @@ export async function seedDatabaseIfEmpty(): Promise<boolean> {
       })),
     }),
   ]);
+    return true;
+  } catch {
+    if ((await prisma.property.count()) > 0) return false;
+    throw new Error('Seed failed');
+  }
+}
 
-  return true;
+export async function seedDatabaseIfEmpty(): Promise<boolean> {
+  seedPromise ??= performSeed();
+  return seedPromise;
 }

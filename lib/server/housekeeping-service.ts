@@ -14,23 +14,42 @@ function pid(propertyId?: string) {
   return propertyId ?? DEFAULT_PROPERTY_ID;
 }
 
+import { seedDatabaseIfEmpty } from '@/lib/server/seed';
+
+const hkSeedLocks = new Map<string, Promise<void>>();
+
 export async function ensureHkSeeded(propertyId?: string): Promise<void> {
   const prop = pid(propertyId);
+  if (!hkSeedLocks.has(prop)) {
+    hkSeedLocks.set(prop, doEnsureHk(prop));
+  }
+  await hkSeedLocks.get(prop)!;
+}
+
+async function doEnsureHk(prop: string): Promise<void> {
+  await seedDatabaseIfEmpty();
   const count = await prisma.roomHousekeeping.count({ where: { propertyId: prop } });
   if (count > 0) return;
 
+  const exists = await prisma.property.findUnique({ where: { id: prop } });
+  if (!exists) return;
+
   const now = new Date().toISOString();
-  await prisma.roomHousekeeping.createMany({
-    data: Object.entries(DEFAULT_HK_ROOMS).map(([roomNo, row]) => ({
-      id: `hk-${prop}-${roomNo}`,
-      propertyId: prop,
-      roomNo,
-      hkStatus: row.hkStatus,
-      assignedTo: row.assignedTo ?? null,
-      notes: row.notes ?? null,
-      updatedAt: now,
-    })),
-  });
+  try {
+    await prisma.roomHousekeeping.createMany({
+      data: Object.entries(DEFAULT_HK_ROOMS).map(([roomNo, row]) => ({
+        id: `hk-${prop}-${roomNo}`,
+        propertyId: prop,
+        roomNo,
+        hkStatus: row.hkStatus,
+        assignedTo: row.assignedTo ?? null,
+        notes: row.notes ?? null,
+        updatedAt: now,
+      })),
+    });
+  } catch {
+    /* concurrent seed */
+  }
 }
 
 export async function getHkRoomMap(propertyId?: string): Promise<Record<string, HkRoomRecord>> {

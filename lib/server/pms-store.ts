@@ -196,8 +196,11 @@ function pid(propertyId?: string): string {
   return propertyId ?? DEFAULT_PROPERTY_ID;
 }
 
+let initPromise: Promise<void> | null = null;
+
 async function init(): Promise<void> {
-  await seedDatabaseIfEmpty();
+  initPromise ??= seedDatabaseIfEmpty().then(() => undefined);
+  await initPromise;
 }
 
 function mapReservation(r: {
