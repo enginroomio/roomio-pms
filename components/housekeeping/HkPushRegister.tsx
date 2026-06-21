@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { showHkBrowserNotification } from '@/lib/client/show-hk-notification';
 import { emitHkPushAlert } from '@/lib/client/hk-push-alert';
@@ -50,6 +50,16 @@ async function ensureServiceWorker(timeoutMs = 12_000) {
   return registration;
 }
 
+async function fetchServerSubscriberCount(): Promise<number> {
+  try {
+    const res = await fetch('/api/push/subscribe', { cache: 'no-store' });
+    const body = (await res.json()) as { count?: number };
+    return body.count ?? 0;
+  } catch {
+    return -1;
+  }
+}
+
 async function syncSubscriptionToServer(sub: PushSubscription) {
   const saveRes = await fetch('/api/push/subscribe', {
     method: 'POST',
@@ -60,16 +70,24 @@ async function syncSubscriptionToServer(sub: PushSubscription) {
       deviceLabel: 'HK Mobil',
     }),
   });
-  const saveBody = (await saveRes.json()) as { ok: boolean; message?: string };
+  const saveBody = (await saveRes.json()) as { ok: boolean; message?: string; count?: number };
   if (!saveRes.ok || !saveBody.ok) {
-    throw new Error(saveBody.message ?? 'Abonelik sunucuya kaydedilemedi');
+    throw new Error(saveBody.message ?? `Sunucu kaydı başarısız (HTTP ${saveRes.status})`);
   }
+  return saveBody.count ?? -1;
 }
 
 export function HkPushRegister() {
   const [status, setStatus] = useState<PushStatus>('idle');
   const [hint, setHint] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  const [serverCount, setServerCount] = useState<number | null>(null);
+
+  const refreshServerCount = useCallback(async () => {
+    const count = await fetchServerSubscriberCount();
+    setServerCount(count >= 0 ? count : null);
+    return count;
+  }, []);
 
   async function pushTestFromServer() {
     const res = await fetch('/api/push/send', {
@@ -96,13 +114,20 @@ export function HkPushRegister() {
     return showHkBrowserNotification(body, title);
   }
 
-  async function refreshServerSubscription() {
+  async function syncBrowserSubscriptionToServer(): Promise<boolean> {
     const reg = await ensureServiceWorker();
+    if (!('pushManager' in reg)) return false;
     const existing = await reg.pushManager.getSubscription();
     if (!existing) return false;
-    await syncSubscriptionToServer(existing);
+
+    const count = await syncSubscriptionToServer(existing);
+    await refreshServerCount();
     setStatus('ready');
-    setHint(null);
+    setHint(
+      count >= 0
+        ? `Sunucuya kaydedildi (${count} cihaz) — Test bildirimi ile deneyin`
+        : 'Sunucuya kaydedildi — Test bildirimi ile deneyin',
+    );
     return true;
   }
 
@@ -125,13 +150,26 @@ export function HkPushRegister() {
     }
 
     void (async () => {
+      const count = await refreshServerCount();
       try {
-        if (await refreshServerSubscription()) return;
-      } catch {
-        // Tarayıcıda abonelik var ama sunucu sıfırlanmış olabilir — kullanıcı tekrar açsın
+        const synced = await syncBrowserSubscriptionToServer();
+        if (synced) return;
+        if (count > 0) {
+          setHint('Tarayıcı kaydı yok — Bildirimleri aç veya Yeniden kaydol');
+        } else if (Notification.permission === 'granted') {
+          setHint('Sunucuda kayıt yok — Bildirimleri aç ile kaydolun');
+        }
+      } catch (err) {
+        if (Notification.permission === 'granted') {
+          setHint(
+            err instanceof Error
+              ? `Sunucu senkron hatası: ${err.message} — Yeniden kaydol deneyin`
+              : 'Sunucu senkron hatası — Yeniden kaydol deneyin',
+          );
+        }
       }
     })();
-  }, []);
+  }, [refreshServerCount]);
 
   async function sendTestNotification() {
     setTesting(true);
@@ -142,9 +180,10 @@ export function HkPushRegister() {
 
     try {
       const localOk = await showLocalNotification(body, title);
-      const { status, body: sendBody } = await pushTestFromServer();
+      const { status: httpStatus, body: sendBody } = await pushTestFromServer();
+      await refreshServerCount();
 
-      if (status === 200 && sendBody.ok && (sendBody.sent ?? 0) > 0) {
+      if (httpStatus === 200 && sendBody.ok && (sendBody.sent ?? 0) > 0) {
         setHint(
           localOk
             ? 'Tamam — sayfadaki yeşil kutu + macOS sağ üst bildirimi'
@@ -154,7 +193,7 @@ export function HkPushRegister() {
       }
       if (sendBody.message?.includes('Kayıtlı cihaz yok')) {
         setStatus('idle');
-        setHint('Sunucuda kayıt yok — Bildirimleri aç ile tekrar kaydolun');
+        setHint('Sunucuda kayıt yok — Bildirimleri aç veya Yeniden kaydol');
         return;
       }
       if (localOk) {
@@ -169,64 +208,90 @@ export function HkPushRegister() {
     }
   }
 
-  async function subscribe(force = false) {
-    if (status === 'subscribing') return;
-    if (status === 'ready' && !force) return;
+  async function createOrRefreshSubscription(forceNew: boolean) {
+    const keyRes = await fetch('/api/push/vapid-public-key', { cache: 'no-store' });
+    const keyBody = (await keyRes.json()) as { ok: boolean; publicKey: string | null; message?: string };
+    if (!keyRes.ok || !keyBody.ok || !keyBody.publicKey) {
+      setStatus('missing-keys');
+      setHint(keyBody.message ?? 'Sunucuda VAPID anahtarları tanımlı değil');
+      return;
+    }
 
-    setStatus('subscribing');
-    setHint('İzin isteniyor…');
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      setStatus('denied');
+      setHint(
+        permission === 'denied'
+          ? 'Bildirim izni reddedildi — adres çubuğundaki kilit simgesinden izin verin'
+          : 'Bildirim izni verilmedi',
+      );
+      return;
+    }
 
-    try {
-      const keyRes = await fetch('/api/push/vapid-public-key');
-      const keyBody = (await keyRes.json()) as { ok: boolean; publicKey: string | null; message?: string };
-      if (!keyRes.ok || !keyBody.ok || !keyBody.publicKey) {
-        setStatus('missing-keys');
-        setHint(keyBody.message ?? 'Sunucuda VAPID anahtarları tanımlı değil');
-        return;
+    setHint(forceNew ? 'Yeniden kaydediliyor…' : 'Abonelik oluşturuluyor…');
+    const reg = await ensureServiceWorker();
+    if (!('pushManager' in reg)) {
+      setStatus('unsupported');
+      setHint('Bu tarayıcı push bildirimlerini desteklemiyor');
+      return;
+    }
+
+    let sub = await reg.pushManager.getSubscription();
+
+    if (forceNew && sub) {
+      try {
+        await sub.unsubscribe();
+      } catch {
+        // Eski abonelik kaldırılamasa bile yeni kayıt denenecek
       }
+      sub = null;
+    }
 
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        setStatus('denied');
-        setHint(
-          permission === 'denied'
-            ? 'Bildirim izni reddedildi — adres çubuğundaki kilit simgesinden izin verin'
-            : 'Bildirim izni verilmedi',
-        );
-        return;
-      }
-
-      setHint('Abonelik oluşturuluyor…');
-      const reg = await ensureServiceWorker();
-      if (!('pushManager' in reg)) {
-        setStatus('unsupported');
-        setHint('Bu tarayıcı push bildirimlerini desteklemiyor');
-        return;
-      }
-
-      const existing = await reg.pushManager.getSubscription();
-      if (existing) {
-        await existing.unsubscribe();
-      }
-
-      const sub = await reg.pushManager.subscribe({
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(keyBody.publicKey),
       });
+    }
 
-      await syncSubscriptionToServer(sub);
-      await showLocalNotification('Bildirimler açıldı');
+    const count = await syncSubscriptionToServer(sub);
+    await refreshServerCount();
+    await showLocalNotification(forceNew ? 'Yeniden kayıt tamam' : 'Bildirimler açıldı');
 
-      const { status: sendStatus, body: sendBody } = await pushTestFromServer();
-      setStatus('ready');
-      if (sendStatus === 200 && sendBody.ok && (sendBody.sent ?? 0) > 0) {
-        setHint('Kayıt tamam — macOS sağ üst köşeyi kontrol edin');
-      } else {
-        setHint('Kayıt tamam — Test bildirimi ile tekrar deneyin');
-      }
+    const { status: sendStatus, body: sendBody } = await pushTestFromServer();
+    setStatus('ready');
+    if (sendStatus === 200 && sendBody.ok && (sendBody.sent ?? 0) > 0) {
+      setHint(
+        count >= 0
+          ? `Kayıt tamam (${count} cihaz) — macOS sağ üst köşeyi kontrol edin`
+          : 'Kayıt tamam — macOS sağ üst köşeyi kontrol edin',
+      );
+    } else {
+      setHint(
+        count >= 0
+          ? `Sunucuya kaydedildi (${count} cihaz) — Test bildirimi ile tekrar deneyin`
+          : 'Kayıt tamam — Test bildirimi ile tekrar deneyin',
+      );
+    }
+  }
+
+  async function subscribe(forceNew = false) {
+    if (status === 'subscribing') return;
+
+    const previousStatus = status;
+    setStatus('subscribing');
+    setHint(forceNew ? 'Yeniden kaydediliyor…' : 'İzin isteniyor…');
+
+    try {
+      await createOrRefreshSubscription(forceNew);
     } catch (err) {
-      setStatus('denied');
-      setHint(err instanceof Error ? err.message : 'Bildirim açılamadı — sayfayı yenileyip tekrar deneyin');
+      const message = err instanceof Error ? err.message : 'Bildirim açılamadı — sayfayı yenileyip tekrar deneyin';
+      if (Notification.permission === 'granted') {
+        setStatus(previousStatus === 'ready' ? 'ready' : 'idle');
+      } else {
+        setStatus('denied');
+      }
+      setHint(message);
     }
   }
 
@@ -250,19 +315,22 @@ export function HkPushRegister() {
           aria-busy={busy}
         >
           {busy ? <Loader2 size={16} className="roomio-hk-push__spin" /> : ready ? <Bell size={16} /> : <BellOff size={16} />}
-          {busy ? 'Açılıyor…' : ready ? 'Yeniden kaydol' : 'Bildirimleri aç'}
+          {busy ? (ready ? 'Kaydediliyor…' : 'Açılıyor…') : ready ? 'Yeniden kaydol' : 'Bildirimleri aç'}
         </button>
-        {ready ? (
+        {ready || Notification.permission === 'granted' ? (
           <button
             type="button"
             className="roomio-btn roomio-btn--ghost roomio-btn--sm"
             onClick={() => void sendTestNotification()}
-            disabled={testing}
+            disabled={testing || busy}
           >
             {testing ? 'Gönderiliyor…' : 'Test bildirimi'}
           </button>
         ) : null}
       </div>
+      {serverCount !== null ? (
+        <p className="roomio-hk-push-hint roomio-hk-push-hint--meta">Sunucu: {serverCount} kayıtlı cihaz</p>
+      ) : null}
       {hint ? <p className="roomio-hk-push-hint">{hint}</p> : null}
     </div>
   );

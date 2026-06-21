@@ -1,4 +1,4 @@
-const CACHE = 'roomio-hk-v4';
+const CACHE = 'roomio-hk-v5';
 const SHELL = [
   '/',
   '/manifest.json',
