@@ -48,7 +48,7 @@ export async function sendHkPush(payload: {
         : 0;
       const message = err instanceof Error ? err.message : 'push failed';
       errors.push(message);
-      if (status === 404 || status === 410) {
+      if (status === 400 || status === 401 || status === 403 || status === 404 || status === 410) {
         await removePushSubscription(sub.endpoint);
       }
     }

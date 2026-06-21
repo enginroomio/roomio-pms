@@ -106,6 +106,7 @@ export function HkPushRegister() {
         failed?: number;
         subscribers?: number;
         message?: string;
+        errors?: string[];
       },
     };
   }
@@ -191,6 +192,11 @@ export function HkPushRegister() {
         );
         return;
       }
+      if ((sendBody.failed ?? 0) > 0 && sendBody.errors?.length) {
+        setStatus('idle');
+        setHint(`Push hatası: ${sendBody.errors[0]} — Yeniden kaydol`);
+        return;
+      }
       if (sendBody.message?.includes('Kayıtlı cihaz yok')) {
         setStatus('idle');
         setHint('Sunucuda kayıt yok — Bildirimleri aç veya Yeniden kaydol');
@@ -266,6 +272,8 @@ export function HkPushRegister() {
           ? `Kayıt tamam (${count} cihaz) — macOS sağ üst köşeyi kontrol edin`
           : 'Kayıt tamam — macOS sağ üst köşeyi kontrol edin',
       );
+    } else if (sendBody.errors?.length) {
+      setHint(`Kayıt sunucuda (${count} cihaz) ama push hatası: ${sendBody.errors[0]} — tekrar Yeniden kaydol`);
     } else {
       setHint(
         count >= 0

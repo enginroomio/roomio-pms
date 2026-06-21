@@ -89,6 +89,13 @@ export async function migratePushSubscriptionsFromFile(): Promise<number> {
 export async function savePushSubscription(
   input: Omit<PushSubscriptionRecord, 'id' | 'createdAt'>,
 ): Promise<PushSubscriptionRecord> {
+  // HK mobil: tek aktif kayıt — eski endpoint'ler push hatasına yol açmasın
+  if (input.role === 'hk') {
+    await prisma.pushSubscription.deleteMany({
+      where: { role: 'hk', endpoint: { not: input.endpoint } },
+    });
+  }
+
   const row = await prisma.pushSubscription.upsert({
     where: { endpoint: input.endpoint },
     create: {
