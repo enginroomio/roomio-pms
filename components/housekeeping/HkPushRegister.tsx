@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Bell, Loader2 } from 'lucide-react';
+import { useSession } from '@/components/auth/SessionProvider';
 import { browserHasPushSubscription, showHkBrowserNotification } from '@/lib/client/show-hk-notification';
 import { emitHkPushAlert } from '@/lib/client/hk-push-alert';
 
@@ -47,14 +48,21 @@ async function ensureServiceWorker(timeoutMs = 12_000) {
   return registration;
 }
 
-async function syncSubscriptionToServer(sub: PushSubscription) {
+async function getBrowserSubscription(): Promise<PushSubscription | null> {
+  if (!('serviceWorker' in navigator)) return null;
+  const reg = await navigator.serviceWorker.getRegistration('/');
+  if (!reg || !('pushManager' in reg)) return null;
+  return reg.pushManager.getSubscription();
+}
+
+async function syncSubscriptionToServer(sub: PushSubscription, deviceLabel: string) {
   const saveRes = await fetch('/api/push/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       subscription: sub.toJSON(),
       role: 'hk',
-      deviceLabel: 'HK Mobil',
+      deviceLabel,
     }),
   });
   const saveBody = (await saveRes.json()) as { ok: boolean; message?: string };
@@ -63,40 +71,53 @@ async function syncSubscriptionToServer(sub: PushSubscription) {
   }
 }
 
-async function ensurePushRegistration(): Promise<boolean> {
-  if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
-  if (isIosDevice() && !isStandalonePwa()) return false;
-
-  let permission = Notification.permission;
-  if (permission === 'default') {
-    permission = await Notification.requestPermission();
-  }
-  if (permission !== 'granted') return false;
-
-  const keyRes = await fetch('/api/push/vapid-public-key', { cache: 'no-store' });
-  const keyBody = (await keyRes.json()) as { ok: boolean; publicKey: string | null };
-  if (!keyRes.ok || !keyBody.ok || !keyBody.publicKey) return false;
-
-  const reg = await ensureServiceWorker();
-  if (!('pushManager' in reg)) return false;
-
-  let sub = await reg.pushManager.getSubscription();
-  if (!sub) {
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(keyBody.publicKey),
-    });
-  }
-
-  await syncSubscriptionToServer(sub);
-  return true;
+async function sendPresenceHeartbeat(): Promise<void> {
+  const sub = await getBrowserSubscription();
+  if (!sub) return;
+  await fetch('/api/push/presence', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint: sub.endpoint }),
+  }).catch(() => undefined);
 }
 
 export function HkPushRegister() {
+  const { user } = useSession();
+  const deviceLabel = `${user.name} · HK Mobil`;
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(true);
   const [testing, setTesting] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
+
+  const ensurePushRegistration = useCallback(async (): Promise<boolean> => {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
+    if (isIosDevice() && !isStandalonePwa()) return false;
+
+    let permission = Notification.permission;
+    if (permission === 'default') {
+      permission = await Notification.requestPermission();
+    }
+    if (permission !== 'granted') return false;
+
+    const keyRes = await fetch('/api/push/vapid-public-key', { cache: 'no-store' });
+    const keyBody = (await keyRes.json()) as { ok: boolean; publicKey: string | null };
+    if (!keyRes.ok || !keyBody.ok || !keyBody.publicKey) return false;
+
+    const reg = await ensureServiceWorker();
+    if (!('pushManager' in reg)) return false;
+
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(keyBody.publicKey),
+      });
+    }
+
+    await syncSubscriptionToServer(sub, deviceLabel);
+    await sendPresenceHeartbeat();
+    return true;
+  }, [deviceLabel]);
 
   const refresh = useCallback(async (quiet = false) => {
     if (!('Notification' in window)) {
@@ -126,13 +147,14 @@ export function HkPushRegister() {
     } catch {
       const linked = await browserHasPushSubscription();
       setReady(linked);
+      if (linked) await sendPresenceHeartbeat();
       if (!linked) {
-        setHint('Deploy sonrası — sayfayı yenileyin (Cmd+Shift+R) veya Test bildirimi');
+        setHint('Sayfayı yenileyin (Cmd+Shift+R) veya Test bildirimi');
       }
     } finally {
       if (!quiet) setBusy(false);
     }
-  }, []);
+  }, [ensurePushRegistration]);
 
   useEffect(() => {
     void refresh();
@@ -145,6 +167,10 @@ export function HkPushRegister() {
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onVisible);
 
+    const heartbeat = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void sendPresenceHeartbeat();
+    }, 45_000);
+
     let swCleanup: (() => void) | undefined;
     if ('serviceWorker' in navigator) {
       const onControllerChange = () => void refresh(true);
@@ -155,6 +181,7 @@ export function HkPushRegister() {
     return () => {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisible);
+      window.clearInterval(heartbeat);
       swCleanup?.();
     };
   }, [refresh]);

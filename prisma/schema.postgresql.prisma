@@ -243,4 +243,5 @@ model PushSubscription {
   role        String?
   deviceLabel String?
   createdAt   String
+  lastSeenAt  String?
 }

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { BedDouble, ClipboardList, LayoutGrid } from 'lucide-react';
 import { HousekeepingPano } from '@/components/housekeeping/HousekeepingPano';
 import { HkPushRegister } from '@/components/housekeeping/HkPushRegister';
+import { HkOnlinePanel } from '@/components/housekeeping/HkOnlinePanel';
 import { showHkBrowserNotification } from '@/lib/client/show-hk-notification';
 import { emitHkPushAlert, HK_PUSH_ALERT_EVENT, type HkPushAlertDetail } from '@/lib/client/hk-push-alert';
 import { patchHkRoom } from '@/lib/client/hk-update';
@@ -116,6 +117,7 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
         ) : null}
         <HkPushRegister />
       </header>
+      <HkOnlinePanel />
 
       <HousekeepingPano
         board={board}

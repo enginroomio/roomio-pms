@@ -1,17 +1,39 @@
 import { NextResponse } from 'next/server';
 import {
   countPushSubscriptions,
-  listPushSubscriptions,
+  listPushSubscriberViews,
   pushConfigured,
   savePushSubscription,
 } from '@/lib/server/push-store';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const items = await listPushSubscriptions();
-    return NextResponse.json({ ok: true, count: items.length, configured: pushConfigured() });
+    const { searchParams } = new URL(req.url);
+    const role = searchParams.get('role') ?? undefined;
+    const detail = searchParams.get('detail') === '1';
+
+    if (detail) {
+      const subscribers = await listPushSubscriberViews(role);
+      const online = subscribers.filter((s) => s.online).length;
+      return NextResponse.json({
+        ok: true,
+        configured: pushConfigured(),
+        count: subscribers.length,
+        online,
+        subscribers: subscribers.map((s) => ({
+          id: s.id,
+          deviceLabel: s.deviceLabel ?? 'HK Mobil',
+          role: s.role,
+          online: s.online,
+          lastSeenAt: s.lastSeenAt ?? null,
+        })),
+      });
+    }
+
+    const count = await countPushSubscriptions(role);
+    return NextResponse.json({ ok: true, count, configured: pushConfigured() });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Abonelik listesi alınamadı';
     return NextResponse.json({ ok: false, message, count: 0, configured: pushConfigured() }, { status: 500 });
@@ -41,8 +63,9 @@ export async function POST(req: Request) {
       role: body.role,
       deviceLabel: body.deviceLabel,
     });
-    const count = await countPushSubscriptions();
-    return NextResponse.json({ ok: true, id: saved.id, count });
+    const count = await countPushSubscriptions('hk');
+    const online = (await listPushSubscriberViews('hk')).filter((s) => s.online).length;
+    return NextResponse.json({ ok: true, id: saved.id, count, online });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Abonelik veritabanına kaydedilemedi';
     console.error('[push/subscribe]', message);

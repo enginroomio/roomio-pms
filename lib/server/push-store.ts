@@ -9,10 +9,13 @@ export type PushSubscriptionRecord = {
   role?: string;
   deviceLabel?: string;
   createdAt: string;
+  lastSeenAt?: string;
 };
 
 const LEGACY_FILE = process.env.ROOMIO_PUSH_STORE
   ?? path.join(process.cwd(), '.roomio-data', 'push-subscriptions.json');
+
+const ONLINE_WINDOW_MS = 3 * 60 * 1000;
 
 type DbPushRow = {
   id: string;
@@ -22,6 +25,7 @@ type DbPushRow = {
   role: string | null;
   deviceLabel: string | null;
   createdAt: string;
+  lastSeenAt: string | null;
 };
 
 function toRecord(row: DbPushRow): PushSubscriptionRecord {
@@ -32,7 +36,22 @@ function toRecord(row: DbPushRow): PushSubscriptionRecord {
     role: row.role ?? undefined,
     deviceLabel: row.deviceLabel ?? undefined,
     createdAt: row.createdAt,
+    lastSeenAt: row.lastSeenAt ?? undefined,
   };
+}
+
+export function isPushSubscriberOnline(lastSeenAt?: string | null, now = Date.now()): boolean {
+  if (!lastSeenAt) return false;
+  const ts = Date.parse(lastSeenAt);
+  if (Number.isNaN(ts)) return false;
+  return now - ts <= ONLINE_WINDOW_MS;
+}
+
+export type PushSubscriberView = PushSubscriptionRecord & { online: boolean };
+
+export function toSubscriberView(row: DbPushRow, now = Date.now()): PushSubscriberView {
+  const record = toRecord(row);
+  return { ...record, online: isPushSubscriberOnline(record.lastSeenAt, now) };
 }
 
 /** Eski JSON dosyasındaki abonelikleri Postgres/SQLite'a taşır (bir kez). */
@@ -54,6 +73,7 @@ export async function migratePushSubscriptionsFromFile(): Promise<number> {
   if (!Array.isArray(items) || items.length === 0) return 0;
 
   let migrated = 0;
+  const now = new Date().toISOString();
   for (const item of items) {
     if (!item.endpoint || !item.keys?.p256dh || !item.keys?.auth) continue;
     await prisma.pushSubscription.upsert({
@@ -65,13 +85,15 @@ export async function migratePushSubscriptionsFromFile(): Promise<number> {
         auth: item.keys.auth,
         role: item.role ?? null,
         deviceLabel: item.deviceLabel ?? null,
-        createdAt: item.createdAt ?? new Date().toISOString(),
+        createdAt: item.createdAt ?? now,
+        lastSeenAt: now,
       },
       update: {
         p256dh: item.keys.p256dh,
         auth: item.keys.auth,
         role: item.role ?? null,
         deviceLabel: item.deviceLabel ?? null,
+        lastSeenAt: now,
       },
     });
     migrated += 1;
@@ -87,15 +109,9 @@ export async function migratePushSubscriptionsFromFile(): Promise<number> {
 }
 
 export async function savePushSubscription(
-  input: Omit<PushSubscriptionRecord, 'id' | 'createdAt'>,
+  input: Omit<PushSubscriptionRecord, 'id' | 'createdAt' | 'lastSeenAt'>,
 ): Promise<PushSubscriptionRecord> {
-  // HK mobil: tek aktif kayıt — eski endpoint'ler push hatasına yol açmasın
-  if (input.role === 'hk') {
-    await prisma.pushSubscription.deleteMany({
-      where: { role: 'hk', endpoint: { not: input.endpoint } },
-    });
-  }
-
+  const now = new Date().toISOString();
   const row = await prisma.pushSubscription.upsert({
     where: { endpoint: input.endpoint },
     create: {
@@ -105,29 +121,50 @@ export async function savePushSubscription(
       auth: input.keys.auth,
       role: input.role ?? null,
       deviceLabel: input.deviceLabel ?? null,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      lastSeenAt: now,
     },
     update: {
       p256dh: input.keys.p256dh,
       auth: input.keys.auth,
       role: input.role ?? null,
       deviceLabel: input.deviceLabel ?? null,
+      lastSeenAt: now,
     },
   });
   return toRecord(row);
 }
 
-export async function listPushSubscriptions(): Promise<PushSubscriptionRecord[]> {
-  const rows = await prisma.pushSubscription.findMany({ orderBy: { createdAt: 'desc' } });
+export async function touchPushPresence(endpoint: string): Promise<boolean> {
+  const result = await prisma.pushSubscription.updateMany({
+    where: { endpoint },
+    data: { lastSeenAt: new Date().toISOString() },
+  });
+  return result.count > 0;
+}
+
+export async function listPushSubscriptions(role?: string): Promise<PushSubscriptionRecord[]> {
+  const rows = await prisma.pushSubscription.findMany({
+    where: role ? { role } : undefined,
+    orderBy: [{ createdAt: 'desc' }],
+  });
   return rows.map(toRecord);
+}
+
+export async function listPushSubscriberViews(role?: string): Promise<PushSubscriberView[]> {
+  const rows = await prisma.pushSubscription.findMany({
+    where: role ? { role } : undefined,
+    orderBy: [{ createdAt: 'desc' }],
+  });
+  return rows.map((row) => toSubscriberView(row));
 }
 
 export async function removePushSubscription(endpoint: string): Promise<void> {
   await prisma.pushSubscription.deleteMany({ where: { endpoint } });
 }
 
-export async function countPushSubscriptions(): Promise<number> {
-  return prisma.pushSubscription.count();
+export async function countPushSubscriptions(role?: string): Promise<number> {
+  return prisma.pushSubscription.count({ where: role ? { role } : undefined });
 }
 
 export function pushConfigured(): boolean {
