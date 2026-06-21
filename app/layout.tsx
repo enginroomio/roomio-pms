@@ -4,6 +4,8 @@ import { RoomioProviders } from '@/components/RoomioProviders';
 import './globals.css';
 import './polish.css';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Roomio — Hotel PMS',
   description: 'Modern otel yönetim sistemi — çevrimdışı destekli, KVKK uyumlu',
