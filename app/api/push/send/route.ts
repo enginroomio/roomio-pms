@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     url?: string;
   };
 
-  const subs = await listPushSubscriptions();
+  const subs = await listPushSubscriptions('hk');
   if (subs.length === 0) {
     return NextResponse.json(
       {

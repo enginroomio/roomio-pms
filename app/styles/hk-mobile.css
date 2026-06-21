@@ -71,6 +71,13 @@
   text-align: right;
 }
 
+.roomio-hk-push-meta {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--roomio-muted, #667085);
+  text-align: right;
+}
+
 .roomio-hk-push-alert {
   position: sticky;
   top: 0;
