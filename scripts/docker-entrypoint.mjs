@@ -14,6 +14,9 @@ if (dbUrl.startsWith('file:')) {
 const schema = prismaSchemaPath(dbUrl);
 const provider = isPostgresUrl(dbUrl) ? 'postgresql' : 'sqlite';
 
+console.log(`[entrypoint] Prisma client (${provider})…`);
+execSync(`npx prisma generate --schema=${schema}`, { stdio: 'inherit' });
+
 console.log(`[entrypoint] Veritabanı şeması (${provider})…`);
 execSync(`npx prisma db push --schema=${schema} --skip-generate`, { stdio: 'inherit' });
 

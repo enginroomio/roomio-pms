@@ -68,7 +68,8 @@ if (prod) {
 
 console.log('\nℹ İlk deploy 5–10 dk sürebilir (Docker build + cold start)');
 console.log('ℹ Free plan: 15 dk hareketsizlikten sonra uyur; ilk istek 30–60 sn sürebilir');
-console.log('ℹ Veritabanı: SQLite demo verisi redeploy sonrası sıfırlanabilir (free tier)\n');
+console.log('ℹ Kalıcı veri için: npm run render:postgres:setup');
+console.log('ℹ Özel domain için: npm run render:domain:setup\n');
 
 if (!existsSync('.env.vapid.generated')) {
   const vapidOk = spawnSync('npm', ['run', 'vapid:gen'], { stdio: 'inherit', shell: true }).status === 0;

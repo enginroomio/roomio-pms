@@ -234,3 +234,13 @@ model RoomHousekeeping {
 
   @@unique([propertyId, roomNo])
 }
+
+model PushSubscription {
+  id          String  @id
+  endpoint    String  @unique
+  p256dh      String
+  auth        String
+  role        String?
+  deviceLabel String?
+  createdAt   String
+}

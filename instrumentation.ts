@@ -15,6 +15,9 @@ export async function register() {
     const { seedDatabaseIfEmpty } = await import('@/lib/server/seed');
     await seedDatabaseIfEmpty();
 
+    const { migratePushSubscriptionsFromFile } = await import('@/lib/server/push-store');
+    await migratePushSubscriptionsFromFile();
+
     const { warmTcmbCache } = await import('@/lib/server/exchange-rates-service');
     const { startTcmbDailyScheduler } = await import('@/lib/server/tcmb-scheduler');
     void warmTcmbCache();

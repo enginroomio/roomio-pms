@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { isIntegrationLiveMode } from '@/lib/integrations/live-mode';
 import { pingRedis } from '@/lib/server/redis';
-import { pushConfigured } from '@/lib/server/push-store';
+import { pushConfigured, countPushSubscriptions } from '@/lib/server/push-store';
 import { prisma } from '@/lib/server/prisma';
 
 type HealthChecks = Record<string, { ok: boolean; detail?: string }>;
@@ -41,12 +41,15 @@ export async function collectHealthStatus() {
     detail: isIntegrationLiveMode() ? 'live' : 'simulated',
   };
 
+  const pushCount = pushConfigured() ? await countPushSubscriptions().catch(() => -1) : 0;
+
   checks.monitoring = {
     ok: true,
     detail: [
       pushConfigured() ? 'push:ready' : 'push:disabled',
+      pushConfigured() && pushCount >= 0 ? `push:subs:${pushCount}` : null,
       process.env.SENTRY_DSN ? 'sentry:configured' : 'sentry:disabled',
-    ].join(', '),
+    ].filter(Boolean).join(', '),
   };
 
   const release = await readReleaseManifest();

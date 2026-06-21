@@ -54,6 +54,8 @@
     "deploy:faz11": "node scripts/deploy-faz11.mjs",
     "deploy:faz15": "node scripts/deploy-faz15.mjs",
     "deploy:render": "node scripts/deploy-render.mjs",
+    "render:postgres:setup": "node scripts/render-postgres-setup.mjs",
+    "render:domain:setup": "node scripts/render-custom-domain.mjs",
     "setup:render": "node scripts/setup-render.mjs",
     "setup:render:all": "bash scripts/render-quickstart.sh",
     "github:push": "bash scripts/github-push.sh",
