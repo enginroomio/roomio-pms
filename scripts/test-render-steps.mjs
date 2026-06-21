@@ -47,9 +47,11 @@ console.log(`${health.ok ? '✓' : '✗'} ${PROD}/api/health`);
 if (!health.ok) {
   if (health.reason === 'dns') {
     console.log('ℹ DNS kaydı yok — Render Blueprint henüz deploy edilmemiş');
-    console.log('  render.com → New → Blueprint → GitHub repo bağla');
+    console.log('  Önce: bash scripts/github-push.sh');
+    console.log('  Sonra: render.com → New → Blueprint');
   } else if (health.reason === 'not_found') {
-    console.log('ℹ 404 — servis adı farklı olabilir; Render dashboard URL kontrol edin');
+    console.log('ℹ 404 — site henüz Render\'da yok (Blueprint deploy yapılmamış)');
+    console.log('  bash scripts/github-push.sh → Render Blueprint');
   } else {
     console.log('ℹ Site uyuyor olabilir (free plan) veya deploy devam ediyor');
     console.log('  Render dashboard → Logs kontrol edin');

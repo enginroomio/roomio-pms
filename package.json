@@ -56,6 +56,7 @@
     "deploy:render": "node scripts/deploy-render.mjs",
     "setup:render": "node scripts/setup-render.mjs",
     "setup:render:all": "bash scripts/render-quickstart.sh",
+    "github:push": "bash scripts/github-push.sh",
     "tunnel:https": "node scripts/tunnel-https.mjs",
     "test:render": "node scripts/test-render-steps.mjs",
     "fly:auth:check": "node scripts/fly-auth.mjs",
