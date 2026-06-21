@@ -1,0 +1,35 @@
+#!/bin/bash
+set -euo pipefail
+
+ROOMIO_ROOT="/Users/Engin/Projects/roomio-pms"
+NODE_BIN=""
+for CAND in "/opt/homebrew/bin/node" "/usr/local/bin/node" "$(command -v node 2>/dev/null)"; do
+  if [ -n "$CAND" ] && [ -x "$CAND" ]; then NODE_BIN="$CAND"; break; fi
+done
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+export ROOMIO_BROWSER="safari"
+
+LOG_DIR="$ROOMIO_ROOT/.roomio/runtime"
+LOG_FILE="$LOG_DIR/launcher.log"
+mkdir -p "$LOG_DIR"
+
+if [ ! -f "$ROOMIO_ROOT/package.json" ]; then
+  osascript -e 'display alert "Roomio" message "Proje klasörü bulunamadı. npm run install-shortcuts ile kısayolu yenileyin." as critical'
+  exit 1
+fi
+
+if [ -z "$NODE_BIN" ]; then
+  osascript -e 'display alert "Roomio" message "Node.js bulunamadı. https://nodejs.org adresinden kurun." as critical'
+  exit 1
+fi
+
+cd "$ROOMIO_ROOT"
+
+{
+  echo "=== Roomio $(date) · safari ==="
+  "$NODE_BIN" scripts/roomio-desktop.mjs
+} >> "$LOG_FILE" 2>&1 || {
+  EC=$?
+  osascript -e "display alert \"Roomio başlatılamadı\" message \"Log: $LOG_FILE\" as critical"
+  exit $EC
+}

@@ -1,0 +1,15 @@
+{
+  "nav.home": "Home",
+  "nav.reservations": "Reservations",
+  "nav.reception": "Front Office",
+  "nav.reports": "Reports",
+  "nav.accounting": "Accounting",
+  "property.switch": "Property",
+  "locale.switch": "Language",
+  "reports.design": "Report Design",
+  "reports.templates": "Report templates",
+  "reports.newTemplate": "New template",
+  "reports.edit": "Edit",
+  "reports.save": "Save",
+  "reports.columns": "Columns"
+}

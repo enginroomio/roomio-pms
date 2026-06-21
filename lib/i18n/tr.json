@@ -1,0 +1,15 @@
+{
+  "nav.home": "Ana Sayfa",
+  "nav.reservations": "Rezervasyon",
+  "nav.reception": "Resepsiyon",
+  "nav.reports": "Raporlar",
+  "nav.accounting": "Muhasebe",
+  "property.switch": "Otel seçimi",
+  "locale.switch": "Dil",
+  "reports.design": "Rapor Tasarım",
+  "reports.templates": "Rapor şablonları",
+  "reports.newTemplate": "Yeni şablon",
+  "reports.edit": "Düzenle",
+  "reports.save": "Kaydet",
+  "reports.columns": "Sütunlar"
+}

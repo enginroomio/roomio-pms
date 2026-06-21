@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Property {
+  id         String   @id
+  code       String   @unique
+  name       String
+  city       String?
+  totalRooms Int
+  isDefault  Boolean  @default(false)
+  createdAt  String
+  appStates  AppState[]
+  reservations Reservation[]
+  roomBlocks RoomBlock[]
+  eodArchives EodArchive[]
+  identityNotifications IdentityNotification[]
+  invoices Invoice[]
+  stockItems StockItem[]
+  ledgerEntries LedgerEntry[]
+  reportTemplates ReportTemplate[]
+  taxRules        TaxRule[]
+  exchangeConfig  ExchangeConfig?
+  localeEntries   LocaleEntry[]
+  roomHousekeeping RoomHousekeeping[]
+}
+
+model AppState {
+  propertyId   String   @id
+  businessDate String
+  lastEodClose String?
+  property     Property @relation(fields: [propertyId], references: [id])
+}
+
+model User {
+  id           String @id
+  email        String @unique
+  name         String
+  role         String
+  passwordHash String
+}
+
+model Reservation {
+  id         String   @id
+  propertyId String
+  refNo      String
+  guestName  String
+  email      String?
+  phone      String?
+  checkIn    String
+  checkOut   String
+  roomType   String
+  roomNo     String?
+  adults     Int
+  children   Int      @default(0)
+  mealPlan   String
+  rate       Float
+  currency   String   @default("TRY")
+  agency     String
+  market     String
+  status     String
+  createdAt  String
+  notes      String?
+  extraData  String?
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, refNo])
+}
+
+model RoomBlock {
+  id         String   @id
+  propertyId String
+  roomNo     String
+  fromDate   String   @map("from")
+  toDate     String   @map("to")
+  reason     String
+  blockedBy  String
+  status     String
+  property   Property @relation(fields: [propertyId], references: [id])
+}
+
+model EodArchive {
+  id           String   @id
+  propertyId   String
+  businessDate String
+  closedAt     String
+  closedBy     String
+  occupancy    Int
+  revenue      Float
+  property     Property @relation(fields: [propertyId], references: [id])
+}
+
+model IdentityNotification {
+  id             String   @id
+  propertyId     String
+  reservationId  String?
+  refNo          String?
+  guestName      String
+  firstName      String?
+  lastName       String?
+  roomNo         String
+  nationality    String
+  idNo           String
+  idType         String?
+  birthDate      String?
+  birthPlace     String?
+  gender         String?
+  fatherName     String?
+  motherName     String?
+  checkIn        String
+  checkOut       String?
+  status         String
+  sentAt         String?
+  egmRef         String?
+  errorMessage   String?
+  createdAt      String
+  property       Property @relation(fields: [propertyId], references: [id])
+}
+
+model Invoice {
+  id         String   @id
+  propertyId String
+  no         String
+  date       String
+  guest      String
+  amount     Float
+  vat        Float
+  status     String
+  type       String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, no])
+}
+
+model StockItem {
+  id         String          @id
+  propertyId String
+  sku        String
+  name       String
+  category   String
+  unit       String
+  qty        Float
+  minQty     Float
+  unitCost   Float
+  movements  StockMovement[]
+  property   Property        @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, sku])
+}
+
+model LedgerEntry {
+  id          String   @id
+  propertyId  String
+  date        String
+  account     String
+  description String
+  debit       Float
+  credit      Float
+  ref         String?
+  property    Property @relation(fields: [propertyId], references: [id])
+}
+
+model StockMovement {
+  id        String    @id
+  stockId   String
+  date      String
+  type      String
+  qty       Float
+  note      String?
+  userId    String?
+  stock     StockItem @relation(fields: [stockId], references: [id])
+}
+
+model ReportTemplate {
+  id         String   @id
+  propertyId String
+  name       String
+  module     String
+  columns    String
+  kind       String   @default("report")
+  pageId     String?
+  layout     String?
+  updatedAt  String
+  property   Property @relation(fields: [propertyId], references: [id])
+}
+
+model TaxRule {
+  id         String   @id
+  propertyId String
+  code       String
+  name       String
+  rate       Float
+  base       String   @default("subtotal")
+  appliesTo  String   @default("accommodation")
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model ExchangeConfig {
+  propertyId          String   @id
+  exchangeDiscountPct Float    @default(2)
+  updatedAt           String
+  property            Property @relation(fields: [propertyId], references: [id])
+}
+
+model LocaleEntry {
+  id         String   @id
+  propertyId String   @default("prop-sapphire-ist")
+  locale     String
+  key        String
+  value      String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, locale, key])
+}
+
+model RoomHousekeeping {
+  id         String   @id
+  propertyId String
+  roomNo     String
+  hkStatus   String   @default("CLEAN")
+  assignedTo String?
+  notes      String?
+  updatedAt  String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, roomNo])
+}

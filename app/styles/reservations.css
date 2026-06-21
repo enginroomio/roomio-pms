@@ -1,0 +1,2731 @@
+/* Rezervasyon modülü — screen-039 */
+
+.roomio-rez-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.roomio-rez-tab {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--roomio-border);
+  background: var(--roomio-card);
+  color: var(--roomio-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.roomio-rez-tab:hover {
+  border-color: var(--roomio-accent-dark);
+  color: var(--roomio-text);
+}
+
+.roomio-rez-tab.is-active {
+  background: #1e3a8a;
+  border-color: #1e3a8a;
+  color: #fff;
+}
+
+.roomio-rez-filters {
+  background: var(--roomio-card);
+  border: 1px solid var(--roomio-border);
+  border-radius: var(--roomio-radius-md);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.roomio-rez-filters__title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--roomio-text-muted);
+  margin-bottom: 10px;
+}
+
+.roomio-rez-filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.roomio-rez-filters__check {
+  align-self: center;
+  min-height: 42px;
+}
+
+.roomio-rez-filters__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.roomio-rez-list__search {
+  margin-bottom: 12px;
+}
+
+.roomio-rez-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.roomio-rez-table .roomio-table-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-rez-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rez-status--guaranteed { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.rez-status--inhouse { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+.rez-status--option { background: #ffedd5; color: #c2410c; border: 1px solid #fdba74; }
+.rez-status--cancelled { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+.rez-status--out { background: #e2e8f0; color: #475569; border: 1px solid #cbd5e1; }
+.rez-status--noshow { background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe; }
+
+.roomio-rez-table__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--roomio-border);
+  font-size: 0.82rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-rez-table__pager {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.roomio-rez-fnbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: #1e293b;
+  border-radius: var(--roomio-radius-md);
+}
+
+.roomio-rez-fnbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.roomio-rez-fnbar__btn:hover {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+}
+
+.roomio-rez-fnbar__btn.is-primary {
+  background: #854d0e;
+  border-color: #fbbf24;
+  color: #fffbeb;
+}
+
+.roomio-rez-fnbar__btn kbd {
+  font-size: 0.68rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  font-family: inherit;
+}
+
+.roomio-rez-fnbar__esc {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+html[data-theme='dark'] .roomio-rez-filters {
+  background: var(--roomio-card);
+}
+
+/* Grafikler — F1 doluluk ekranı (Elektra v5 profesyonel) */
+.roomio-rez-graphic-pro {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.roomio-rez-graphic-pro--loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 20px;
+  justify-content: center;
+  color: var(--roomio-text-muted);
+  border: 1px dashed var(--roomio-border);
+  border-radius: var(--roomio-radius-md);
+  background: var(--roomio-card);
+}
+
+.roomio-rez-graphic-pro__spin {
+  animation: roomio-spin 0.9s linear infinite;
+}
+
+@keyframes roomio-spin {
+  to { transform: rotate(360deg); }
+}
+
+.roomio-rez-graphic-pro__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.roomio-rez-graphic-pro__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.roomio-rez-graphic-pro__filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roomio-rez-graphic-pro__filter > span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-rez-graphic-pro__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.roomio-rez-graphic-pro__segments {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--roomio-border);
+  background: #fff;
+}
+
+.roomio-rez-graphic-pro__segment {
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--roomio-text-muted);
+  cursor: pointer;
+}
+
+.roomio-rez-graphic-pro__segment.is-active {
+  background: #0f766e;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.28);
+}
+
+.roomio-rez-graphic-pro__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.roomio-rez-graphic-pro__kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.roomio-rez-graphic-pro__kpi {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.roomio-rez-graphic-pro__kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #ecfeff, #ccfbf1);
+  color: #0f766e;
+  flex-shrink: 0;
+}
+
+.roomio-rez-graphic-pro__kpi-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-rez-graphic-pro__kpi-value {
+  display: block;
+  font-size: 1.35rem;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.roomio-rez-graphic-pro__kpi-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-rez-graphic-pro__kpi-delta {
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.roomio-rez-graphic-pro__kpi-delta.is-up {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.roomio-rez-graphic-pro__kpi-delta.is-down {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.roomio-rez-graphic-pro__kpi-delta.is-flat {
+  color: var(--roomio-text-muted);
+  background: #f1f5f9;
+}
+
+.roomio-rez-graphic-pro__charts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.roomio-rez-graphic-pro__chart-panel {
+  border: 1px solid var(--roomio-border);
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px 14px 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.roomio-rez-graphic-pro__chart-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.roomio-rez-graphic-pro__chart-head h3 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.roomio-rez-graphic-pro__chart-head p {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-rez-graphic-pro__chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+  align-items: center;
+}
+
+.roomio-rez-graphic-pro__chart-legend .swatch {
+  display: inline-block;
+  width: 16px;
+  height: 3px;
+  border-radius: 999px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.roomio-rez-graphic-pro__chart-legend .swatch--current { background: #059669; }
+.roomio-rez-graphic-pro__chart-legend .swatch--prior { background: #3b82f6; border-top: 1px dashed #3b82f6; height: 0; border-bottom: 2px dashed #3b82f6; }
+.roomio-rez-graphic-pro__chart-legend .swatch--forecast { background: #e2e8f0; height: 10px; width: 10px; border-radius: 2px; }
+.roomio-rez-graphic-pro__chart-legend .swatch--booked { background: #059669; }
+.roomio-rez-graphic-pro__chart-legend .swatch--avail { background: #bbf7d0; }
+
+.roomio-rez-graphic-pro__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.roomio-rez-graphic-pro__grid {
+  stroke: #e2e8f0;
+  stroke-width: 1;
+}
+
+.roomio-rez-graphic-pro__axis {
+  fill: #64748b;
+  font-size: 10px;
+}
+
+.roomio-rez-graphic-pro__forecast-zone {
+  fill: rgba(241, 245, 249, 0.85);
+}
+
+.roomio-rez-graphic-pro__forecast-label {
+  fill: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.roomio-rez-graphic-pro__line--current {
+  stroke: #059669;
+  stroke-width: 2.5;
+}
+
+.roomio-rez-graphic-pro__line--prior {
+  stroke: #3b82f6;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.roomio-rez-graphic-pro__dot--current {
+  fill: #059669;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.roomio-rez-graphic-pro__point-label {
+  fill: #065f46;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.roomio-rez-graphic-pro__bar--booked { fill: #059669; }
+.roomio-rez-graphic-pro__bar--avail { fill: #bbf7d0; }
+.roomio-rez-graphic-pro__bar--prior-outline {
+  fill: rgba(59, 130, 246, 0.08);
+  stroke: #3b82f6;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.roomio-rez-graphic-pro__matrix-wrap {
+  border: 1px solid var(--roomio-border);
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.roomio-rez-graphic-pro__matrix-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.roomio-rez-graphic-pro__matrix-head h3 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.roomio-rez-graphic-pro__matrix-head p {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-rez-graphic-pro__matrix-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+  align-items: center;
+}
+
+.roomio-rez-graphic-pro__legend-chip {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+
+.roomio-rez-graphic-pro__matrix-scroll {
+  overflow-x: auto;
+}
+
+.roomio-rez-graphic-pro__matrix-grid {
+  display: grid;
+  gap: 6px;
+  min-width: max-content;
+}
+
+.roomio-rez-graphic-pro__matrix-corner,
+.roomio-rez-graphic-pro__matrix-colhead,
+.roomio-rez-graphic-pro__matrix-rowlabel {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid var(--roomio-border);
+  font-size: 0.72rem;
+}
+
+.roomio-rez-graphic-pro__matrix-corner {
+  font-weight: 800;
+}
+
+.roomio-rez-graphic-pro__matrix-colhead {
+  text-align: center;
+}
+
+.roomio-rez-graphic-pro__matrix-colhead strong {
+  display: block;
+  font-size: 0.74rem;
+}
+
+.roomio-rez-graphic-pro__occ-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.roomio-rez-graphic-pro__occ-badge.is-hot {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.roomio-rez-graphic-pro__matrix-row {
+  display: contents;
+}
+
+.roomio-rez-graphic-pro__matrix-rowlabel strong {
+  display: block;
+}
+
+.roomio-rez-graphic-pro__matrix-rowlabel small {
+  color: var(--roomio-text-muted);
+}
+
+.roomio-rez-graphic-pro__matrix-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 58px;
+  padding: 8px 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--roomio-border);
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.roomio-rez-graphic-pro__matrix-cell:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.roomio-rez-graphic-pro__matrix-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+.roomio-rez-graphic-pro__matrix-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.72rem;
+}
+
+.roomio-rez-graphic-pro__matrix-main strong {
+  font-size: 0.82rem;
+}
+
+.roomio-rez-graphic-pro__matrix-main em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-rez-graphic-pro__matrix-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  border-radius: 0 0 8px 8px;
+}
+
+.roomio-rez-graphic-pro__foot {
+  padding: 0 4px;
+}
+
+.roomio-rez-graphic-pro__foot p {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-rez-graphic-pro__foot-note {
+  margin-top: 4px !important;
+  font-size: 0.68rem !important;
+  opacity: 0.85;
+}
+
+@media (max-width: 1200px) {
+  .roomio-rez-graphic-pro__kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .roomio-rez-graphic-pro__charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .roomio-rez-graphic-pro__kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media print {
+  .roomio-rez-graphic-pro__toolbar,
+  .roomio-rez-graphic-pro__actions {
+    display: none;
+  }
+}
+
+/* Legacy alias — e2e + geriye uyum */
+.roomio-rez-graphic {
+  display: contents;
+}
+
+.roomio-rez-graphic__cell {
+  /* matrix cell base — see .roomio-rez-graphic-pro__matrix-cell */
+}
+
+/* Grafik mockup alternatifleri — interaktif tasarım comps */
+.roomio-grafik-design-picker {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.roomio-grafik-design-picker__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.roomio-grafik-design-picker__btn strong {
+  font-size: 0.82rem;
+}
+
+.roomio-grafik-design-picker__btn span {
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-design-picker__btn.is-active {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 1px #0f766e, 0 4px 14px rgba(15, 118, 110, 0.12);
+  background: linear-gradient(180deg, #f0fdfa, #fff);
+}
+
+.roomio-grafik-mockup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.roomio-grafik-mockup__badge {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #1e3a8a;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.roomio-grafik-mockup__filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-mockup__filterbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+  font-weight: 700;
+}
+
+.roomio-grafik-mockup__filterbar select,
+.roomio-grafik-mockup__filterbar input {
+  min-width: 160px;
+  padding: 8px 10px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  background: #fff;
+}
+
+.roomio-grafik-mockup__seg {
+  display: inline-flex;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.roomio-grafik-mockup__seg button {
+  padding: 8px 14px;
+  border: 0;
+  background: #fff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roomio-grafik-mockup__seg button.is-active {
+  background: #0f766e;
+  color: #fff;
+}
+
+.roomio-grafik-mockup__report {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #0f766e;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.roomio-grafik-mockup__export {
+  padding: 9px 16px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.roomio-grafik-mockup__kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.roomio-grafik-mockup__kpis--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.roomio-grafik-mockup__kpi {
+  position: relative;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-mockup__kpi--soft {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.roomio-grafik-mockup__kpi-label {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-mockup__kpi-value {
+  display: block;
+  font-size: 1.45rem;
+  line-height: 1.1;
+  margin-top: 4px;
+}
+
+.roomio-grafik-mockup__kpi-prior {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-mockup__kpi-delta {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.roomio-grafik-mockup__kpi-delta.is-up {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.roomio-grafik-mockup__kpi-delta.is-down {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.roomio-grafik-mockup__chart-block {
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-mockup__chart-block header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.roomio-grafik-mockup__chart-block h3 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.roomio-grafik-mockup__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-mockup__legend .line,
+.roomio-grafik-mockup__legend .bar {
+  display: inline-block;
+  width: 18px;
+  height: 3px;
+  margin-right: 4px;
+  vertical-align: middle;
+  border-radius: 999px;
+}
+
+.roomio-grafik-mockup__legend .line--cur { background: #059669; }
+.roomio-grafik-mockup__legend .line--prior { background: #3b82f6; border-bottom: 2px dashed #3b82f6; height: 0; }
+.roomio-grafik-mockup__legend .bar--booked { background: #059669; }
+.roomio-grafik-mockup__legend .bar--avail { background: #bbf7d0; }
+.roomio-grafik-mockup__legend .bar--prior { background: transparent; border: 1px dashed #3b82f6; height: 10px; width: 10px; border-radius: 2px; }
+
+.roomio-grafik-mockup__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.roomio-grafik-mockup__info {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 0.76rem;
+}
+
+.roomio-grafik-mockup__cal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-mockup__cal-toolbar button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.roomio-grafik-mockup__cal-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.roomio-grafik-mockup__cal-actions button {
+  width: auto;
+  padding: 0 12px;
+  font-size: 0.74rem;
+}
+
+.roomio-grafik-mockup__cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  font-size: 0.72rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-mockup__cal-legend .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 4px;
+}
+
+.roomio-grafik-mockup__legend .line--room { background: #059669; }
+.roomio-grafik-mockup__legend .line--pax { background: #7c3aed; }
+.roomio-grafik-mockup__legend .bar--pax { background: #7c3aed; }
+.roomio-grafik-mockup__cal-legend .dot--room { background: #059669; }
+.roomio-grafik-mockup__cal-legend .dot--pax { background: #7c3aed; }
+
+.roomio-grafik-mockup__toggle {
+  margin-left: auto;
+  display: inline-flex;
+  border: 1px solid var(--roomio-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.roomio-grafik-mockup__toggle button {
+  padding: 6px 14px;
+  border: 0;
+  background: #fff;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.roomio-grafik-mockup__toggle button.is-active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.roomio-grafik-mockup__cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.roomio-grafik-mockup__cal-weekday {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--roomio-text-muted);
+  padding: 6px;
+}
+
+.roomio-grafik-mockup__cal-cell {
+  min-height: 88px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--roomio-border);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.roomio-grafik-mockup__cal-cell.is-empty {
+  background: transparent;
+  border-color: transparent;
+}
+
+.roomio-grafik-mockup__cal-cell.is-low { background: linear-gradient(180deg, #f0fdf4, #fff); }
+.roomio-grafik-mockup__cal-cell.is-mid { background: linear-gradient(180deg, #fefce8, #fff); }
+.roomio-grafik-mockup__cal-cell.is-hot { background: linear-gradient(180deg, #fff7ed, #fff); }
+
+.roomio-grafik-mockup__cal-day {
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.roomio-grafik-mockup__cal-occ {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #16a34a;
+}
+
+.roomio-grafik-mockup__cal-rev {
+  font-size: 0.72rem;
+  color: #2563eb;
+  margin-top: auto;
+}
+
+.roomio-grafik-mockup__forecast-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-mockup__forecast-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.roomio-grafik-mockup__forecast-head p {
+  margin: 4px 0 0;
+  font-size: 0.74rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-mockup__forecast-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.roomio-grafik-mockup__forecast-actions button {
+  padding: 8px 14px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.roomio-grafik-mockup__forecast-actions button.is-primary {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+}
+
+.roomio-grafik-mockup__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--roomio-border);
+  padding-bottom: 8px;
+}
+
+.roomio-grafik-mockup__tabs button {
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  font-size: 0.76rem;
+  color: var(--roomio-text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.roomio-grafik-mockup__tabs button.is-active {
+  color: #0f766e;
+  border-bottom-color: #0f766e;
+  font-weight: 700;
+}
+
+.roomio-grafik-mockup__forecast-body {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 12px;
+}
+
+.roomio-grafik-mockup__side {
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-mockup__side h4 {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+}
+
+.roomio-grafik-mockup__side dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.72rem;
+}
+
+.roomio-grafik-mockup__side dt {
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-mockup__side dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.roomio-grafik-mockup__side .is-up {
+  color: #166534;
+}
+
+.roomio-grafik-mockup__table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--roomio-border);
+  font-size: 0.74rem;
+}
+
+.roomio-grafik-mockup__table th,
+.roomio-grafik-mockup__table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+}
+
+.roomio-grafik-mockup__table th {
+  background: #f8fafc;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-mockup__table .is-up { color: #166534; font-weight: 700; }
+.roomio-grafik-mockup__table .is-down { color: #b91c1c; font-weight: 700; }
+
+@media (max-width: 1100px) {
+  .roomio-grafik-design-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .roomio-grafik-mockup__kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .roomio-grafik-mockup__forecast-body {
+    grid-template-columns: 1fr;
+  }
+
+  .roomio-grafik-monthly__body {
+    grid-template-columns: 1fr;
+  }
+
+  .roomio-grafik-monthly__toolbar-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Aylık Pro mockup — EGM · TIS · TGA · filtre sihirbazı */
+.roomio-grafik-mockup--monthly-pro {
+  border-color: #99f6e4;
+  background: linear-gradient(180deg, #f0fdfa 0%, #f8fafc 120px);
+}
+
+.roomio-grafik-monthly__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-monthly__head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.roomio-grafik-monthly__head p {
+  margin: 4px 0 0;
+  font-size: 0.74rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-monthly__month-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.roomio-grafik-monthly__month-nav button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.roomio-grafik-monthly__month-nav strong {
+  min-width: 140px;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.roomio-grafik-monthly__today {
+  width: auto !important;
+  padding: 0 14px !important;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.roomio-grafik-monthly__dimensions {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.roomio-grafik-monthly__dim {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.roomio-grafik-monthly__dim strong {
+  font-size: 0.82rem;
+}
+
+.roomio-grafik-monthly__dim span {
+  font-size: 0.66rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-monthly__dim.is-active {
+  border-color: #0f766e;
+  background: linear-gradient(180deg, #ecfdf5, #fff);
+  box-shadow: inset 0 0 0 1px #0f766e;
+}
+
+.roomio-grafik-monthly__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-monthly__toolbar-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.roomio-grafik-monthly__toolbar-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--roomio-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.roomio-grafik-monthly__toolbar-row select {
+  padding: 8px 10px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  font-size: 0.76rem;
+  background: #fff;
+}
+
+.roomio-grafik-monthly__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.roomio-grafik-monthly__wizard-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: 1px solid #0f766e;
+  border-radius: 8px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roomio-grafik-monthly__ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.roomio-grafik-monthly__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roomio-grafik-monthly__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  border: 1px solid var(--roomio-border);
+  background: #fff;
+}
+
+.roomio-grafik-monthly__chip em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-monthly__chip button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.6;
+  display: grid;
+  place-items: center;
+}
+
+.roomio-grafik-monthly__chip.tone-blue { background: #eff6ff; border-color: #bfdbfe; }
+.roomio-grafik-monthly__chip.tone-teal { background: #f0fdfa; border-color: #99f6e4; }
+.roomio-grafik-monthly__chip.tone-amber { background: #fffbeb; border-color: #fde68a; }
+.roomio-grafik-monthly__chip.tone-violet { background: #f5f3ff; border-color: #ddd6fe; }
+.roomio-grafik-monthly__chip.tone-indigo { background: #eef2ff; border-color: #c7d2fe; }
+.roomio-grafik-monthly__chip.tone-rose { background: #fff1f2; border-color: #fecdd3; }
+.roomio-grafik-monthly__chip.tone-slate { background: #f8fafc; }
+
+.roomio-grafik-monthly__chip-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px dashed #94a3b8;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.72rem;
+  color: var(--roomio-text-muted);
+  cursor: pointer;
+}
+
+.roomio-grafik-monthly__body {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 12px;
+}
+
+.roomio-grafik-monthly__calendar-panel {
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-monthly__grid .roomio-grafik-mockup__cal-cell {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+}
+
+.roomio-grafik-monthly__day .roomio-grafik-monthly__sub {
+  font-size: 0.62rem;
+  color: var(--roomio-text-muted);
+  margin-top: auto;
+}
+
+.roomio-grafik-monthly__dim-note {
+  font-size: 0.68rem;
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.roomio-grafik-monthly__side {
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-monthly__side h4 {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+}
+
+.roomio-grafik-monthly__side-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.roomio-grafik-monthly__side-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.74rem;
+}
+
+.roomio-grafik-monthly__side-list .is-warn { color: #ea580c; }
+.roomio-grafik-monthly__side-list .is-up { color: #166534; }
+
+.roomio-grafik-monthly__presets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roomio-grafik-monthly__preset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+}
+
+.roomio-grafik-monthly__preset strong {
+  font-size: 0.74rem;
+}
+
+.roomio-grafik-monthly__preset span {
+  font-size: 0.66rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-monthly__preset.is-active {
+  border-color: #0f766e;
+  background: #ecfdf5;
+}
+
+/* Filtre sihirbazı modal */
+.roomio-grafik-wizard-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.roomio-grafik-wizard {
+  width: min(720px, 100%);
+  max-height: min(90vh, 820px);
+  overflow: auto;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+}
+
+.roomio-grafik-wizard__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-wizard__eyebrow {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.roomio-grafik-wizard__head h3 {
+  margin: 4px 0 0;
+  font-size: 1rem;
+}
+
+.roomio-grafik-wizard__close {
+  border: 0;
+  background: #f1f5f9;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.roomio-grafik-wizard__steps {
+  display: flex;
+  gap: 8px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.roomio-grafik-wizard__step {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  background: #f1f5f9;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-wizard__step.is-active {
+  background: #0f766e;
+  color: #fff;
+  font-weight: 700;
+}
+
+.roomio-grafik-wizard__step.is-done:not(.is-active) {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.roomio-grafik-wizard__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 16px 18px;
+}
+
+.roomio-grafik-wizard__cat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.roomio-grafik-wizard__cat strong {
+  font-size: 0.78rem;
+}
+
+.roomio-grafik-wizard__cat span {
+  font-size: 0.66rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-wizard__cat.is-active {
+  border-color: #0f766e;
+  background: #f0fdfa;
+  box-shadow: inset 0 0 0 1px #0f766e;
+}
+
+.roomio-grafik-wizard__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.roomio-grafik-wizard__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-wizard__form input,
+.roomio-grafik-wizard__form select {
+  padding: 10px 12px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+.roomio-grafik-wizard__selected {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.roomio-grafik-wizard__preview code {
+  display: block;
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 0.76rem;
+}
+
+.roomio-grafik-wizard__share {
+  border: 1px solid var(--roomio-border);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roomio-grafik-wizard__share legend {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0 4px;
+}
+
+.roomio-grafik-wizard__share label {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.roomio-grafik-wizard__hint {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-wizard__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-wizard__ghost,
+.roomio-grafik-wizard__primary {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roomio-grafik-wizard__ghost {
+  border: 1px solid var(--roomio-border);
+  background: #fff;
+}
+
+.roomio-grafik-wizard__primary {
+  border: 0;
+  background: #0f766e;
+  color: #fff;
+}
+
+/* Mockup galerisi */
+.roomio-grafik-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.roomio-grafik-gallery__card {
+  border: 1px solid var(--roomio-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.roomio-grafik-gallery__img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-bottom: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-gallery__body {
+  padding: 14px 16px;
+}
+
+.roomio-grafik-gallery__body h2 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.roomio-grafik-gallery__body p {
+  margin: 6px 0 0;
+  font-size: 0.74rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-gallery__links {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 900px) {
+  .roomio-grafik-gallery {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Elektra v5 tam mockup — oda + kişi doluluğu */
+.roomio-grafik-mockup--elektra-full {
+  border-color: #5eead4;
+  background: linear-gradient(180deg, #f0fdfa 0%, #f8fafc 180px);
+}
+
+.roomio-grafik-elektra__filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-grafik-elektra__filterbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--roomio-text-muted);
+  text-transform: uppercase;
+}
+
+.roomio-grafik-elektra__filterbar select,
+.roomio-grafik-elektra__filterbar input {
+  min-width: 130px;
+  padding: 8px 10px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  font-size: 0.76rem;
+}
+
+.roomio-grafik-elektra__subbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.roomio-grafik-elektra__dims {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.roomio-grafik-elektra__dims button {
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roomio-grafik-elektra__dims button.is-active {
+  background: #0f766e;
+  color: #fff;
+}
+
+.roomio-grafik-elektra__kpis {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.roomio-grafik-elektra__day {
+  min-height: 96px;
+}
+
+.roomio-grafik-elektra__occ {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.roomio-grafik-elektra__occ--room { color: #059669; }
+.roomio-grafik-elektra__occ--pax { color: #7c3aed; }
+
+.roomio-grafik-wizard--wide {
+  width: min(860px, 100%);
+}
+
+.roomio-grafik-wizard__sub {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-grafik-wizard__search {
+  margin: 0 18px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  width: calc(100% - 36px);
+}
+
+.roomio-grafik-wizard__grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.roomio-grafik-wizard__form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.roomio-grafik-wizard__quick-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.roomio-grafik-wizard__quick-picks button {
+  padding: 6px 12px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roomio-grafik-wizard__quick-picks button.is-active {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+@media (max-width: 1100px) {
+  .roomio-grafik-elektra__kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .roomio-grafik-wizard__grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mockup #3 — Detaylı Filtre Sihirbazı Pro */
+.roomio-grafik-mockup--wizard-pro {
+  border-color: #a78bfa;
+  background: linear-gradient(135deg, #faf5ff 0%, #f8fafc 50%);
+}
+
+.roomio-wizard-pro__intro {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-wizard-pro__intro h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.roomio-wizard-pro__intro p {
+  margin: 6px 0 0;
+  font-size: 0.76rem;
+  color: var(--roomio-text-muted);
+  max-width: 720px;
+}
+
+.roomio-wizard-pro__intro-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.roomio-wizard-pro__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #5b21b6;
+}
+
+.roomio-wizard-pro__layout {
+  display: grid;
+  grid-template-columns: 180px 1fr 280px;
+  gap: 12px;
+  min-height: 640px;
+}
+
+.roomio-wizard-pro__backdrop {
+  border-radius: 12px;
+  background: #e2e8f0;
+  padding: 12px;
+  opacity: 0.85;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roomio-wizard-pro__backdrop-bar,
+.roomio-wizard-pro__backdrop-kpis,
+.roomio-wizard-pro__backdrop-chart {
+  border-radius: 6px;
+  background: #cbd5e1;
+}
+
+.roomio-wizard-pro__backdrop-bar { height: 32px; }
+.roomio-wizard-pro__backdrop-kpis { height: 48px; flex: 0; }
+.roomio-wizard-pro__backdrop-chart { flex: 1; min-height: 120px; }
+
+.roomio-wizard-pro__backdrop p {
+  margin: 0;
+  font-size: 0.62rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.roomio-grafik-wizard--pro {
+  position: relative;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+  max-height: none;
+  overflow: visible;
+}
+
+.roomio-grafik-wizard__steps--clickable .roomio-grafik-wizard__step {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.roomio-grafik-wizard__grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.roomio-grafik-wizard__cat--amber.is-active { background: #fffbeb; border-color: #f59e0b; }
+.roomio-grafik-wizard__cat--blue.is-active { background: #eff6ff; border-color: #3b82f6; }
+.roomio-grafik-wizard__cat--teal.is-active { background: #f0fdfa; border-color: #0f766e; }
+.roomio-grafik-wizard__cat--violet.is-active { background: #f5f3ff; border-color: #7c3aed; }
+.roomio-grafik-wizard__cat--indigo.is-active { background: #eef2ff; border-color: #6366f1; }
+.roomio-grafik-wizard__cat--rose.is-active { background: #fff1f2; border-color: #f43f5e; }
+.roomio-grafik-wizard__cat--slate.is-active { background: #f8fafc; border-color: #64748b; }
+
+.roomio-wizard-pro__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 18px 16px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.roomio-wizard-pro__group h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-wizard-pro__logic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.74rem;
+}
+
+.roomio-wizard-pro__logic button {
+  padding: 6px 12px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roomio-wizard-pro__logic button.is-active {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+}
+
+.roomio-wizard-pro__cat-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+  font-weight: 400;
+}
+
+.roomio-wizard-pro__board-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 72px;
+  padding: 10px 8px;
+}
+
+.roomio-wizard-pro__board-grid small {
+  font-size: 0.58rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.roomio-wizard-pro__multiselect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.roomio-wizard-pro__multiselect label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+}
+
+.roomio-wizard-pro__add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1px dashed #0f766e;
+  border-radius: 8px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.roomio-wizard-pro__targets {
+  border: 1px solid var(--roomio-border);
+  border-radius: 10px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.roomio-wizard-pro__targets legend {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.roomio-wizard-pro__targets label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+}
+
+.roomio-wizard-pro__default {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.74rem !important;
+}
+
+.roomio-wizard-pro__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roomio-wizard-pro__panel-block {
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-wizard-pro__panel-block h4 {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+}
+
+.roomio-wizard-pro__queue {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roomio-wizard-pro__queue li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--roomio-border);
+  font-size: 0.72rem;
+}
+
+.roomio-wizard-pro__queue li.tone-amber { background: #fffbeb; }
+.roomio-wizard-pro__queue li.tone-blue { background: #eff6ff; }
+
+.roomio-wizard-pro__queue strong {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-wizard-pro__queue button {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.roomio-wizard-pro__logic-tag {
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #0f766e;
+  padding: 2px 6px;
+  background: #ecfdf5;
+  border-radius: 4px;
+}
+
+.roomio-wizard-pro__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  border: 0;
+  background: transparent;
+  font-size: 0.68rem;
+  color: var(--roomio-text-muted);
+  cursor: pointer;
+}
+
+.roomio-wizard-pro__expr {
+  margin: 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.roomio-wizard-pro__impact {
+  margin: 10px 0 0;
+  display: grid;
+  gap: 6px;
+}
+
+.roomio-wizard-pro__impact div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+}
+
+.roomio-wizard-pro__impact dt {
+  color: var(--roomio-text-muted);
+}
+
+.roomio-wizard-pro__impact dd {
+  margin: 0;
+  font-weight: 800;
+}
+
+.roomio-wizard-pro__preset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 6px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+}
+
+.roomio-wizard-pro__preset strong {
+  font-size: 0.74rem;
+}
+
+.roomio-wizard-pro__preset span {
+  font-size: 0.66rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-wizard-pro__spec {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-wizard-pro__spec h3 {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+}
+
+.roomio-wizard-pro__spec-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.roomio-wizard-pro__spec h4 {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+}
+
+.roomio-wizard-pro__spec ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.72rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-wizard-pro__spec p {
+  margin: 14px 0 0;
+  font-size: 0.74rem;
+}
+
+@media (max-width: 1200px) {
+  .roomio-wizard-pro__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .roomio-wizard-pro__backdrop {
+    display: none;
+  }
+
+  .roomio-wizard-pro__spec-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Elektra v5 Forecast F1 mockup */
+.roomio-grafik-mockup--elektra-forecast {
+  border-color: #94a3b8;
+  background: #dfe4ea;
+  padding: 0;
+  overflow: hidden;
+}
+
+.roomio-ef1 {
+  font-family: Tahoma, 'Segoe UI', sans-serif;
+  font-size: 11px;
+  color: #1a1a1a;
+  background: #ece9d8;
+  border: 1px solid #888;
+}
+
+.roomio-ef1__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: linear-gradient(180deg, #fff 0%, #ece9d8 100%);
+  border-bottom: 1px solid #888;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.roomio-ef1__loading {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  font-size: 11px;
+  color: #555;
+}
+
+.roomio-ef1__toolbar {
+  padding: 6px 8px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #bbb;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roomio-ef1__toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.roomio-ef1__toolbar-row--actions {
+  gap: 4px;
+}
+
+.roomio-ef1__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 10px;
+}
+
+.roomio-ef1__field span {
+  color: #333;
+}
+
+.roomio-ef1__field select,
+.roomio-ef1__field input {
+  height: 22px;
+  padding: 2px 6px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  font: inherit;
+  min-width: 100px;
+}
+
+.roomio-ef1__field--range {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.roomio-ef1__field--range > span:first-child {
+  width: 100%;
+}
+
+.roomio-ef1__field--range input {
+  width: 88px;
+  min-width: 88px;
+}
+
+.roomio-ef1__range-sep {
+  color: #666;
+}
+
+.roomio-ef1__mini {
+  height: 22px;
+  min-width: 28px;
+  padding: 0 6px;
+  border: 1px solid #7f9db9;
+  background: linear-gradient(180deg, #fff 0%, #ece9d8 100%);
+  font: inherit;
+  cursor: pointer;
+}
+
+.roomio-ef1__mini--today {
+  min-width: 48px;
+}
+
+.roomio-ef1__btn {
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid #7f9db9;
+  background: linear-gradient(180deg, #fff 0%, #ece9d8 100%);
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.roomio-ef1__btn--primary {
+  background: linear-gradient(180deg, #6b9fd8 0%, #316ac5 100%);
+  border-color: #1e4a8a;
+  color: #fff;
+  font-weight: 700;
+}
+
+.roomio-ef1__btn--danger {
+  margin-left: auto;
+  background: linear-gradient(180deg, #f88 0%, #c44 100%);
+  border-color: #933;
+  color: #fff;
+}
+
+.roomio-ef1__maintabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  background: #dbe4f0;
+  border-bottom: 1px solid #7f9db9;
+  padding: 2px 4px 0;
+  overflow-x: auto;
+}
+
+.roomio-ef1__maintab {
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.roomio-ef1__maintab.is-active {
+  background: #fff;
+  border-color: #7f9db9;
+  border-radius: 3px 3px 0 0;
+  font-weight: 700;
+  color: #003399;
+}
+
+.roomio-ef1__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 6px 10px;
+  background: #fff;
+  border-bottom: 1px solid #ccc;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.roomio-ef1__summary strong {
+  color: #003399;
+}
+
+.roomio-ef1__summary em {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.roomio-ef1__chart-wrap {
+  background: #fff;
+  padding: 8px;
+}
+
+.roomio-ef1__chart-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 6px;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.roomio-ef1__check-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 400;
+}
+
+.roomio-ef1__chart {
+  display: flex;
+  gap: 4px;
+  border: 1px solid #bbb;
+  background: #fafafa;
+  padding: 8px 4px 4px;
+  overflow-x: auto;
+}
+
+.roomio-ef1__chart.is-3d .roomio-ef1__bar-empty {
+  box-shadow: 3px -3px 0 #c4a000;
+}
+
+.roomio-ef1__chart.is-3d .roomio-ef1__bar-occ {
+  box-shadow: 3px -3px 0 #1e4a8a;
+}
+
+.roomio-ef1__y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 280px;
+  padding: 0 4px 18px 0;
+  font-size: 10px;
+  color: #666;
+  text-align: right;
+  min-width: 24px;
+}
+
+.roomio-ef1__bars {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  align-items: flex-end;
+}
+
+.roomio-ef1__bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 36px;
+  flex: 0 0 36px;
+}
+
+.roomio-ef1__bar-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 28px;
+}
+
+.roomio-ef1__bar-empty {
+  background: #ffd700;
+  border: 1px solid #c4a000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 4px;
+}
+
+.roomio-ef1__bar-empty span {
+  font-size: 9px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.roomio-ef1__bar-occ {
+  background: #316ac5;
+  border: 1px solid #1e4a8a;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 4px;
+}
+
+.roomio-ef1__bar-occ span {
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.roomio-ef1__bar-label {
+  margin-top: 4px;
+  font-size: 8px;
+  text-align: center;
+  line-height: 1.2;
+  color: #333;
+  white-space: nowrap;
+}
+
+.roomio-ef1__metric-tabs {
+  display: flex;
+  gap: 0;
+  margin-top: 8px;
+  border-bottom: 1px solid #7f9db9;
+}
+
+.roomio-ef1__metrictab {
+  padding: 4px 12px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  background: #ece9d8;
+  font: inherit;
+  cursor: pointer;
+}
+
+.roomio-ef1__metrictab.is-active {
+  background: #fff;
+  border-color: #7f9db9;
+  border-radius: 3px 3px 0 0;
+  font-weight: 700;
+}
+
+.roomio-ef1__checks {
+  margin: 8px 0 0;
+  padding: 8px;
+  border: 1px solid #ccc;
+  background: #f8f8f8;
+}
+
+.roomio-ef1__checks legend {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 4px;
+}
+
+.roomio-ef1__checks-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px 12px;
+  margin-top: 6px;
+}
+
+.roomio-ef1__checks-grid label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.roomio-ef1__placeholder {
+  padding: 40px 20px;
+  text-align: center;
+  background: #fff;
+  color: #666;
+}
+
+.roomio-ef1__footer {
+  border-top: 1px solid #888;
+  background: #ece9d8;
+}
+
+.roomio-ef1__fx {
+  padding: 4px 8px;
+  background: #fff;
+  border-bottom: 1px solid #ccc;
+}
+
+.roomio-ef1__fx strong {
+  display: block;
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+.roomio-ef1__fx table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.roomio-ef1__fx th,
+.roomio-ef1__fx td {
+  border: 1px solid #bbb;
+  padding: 2px 8px;
+  text-align: center;
+}
+
+.roomio-ef1__fx th {
+  background: #dbe4f0;
+  font-weight: 700;
+}
+
+.roomio-ef1__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 4px 8px;
+  font-size: 10px;
+  color: #333;
+}
+
+.roomio-ef1__msg {
+  margin-left: auto;
+  color: #666;
+}
+
+@media (max-width: 900px) {
+  .roomio-ef1__checks-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .roomio-ef1__btn--danger {
+    margin-left: 0;
+  }
+}

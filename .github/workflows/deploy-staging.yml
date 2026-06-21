@@ -1,0 +1,43 @@
+name: Deploy staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag'
+        required: false
+        default: 'staging'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t roomio-pms:${{ inputs.image_tag }} .
+
+      - name: Health check (container)
+        run: |
+          docker run -d --name roomio-staging -p 13100:3100 \
+            -e DATABASE_URL=file:/tmp/roomio.db \
+            roomio-pms:${{ inputs.image_tag }}
+          for i in $(seq 1 45); do
+            if curl -sf http://127.0.0.1:13100/api/health >/dev/null; then
+              curl -s http://127.0.0.1:13100/api/health | tee health.json
+              docker rm -f roomio-staging
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs roomio-staging || true
+          docker rm -f roomio-staging
+          exit 1
+
+      - name: Deploy notes
+        run: |
+          echo "Image: roomio-pms:${{ inputs.image_tag }}"
+          echo "Push to registry and deploy with your platform (Fly/Railway/VPS)."
+          echo "Required env: DATABASE_URL, ROOMIO_JWT_SECRET, REDIS_URL (optional)"

@@ -1,0 +1,17 @@
+{
+  "brand": "Roomio",
+  "completed": true,
+  "totalScreens": 402,
+  "range": "screen-000 … screen-401",
+  "sections": {
+    "anaMenu": "000-246 (Elektra referans)",
+    "roomioDeep": "247-401 (Roomio modern teal UI)",
+    "grAlt": "247-251",
+    "agAlt": "252-255",
+    "servisProgramlari": "256-286",
+    "dilTanimlari": "287-292",
+    "raporlarDetay": "293-358",
+    "gunSonuEOD": "359-401"
+  },
+  "location": "/Users/Engin/.cursor/projects/empty-window/assets/"
+}

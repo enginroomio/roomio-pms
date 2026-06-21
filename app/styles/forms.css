@@ -1,0 +1,507 @@
+/* Buttons */
+.roomio-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.roomio-btn--primary {
+  background: var(--roomio-accent);
+  color: #042f2e;
+}
+
+.roomio-btn--primary:hover { filter: brightness(1.05); }
+
+.roomio-btn--secondary {
+  background: var(--roomio-card);
+  color: var(--roomio-text);
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-btn--ghost {
+  background: transparent;
+  color: var(--roomio-text-muted);
+  border: 1px solid transparent;
+}
+
+/* Form */
+.roomio-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.roomio-input,
+.roomio-select {
+  padding: 9px 12px;
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  background: var(--roomio-card);
+  color: var(--roomio-text);
+  min-width: 200px;
+}
+
+.roomio-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.roomio-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.roomio-field span { color: var(--roomio-text-muted); font-weight: 500; }
+
+.roomio-field-hint {
+  color: var(--roomio-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.roomio-field--full { grid-column: 1 / -1; }
+
+.roomio-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--roomio-border);
+}
+
+.roomio-form-actions--spaced {
+  margin-top: 16px;
+}
+
+.roomio-form-section--spaced {
+  margin-top: 16px;
+}
+
+/* Table */
+.roomio-table-wrap { overflow-x: auto; padding: 0; }
+
+.roomio-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.roomio-table th,
+.roomio-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--roomio-border);
+}
+
+.roomio-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: var(--roomio-text-muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.roomio-table tbody tr:hover { background: #f8fafc; }
+
+.roomio-table-empty {
+  text-align: center;
+  color: var(--roomio-text-muted);
+  padding: 32px !important;
+}
+
+.roomio-table-footer {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  color: var(--roomio-text-muted);
+  border-top: 1px solid var(--roomio-border);
+}
+
+.roomio-link {
+  color: #0d9488;
+  font-weight: 600;
+}
+
+.roomio-link:hover { text-decoration: underline; }
+
+/* Status */
+.roomio-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.roomio-status--confirmed { background: #dbeafe; color: #1d4ed8; }
+.roomio-status--inhouse { background: #dcfce7; color: #15803d; }
+.roomio-status--out { background: #f1f5f9; color: #475569; }
+.roomio-status--option { background: #fef9c3; color: #a16207; }
+.roomio-status--cancel { background: #fee2e2; color: #b91c1c; }
+.roomio-status--noshow { background: #fce7f3; color: #be185d; }
+
+/* Detail */
+.roomio-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.roomio-detail-grid__full { grid-column: 1 / -1; }
+
+.roomio-card-title {
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  color: var(--roomio-sidebar);
+}
+
+.roomio-dl {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px 16px;
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.roomio-dl dt { color: var(--roomio-text-muted); }
+
+.roomio-dl dd { margin: 0; }
+
+.roomio-alert {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 8px;
+}
+
+.roomio-alert--success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+/* Tabs */
+.roomio-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--roomio-border);
+  padding-bottom: 12px;
+}
+
+.roomio-tab {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-tab:hover { background: #e2e8f0; color: var(--roomio-text); }
+
+.roomio-tab.active {
+  background: var(--roomio-accent-soft);
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.roomio-kpi--link {
+  transition: box-shadow 0.15s, transform 0.15s;
+  cursor: pointer;
+}
+
+.roomio-kpi--link:hover {
+  box-shadow: 0 4px 12px rgba(15, 76, 92, 0.12);
+  transform: translateY(-1px);
+}
+
+.roomio-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.roomio-mini-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.roomio-mini-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--roomio-border);
+  font-size: 0.88rem;
+}
+
+.roomio-mini-list li:last-child { border-bottom: none; }
+
+.roomio-text-warn { color: #c2410c; font-weight: 600; }
+
+.roomio-text-credit { color: #15803d; }
+
+.roomio-row-done { opacity: 0.55; }
+
+.roomio-field--row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Sync status */
+.roomio-sync-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  border: 1px solid var(--roomio-border);
+  background: var(--roomio-card);
+}
+
+.roomio-sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+.roomio-sync-bar--ok .roomio-sync-dot { background: #16a34a; }
+.roomio-sync-bar--warn .roomio-sync-dot { background: #ea580c; }
+.roomio-sync-bar--offline .roomio-sync-dot { background: #64748b; }
+
+.roomio-sync-label { font-weight: 600; }
+.roomio-sync-meta { color: var(--roomio-text-muted); }
+
+.roomio-sync-btn {
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--roomio-border);
+  background: #fff;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.roomio-sync-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.roomio-filter-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--roomio-border);
+  background: #fff;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.roomio-filter-chip.active {
+  background: var(--roomio-accent-soft);
+  border-color: #5eead4;
+  color: #0f766e;
+  font-weight: 600;
+}
+
+.roomio-hk-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.hk-clean { background: #dcfce7; color: #166534; }
+.hk-dirty { background: #ffedd5; color: #c2410c; }
+.hk-inspect { background: #dbeafe; color: #1d4ed8; }
+.hk-ooo { background: #fee2e2; color: #b91c1c; }
+.hk-dnd { background: #f3e8ff; color: #7e22ce; }
+
+.roomio-btn--sm {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+}
+
+.roomio-license-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.roomio-tabs--wrap { flex-wrap: wrap; max-height: 120px; overflow-y: auto; }
+
+.roomio-gr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.roomio-gr-card {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roomio-filter-panel { margin-bottom: 16px; }
+
+.roomio-report-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roomio-report-preview {
+  text-align: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--roomio-border);
+  margin-bottom: 8px;
+}
+
+.roomio-report-preview-title { font-weight: 800; letter-spacing: 0.06em; }
+
+.roomio-report-preview-meta { font-size: 0.82rem; color: var(--roomio-text-muted); }
+
+.roomio-report-footnote {
+  font-size: 0.78rem;
+  color: var(--roomio-text-muted);
+  padding: 8px 12px;
+}
+
+.roomio-table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  border-top: 1px solid var(--roomio-border);
+}
+
+.roomio-pagination { display: flex; gap: 4px; align-items: center; }
+
+.roomio-pagination button {
+  border: 1px solid var(--roomio-border);
+  background: #fff;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.roomio-pagination-active {
+  background: var(--roomio-accent-soft);
+  color: #0f766e;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.roomio-table--compact { font-size: 0.78rem; }
+
+.roomio-cell-wrap { max-width: 180px; white-space: normal; }
+
+.roomio-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.roomio-pill--ok { background: #dcfce7; color: #166534; }
+
+.roomio-stars { display: flex; align-items: center; gap: 4px; }
+
+.roomio-star {
+  border: none;
+  background: none;
+  font-size: 1.2rem;
+  color: #cbd5e1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.roomio-star.filled { color: #f59e0b; }
+
+.roomio-star:disabled { cursor: default; }
+
+.roomio-star-label { font-size: 0.85rem; margin-left: 6px; }
+
+.roomio-stars-inline { white-space: nowrap; }
+
+.roomio-stars-inline strong { margin-left: 4px; }
+
+.roomio-vip-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.vip-platinum { background: #ede9fe; color: #5b21b6; }
+.vip-gold { background: #fef3c7; color: #92400e; }
+.vip-silver { background: #f1f5f9; color: #475569; }
+.vip-bronze { background: #ffedd5; color: #9a3412; }
+
+.roomio-cmd-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 80px;
+}
+
+.roomio-cmd-panel {
+  background: #fff;
+  border-radius: 12px;
+  width: min(520px, 92vw);
+  padding: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.roomio-cmd-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.roomio-cmd-list li a {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.roomio-cmd-list li a:hover { background: #f1f5f9; }
+
+.roomio-header-search {
+  border: 1px solid var(--roomio-border);
+  background: var(--roomio-card);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: var(--roomio-text-muted);
+  cursor: pointer;
+  text-align: left;
+}
+

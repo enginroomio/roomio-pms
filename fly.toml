@@ -1,0 +1,40 @@
+# Fly.io production deploy — https://fly.io/docs/reference/configuration/
+app = "roomio-pms"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3100"
+  HOSTNAME = "0.0.0.0"
+  DATABASE_URL = "file:/data/roomio.db"
+  ROOMIO_DATA_DIR = "/data"
+  ROOMIO_PUSH_STORE = "/data/push-subscriptions.json"
+  ROOMIO_PBX_CONFIG = "/data/pbx-config.json"
+  ROOMIO_TESA_CONFIG = "/data/tesa-config.json"
+  ROOMIO_5651_STORE = "/data/hotspot-5651.enc"
+
+[http_service]
+  internal_port = 3100
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[mounts]
+  source = "roomio_data"
+  destination = "/data"

@@ -1,0 +1,62 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+    inputs:
+      registry:
+        description: 'Container registry (ghcr.io/owner/roomio-pms)'
+        required: false
+        default: 'ghcr.io/${{ github.repository_owner }}/roomio-pms'
+      tag:
+        description: 'Image tag'
+        required: false
+        default: 'latest'
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        run: |
+          IMAGE="${{ inputs.registry }}:${{ inputs.tag }}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Container health check
+        run: |
+          docker run -d --name roomio-prod-test -p 13200:3100 \
+            -e DATABASE_URL=file:/data/roomio.db \
+            "$IMAGE"
+          for i in $(seq 1 45); do
+            if curl -sf http://127.0.0.1:13200/api/health >/dev/null; then
+              curl -sf http://127.0.0.1:13200/api/integrations/status | head -c 400
+              docker rm -f roomio-prod-test
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs roomio-prod-test || true
+          docker rm -f roomio-prod-test
+          exit 1
+
+      - name: Deploy notes
+        run: |
+          echo "Image pushed: $IMAGE"
+          echo "Fly: fly deploy --image $IMAGE"
+          echo "Railway: railway up --image $IMAGE"
+          echo "Required secrets: DATABASE_URL, ROOMIO_JWT_SECRET, REDIS_URL, VAPID_*, SENTRY_DSN"

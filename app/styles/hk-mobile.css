@@ -1,0 +1,92 @@
+.roomio-hk-mobile {
+  min-height: calc(100dvh - 56px);
+  padding: 12px 12px 88px;
+  background: var(--roomio-bg, #f4f6f8);
+}
+
+.roomio-hk-mobile--loading {
+  display: grid;
+  place-items: center;
+  color: var(--roomio-muted, #667085);
+}
+
+.roomio-hk-mobile__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.roomio-hk-mobile__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--roomio-muted, #667085);
+}
+
+.roomio-hk-mobile__header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.roomio-hk-mobile__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fff3cd;
+  color: #856404;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.roomio-hk-mobile .roomio-hk-pano__head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--roomio-bg, #f4f6f8);
+}
+
+.roomio-hk-mobile .roomio-hk-room-btn {
+  min-height: 52px;
+  font-size: 1rem;
+}
+
+.roomio-hk-mobile__nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1px solid rgba(15, 20, 25, 0.08);
+  box-shadow: 0 -8px 24px rgba(15, 20, 25, 0.06);
+}
+
+.roomio-hk-mobile__nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 56px;
+  border-radius: 12px;
+  color: var(--roomio-text, #0f1419);
+  text-decoration: none;
+  font-size: 0.75rem;
+}
+
+.roomio-hk-mobile__nav-item:hover,
+.roomio-hk-mobile__nav-item:focus-visible {
+  background: rgba(26, 107, 74, 0.08);
+  color: #1a6b4a;
+}
+
+@media (max-width: 640px) {
+  .roomio-hk-mobile .roomio-hk-pano__kpi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

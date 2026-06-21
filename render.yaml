@@ -1,0 +1,35 @@
+# Render Blueprint — ücretsiz, kredi kartı gerekmez
+# https://dashboard.render.com/ → New → Blueprint → repo bağla
+services:
+  - type: web
+    name: roomio-pms
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOSTNAME
+        value: 0.0.0.0
+      - key: DATABASE_URL
+        value: file:/data/roomio.db
+      - key: ROOMIO_DATA_DIR
+        value: /data
+      - key: ROOMIO_PUSH_STORE
+        value: /data/push-subscriptions.json
+      - key: ROOMIO_PBX_CONFIG
+        value: /data/pbx-config.json
+      - key: ROOMIO_TESA_CONFIG
+        value: /data/tesa-config.json
+      - key: ROOMIO_5651_STORE
+        value: /data/hotspot-5651.enc
+      - key: ROOMIO_JWT_SECRET
+        generateValue: true
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:hk@hotelsapphire.com

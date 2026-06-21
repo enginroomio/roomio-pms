@@ -1,0 +1,89 @@
+'use client';
+
+import { Suspense } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  Bell,
+  CalendarDays,
+  HelpCircle,
+} from 'lucide-react';
+import { DEMO_USER } from '@/lib/navigation';
+import { SyncStatusBar } from '@/components/SyncStatusBar';
+import { LicenseBadge } from '@/components/LicenseBadge';
+import { CommandPalette } from '@/components/CommandPalette';
+import { IconRail } from '@/components/IconRail';
+import { TopMenuNav } from '@/components/TopMenuNav';
+import { ShortcutBar } from '@/components/ShortcutBar';
+import { ReleaseNotice } from '@/components/ReleaseNotice';
+import { RoleSwitcher } from '@/components/auth/RoleSwitcher';
+import { PropertySwitcher } from '@/components/property/PropertySwitcher';
+import { LocaleSwitcher } from '@/components/i18n/LocaleSwitcher';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { useRoomioShortcuts } from '@/lib/shortcuts';
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  useRoomioShortcuts();
+
+  if (pathname.startsWith('/wifi')) {
+    return <div className="roomio-wifi-shell">{children}</div>;
+  }
+
+  return (
+    <div className="roomio-viewport-host">
+      <div className="roomio-viewport-canvas">
+        <div className="roomio-app">
+          <IconRail />
+
+          <div className="roomio-main">
+            <header className="roomio-header roomio-header--app">
+              <div className="roomio-header-top">
+                <div className="roomio-header-left">
+                  <PropertySwitcher />
+                </div>
+
+                <CommandPalette />
+
+                <div className="roomio-header-meta">
+                  <button type="button" className="roomio-header-icon-btn" aria-label="Takvim">
+                    <CalendarDays size={18} />
+                  </button>
+                  <button type="button" className="roomio-header-icon-btn roomio-header-bell" aria-label="Bildirimler">
+                    <Bell size={18} />
+                    <span className="roomio-header-badge">3</span>
+                  </button>
+                  <Link href="/guest-relations" className="roomio-header-icon-btn" aria-label="Yardım">
+                    <HelpCircle size={18} />
+                  </Link>
+                  <LicenseBadge />
+                  <ThemeToggle />
+                  <LocaleSwitcher />
+                  <RoleSwitcher />
+                  <SyncStatusBar />
+                  <div className="roomio-header-user">
+                    <div className="roomio-avatar">{DEMO_USER.initials}</div>
+                    <div>
+                      <div>{DEMO_USER.name}</div>
+                      <div className="roomio-header-user-role">{DEMO_USER.role}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <TopMenuNav />
+            </header>
+
+            <main className="roomio-content">
+              <Suspense fallback={null}>
+                <ReleaseNotice />
+              </Suspense>
+              {children}
+            </main>
+            <ShortcutBar />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
