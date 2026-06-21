@@ -52,7 +52,15 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
   gap: 6px;
+}
+
+.roomio-hk-push__status {
+  display: inline-flex;
+  align-items: center;
+  color: var(--roomio-accent, #1a6b4a);
+  opacity: 0.85;
 }
 
 .roomio-hk-push-hint {
