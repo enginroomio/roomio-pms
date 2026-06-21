@@ -26,7 +26,7 @@ ENV PORT=3100
 ENV HOSTNAME=0.0.0.0
 ENV DATABASE_URL="file:/data/roomio.db"
 
-RUN apk add --no-cache wget
+RUN apk add --no-cache wget openssl libc6-compat
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
