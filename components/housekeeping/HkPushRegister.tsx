@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { showHkBrowserNotification } from '@/lib/client/show-hk-notification';
+import { emitHkPushAlert } from '@/lib/client/hk-push-alert';
 
 type PushStatus =
   | 'idle'
@@ -91,8 +92,8 @@ export function HkPushRegister() {
     };
   }
 
-  async function showLocalNotification(body: string) {
-    return showHkBrowserNotification(body);
+  async function showLocalNotification(body: string, title = 'Roomio HK') {
+    return showHkBrowserNotification(body, title);
   }
 
   async function refreshServerSubscription() {
@@ -134,31 +135,35 @@ export function HkPushRegister() {
 
   async function sendTestNotification() {
     setTesting(true);
-    setHint('Test bildirimi gönderiliyor…');
-    try {
-      const localOk = await showLocalNotification('Yerel test — Chrome bildirimleri açık');
-      const { status, body } = await pushTestFromServer();
+    const title = 'Roomio HK Test';
+    const body = 'Bildirimler çalışıyor — Oda 108 kirli';
+    emitHkPushAlert({ title, body });
+    setHint('Yeşil kutu sayfada görünmeli — macOS bildirimi sağ üstte');
 
-      if (status === 200 && body.ok && (body.sent ?? 0) > 0) {
+    try {
+      const localOk = await showLocalNotification(body, title);
+      const { status, body: sendBody } = await pushTestFromServer();
+
+      if (status === 200 && sendBody.ok && (sendBody.sent ?? 0) > 0) {
         setHint(
           localOk
-            ? 'Yerel + sunucu bildirimi gönderildi — sağ altta veya macOS Bildirim Merkezi'
-            : 'Sunucu bildirimi gönderildi (sent=1) — macOS Bildirim Merkezi\'ni kontrol edin',
+            ? 'Tamam — sayfadaki yeşil kutu + macOS sağ üst bildirimi'
+            : 'Sunucu gönderdi — macOS sağ üst köşe / Bildirim Merkezi',
         );
         return;
       }
-      if (body.message?.includes('Kayıtlı cihaz yok')) {
+      if (sendBody.message?.includes('Kayıtlı cihaz yok')) {
         setStatus('idle');
         setHint('Sunucuda kayıt yok — Bildirimleri aç ile tekrar kaydolun');
         return;
       }
       if (localOk) {
-        setHint('Yerel bildirim göründü; sunucu push başarısız — Bildirimleri tekrar açın');
+        setHint('Yerel bildirim çalıştı (sağ üst); sunucu push için Yeniden kaydol');
         return;
       }
-      setHint(body.message ?? 'Bildirim gönderilemedi — Bildirimleri tekrar açın');
+      setHint(sendBody.message ?? 'Sunucu push başarısız — yeşil kutu yine de görünmeli');
     } catch {
-      setHint('Test bildirimi gönderilemedi');
+      setHint('Sunucu hatası — yeşil kutu göründüyse bildirimler kısmen çalışıyor');
     } finally {
       setTesting(false);
     }
@@ -215,7 +220,7 @@ export function HkPushRegister() {
       const { status: sendStatus, body: sendBody } = await pushTestFromServer();
       setStatus('ready');
       if (sendStatus === 200 && sendBody.ok && (sendBody.sent ?? 0) > 0) {
-        setHint('Kayıt tamam — test bildirimi gönderildi (sağ alt / Bildirim Merkezi)');
+        setHint('Kayıt tamam — macOS sağ üst köşeyi kontrol edin');
       } else {
         setHint('Kayıt tamam — Test bildirimi ile tekrar deneyin');
       }

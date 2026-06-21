@@ -6,6 +6,7 @@ import { BedDouble, ClipboardList, LayoutGrid } from 'lucide-react';
 import { HousekeepingPano } from '@/components/housekeeping/HousekeepingPano';
 import { HkPushRegister } from '@/components/housekeeping/HkPushRegister';
 import { showHkBrowserNotification } from '@/lib/client/show-hk-notification';
+import { emitHkPushAlert, HK_PUSH_ALERT_EVENT, type HkPushAlertDetail } from '@/lib/client/hk-push-alert';
 import { patchHkRoom } from '@/lib/client/hk-update';
 import { roomioFetch } from '@/lib/client/api';
 import { enqueueSync } from '@/lib/sync/engine';
@@ -31,7 +32,23 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
   }, [initialBoard]);
 
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
+    const showAlert = (detail: HkPushAlertDetail) => {
+      setPushAlert(detail);
+      void showHkBrowserNotification(detail.body, detail.title);
+      window.setTimeout(() => setPushAlert(null), 10_000);
+    };
+
+    const onDomAlert = (event: Event) => {
+      const detail = (event as CustomEvent<HkPushAlertDetail>).detail;
+      if (detail?.body) showAlert(detail);
+    };
+
+    window.addEventListener(HK_PUSH_ALERT_EVENT, onDomAlert);
+
+    if (!('serviceWorker' in navigator)) {
+      return () => window.removeEventListener(HK_PUSH_ALERT_EVENT, onDomAlert);
+    }
+
     const handler = (event: MessageEvent) => {
       const data = event.data as {
         type?: string;
@@ -45,11 +62,10 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
       };
 
       if (data?.type === 'roomio-hk-push' && data.payload?.body) {
-        const title = data.payload.title ?? 'Roomio HK';
-        const body = data.payload.body;
-        setPushAlert({ title, body });
-        void showHkBrowserNotification(body, title);
-        window.setTimeout(() => setPushAlert(null), 10_000);
+        showAlert({
+          title: data.payload.title ?? 'Roomio HK',
+          body: data.payload.body,
+        });
         return;
       }
 
@@ -62,7 +78,10 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
       }).then(() => setQueuedCount((n) => n + 1));
     };
     navigator.serviceWorker.addEventListener('message', handler);
-    return () => navigator.serviceWorker.removeEventListener('message', handler);
+    return () => {
+      window.removeEventListener(HK_PUSH_ALERT_EVENT, onDomAlert);
+      navigator.serviceWorker.removeEventListener('message', handler);
+    };
   }, []);
 
   const updateStatus = useCallback(async (roomNo: string, status: HousekeepingBoardRow['status']) => {
