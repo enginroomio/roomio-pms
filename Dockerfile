@@ -38,7 +38,8 @@ COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
 COPY --from=builder /app/package.json ./package.json
-COPY scripts/docker-entrypoint.mjs ./scripts/docker-entrypoint.mjs
+COPY --from=builder /app/scripts/docker-entrypoint.mjs ./scripts/docker-entrypoint.mjs
+COPY --from=builder /app/scripts/prisma-schema.mjs ./scripts/prisma-schema.mjs
 
 RUN mkdir -p /data && chown -R nextjs:nodejs /data /app
 USER nextjs
