@@ -7,7 +7,7 @@ import { join } from 'node:path';
 
 const ROOT = process.cwd();
 const URL_FILE = join(ROOT, '.roomio', 'production-url.txt');
-const SERVICE_NAME = 'roomio-pms';
+const SERVICE_NAME = 'roomio-pms-v2';
 
 export function defaultRenderUrl(name = SERVICE_NAME) {
   return `https://${name}.onrender.com`;
