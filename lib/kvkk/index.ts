@@ -37,6 +37,20 @@ export function maskTcKimlik(tc: string): string {
   return `${tc.slice(0, 3)}****${tc.slice(-2)}`;
 }
 
+/** KVKK uyumlu misafir adı maskeleme — örn. "Ka**** Yıl****" */
+export function maskGuestName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '—';
+  return parts
+    .map((part) => {
+      if (part.length <= 1) return `${part}***`;
+      const visible = Math.min(2, part.length);
+      const stars = '*'.repeat(Math.max(4, part.length - visible));
+      return `${part.slice(0, visible)}${stars}`;
+    })
+    .join(' ');
+}
+
 export function readAuditLog(): AuditEntry[] {
   if (typeof window === 'undefined') return [];
   try {

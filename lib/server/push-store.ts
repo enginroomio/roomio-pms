@@ -76,27 +76,31 @@ export async function migratePushSubscriptionsFromFile(): Promise<number> {
   const now = new Date().toISOString();
   for (const item of items) {
     if (!item.endpoint || !item.keys?.p256dh || !item.keys?.auth) continue;
-    await prisma.pushSubscription.upsert({
-      where: { endpoint: item.endpoint },
-      create: {
-        id: item.id || `ps-${Date.now()}-${migrated}`,
-        endpoint: item.endpoint,
-        p256dh: item.keys.p256dh,
-        auth: item.keys.auth,
-        role: item.role ?? null,
-        deviceLabel: item.deviceLabel ?? null,
-        createdAt: item.createdAt ?? now,
-        lastSeenAt: now,
-      },
-      update: {
-        p256dh: item.keys.p256dh,
-        auth: item.keys.auth,
-        role: item.role ?? null,
-        deviceLabel: item.deviceLabel ?? null,
-        lastSeenAt: now,
-      },
-    });
-    migrated += 1;
+    try {
+      await prisma.pushSubscription.upsert({
+        where: { endpoint: item.endpoint },
+        create: {
+          id: item.id || `ps-${Date.now()}-${migrated}`,
+          endpoint: item.endpoint,
+          p256dh: item.keys.p256dh,
+          auth: item.keys.auth,
+          role: item.role ?? null,
+          deviceLabel: item.deviceLabel ?? null,
+          createdAt: item.createdAt ?? now,
+          lastSeenAt: now,
+        },
+        update: {
+          p256dh: item.keys.p256dh,
+          auth: item.keys.auth,
+          role: item.role ?? null,
+          deviceLabel: item.deviceLabel ?? null,
+          lastSeenAt: now,
+        },
+      });
+      migrated += 1;
+    } catch {
+      // Veritabanı henüz hazır değilse migration sessizce atlanır.
+    }
   }
 
   if (migrated > 0) {

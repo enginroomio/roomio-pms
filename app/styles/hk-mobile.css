@@ -378,3 +378,94 @@
   background: rgba(26, 107, 74, 0.08);
   color: #1a6b4a;
 }
+
+/* HK rack — ana sayfa Oda Rack birebir, tek ekran */
+.roomio-hk-mobile--one-screen.roomio-dashboard--one-screen {
+  gap: 4px;
+  overflow: hidden;
+}
+
+.roomio-hk-mobile__header--compact {
+  padding: 0 2px;
+  min-height: 0;
+}
+
+.roomio-hk-mobile__header--compact h1 {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.roomio-hk-dashboard-board {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.roomio-hk-mobile--one-screen .roomio-dashboard-board {
+  flex: 1;
+  min-height: 0;
+}
+
+.roomio-hk-mobile--one-screen .roomio-dashboard-rack {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.roomio-hk-mobile--one-screen .roomio-card--rack {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.roomio-hk-mobile--one-screen .roomio-nr-shell--preview {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
+}
+
+.roomio-hk-mobile--one-screen .roomio-movements {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.roomio-hk-mobile--one-screen .roomio-movements__block {
+  padding: 8px;
+}
+
+.roomio-hk-mobile--one-screen .roomio-movements__head h2 {
+  font-size: 0.78rem;
+}
+
+.roomio-hk-mobile--one-screen .roomio-movement-row {
+  padding: 5px 6px;
+}
+
+.roomio-hk-mobile--one-screen .roomio-movement-row__main strong {
+  font-size: 0.72rem;
+}
+
+.roomio-hk-mobile--one-screen .roomio-hk-mobile__nav {
+  padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+}
+
+.roomio-hk-mobile--one-screen .roomio-nr-cell--preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roomio-hk-mobile--one-screen .roomio-nr-cell-status,
+.roomio-hk-mobile--one-screen .roomio-nr-cell-guest,
+.roomio-hk-mobile--one-screen .roomio-nr-cell-no {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.roomio-hk-mobile--one-screen .roomio-nr-cell-guest {
+  display: none;
+}

@@ -308,7 +308,7 @@ export function HkPushRegister() {
     }
   }
 
-  if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+  if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {
     return null;
   }
 

@@ -12,7 +12,7 @@ type Props = {
 const BODY_CLASS: Record<OneScreenVariant, string> = {
   default: 'roomio-one-screen-fit__body--page',
   dashboard: 'roomio-dashboard roomio-dashboard--one-screen',
-  hk: 'roomio-hk-mobile roomio-hk-mobile--one-screen',
+  hk: 'roomio-hk-mobile roomio-hk-mobile--one-screen roomio-dashboard roomio-dashboard--one-screen',
 };
 
 /** Sayfa içeriğini kaydırmasız tek ekrana orantılı sığdırır (tüm rotalar). */

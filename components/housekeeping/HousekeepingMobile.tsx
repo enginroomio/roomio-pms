@@ -1,17 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BedDouble, ClipboardList, LayoutGrid } from 'lucide-react';
-import { HousekeepingPano } from '@/components/housekeeping/HousekeepingPano';
+import { DailyMovements } from '@/components/DailyMovements';
+import { DashboardRoomRack } from '@/components/DashboardRoomRack';
 import { HkPushRegister } from '@/components/housekeeping/HkPushRegister';
-import { HkOnlinePanel } from '@/components/housekeeping/HkOnlinePanel';
 import { showHkBrowserNotification } from '@/lib/client/show-hk-notification';
-import { emitHkPushAlert, HK_PUSH_ALERT_EVENT, type HkPushAlertDetail } from '@/lib/client/hk-push-alert';
-import { patchHkRoom } from '@/lib/client/hk-update';
-import { roomioFetch } from '@/lib/client/api';
+import { HK_PUSH_ALERT_EVENT, type HkPushAlertDetail } from '@/lib/client/hk-push-alert';
 import { enqueueSync } from '@/lib/sync/engine';
+import type { HkRoomRecord } from '@/lib/data/hk-defaults';
 import type { HousekeepingBoardRow } from '@/lib/rooms/inventory';
+import type { Reservation } from '@/lib/types/reservation';
 
 const NAV = [
   { href: '/housekeeping/mobile', label: 'Pano', icon: LayoutGrid },
@@ -19,17 +19,18 @@ const NAV = [
   { href: '/housekeeping/tasks', label: 'Görev', icon: ClipboardList },
 ];
 
-export function HousekeepingMobileClient({ initialBoard }: { initialBoard: HousekeepingBoardRow[] }) {
-  const [board, setBoard] = useState(initialBoard);
-  const [floor, setFloor] = useState<number | 'ALL'>('ALL');
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
-  const [savingRoom, setSavingRoom] = useState<string | null>(null);
+export type HkMobileSnapshot = {
+  businessDate: string;
+  reservations: Reservation[];
+  hkMap: Record<string, HkRoomRecord>;
+  arrivals: Reservation[];
+  departures: Reservation[];
+  alerts: { label: string; count: number; href?: string }[];
+};
+
+export function HousekeepingMobileClient({ snapshot }: { snapshot: HkMobileSnapshot }) {
   const [queuedCount, setQueuedCount] = useState(0);
   const [pushAlert, setPushAlert] = useState<{ title: string; body: string } | null>(null);
-
-  useEffect(() => {
-    setBoard(initialBoard);
-  }, [initialBoard]);
 
   useEffect(() => {
     const showAlert = (detail: HkPushAlertDetail) => {
@@ -57,7 +58,6 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
           hkStatus?: HousekeepingBoardRow['status'];
           title?: string;
           body?: string;
-          tag?: string;
         };
       };
 
@@ -84,73 +84,51 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
     };
   }, []);
 
-  const updateStatus = useCallback(async (roomNo: string, status: HousekeepingBoardRow['status']) => {
-    setSavingRoom(roomNo);
-    try {
-      const result = await patchHkRoom(roomNo, status);
-      setBoard((prev) => prev.map((r) => (r.roomNo === roomNo ? { ...r, status } : r)));
-      if (result.queued) setQueuedCount((n) => n + 1);
-    } finally {
-      setSavingRoom(null);
-    }
-  }, []);
-
   return (
     <>
       {pushAlert ? (
-          <div className="roomio-hk-push-alert" role="status">
-            <strong>{pushAlert.title}</strong>
-            <span>{pushAlert.body}</span>
-            <button type="button" onClick={() => setPushAlert(null)} aria-label="Kapat">
-              ×
-            </button>
-          </div>
+        <div className="roomio-hk-push-alert" role="status">
+          <strong>{pushAlert.title}</strong>
+          <span>{pushAlert.body}</span>
+          <button type="button" onClick={() => setPushAlert(null)} aria-label="Kapat">
+            ×
+          </button>
+        </div>
+      ) : null}
+
+      <header className="roomio-hk-mobile__header roomio-hk-mobile__header--compact">
+        <h1>Oda Rack</h1>
+        {queuedCount > 0 ? (
+          <span className="roomio-hk-mobile__badge">{queuedCount} kuyruk</span>
         ) : null}
-        <header className="roomio-hk-mobile__header">
-          <div>
-            <p className="roomio-hk-mobile__eyebrow">Kat Hizmetleri</p>
-            <h1>HK Mobil</h1>
-          </div>
-          {queuedCount > 0 ? (
-            <span className="roomio-hk-mobile__badge">{queuedCount} kuyruk</span>
-          ) : null}
-          <HkPushRegister />
-        </header>
-        <HkOnlinePanel compact />
+        <HkPushRegister />
+      </header>
 
-        <HousekeepingPano
-          board={board}
-          selectedFloor={floor}
-          onFloorChange={setFloor}
-          selectedRoom={selectedRoom}
-          onRoomSelect={setSelectedRoom}
-          onStatusChange={(roomNo, status) => void updateStatus(roomNo, status)}
-          savingRoom={savingRoom}
-          variant="mobile"
+      <div className="roomio-dashboard-board roomio-hk-dashboard-board">
+        <div className="roomio-dashboard-rack">
+          <DashboardRoomRack
+            reservations={snapshot.reservations}
+            businessDate={snapshot.businessDate}
+            hkMap={snapshot.hkMap}
+          />
+        </div>
+        <DailyMovements
+          arrivals={snapshot.arrivals}
+          departures={snapshot.departures}
+          alerts={snapshot.alerts}
+          maskGuestNames
+          compact
         />
+      </div>
 
-        <nav className="roomio-hk-mobile__nav" aria-label="HK mobil menü">
-          {NAV.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href} className="roomio-hk-mobile__nav-item">
-              <Icon size={20} />
-              <span>{label}</span>
-            </Link>
-          ))}
-        </nav>
+      <nav className="roomio-hk-mobile__nav" aria-label="HK mobil menü">
+        {NAV.map(({ href, label, icon: Icon }) => (
+          <Link key={href} href={href} className="roomio-hk-mobile__nav-item">
+            <Icon size={20} />
+            <span>{label}</span>
+          </Link>
+        ))}
+      </nav>
     </>
   );
-}
-
-export function HousekeepingMobileLoader() {
-  const [board, setBoard] = useState<HousekeepingBoardRow[] | null>(null);
-
-  useEffect(() => {
-    void roomioFetch('/api/housekeeping/rooms')
-      .then((res) => res.json())
-      .then((data: { rooms: HousekeepingBoardRow[] }) => setBoard(data.rooms))
-      .catch(() => setBoard([]));
-  }, []);
-
-  if (!board) return <div className="roomio-hk-mobile-shell roomio-hk-mobile--loading">Yükleniyor…</div>;
-  return <HousekeepingMobileClient initialBoard={board} />;
 }

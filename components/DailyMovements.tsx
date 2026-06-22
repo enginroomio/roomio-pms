@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { maskGuestName } from '@/lib/kvkk';
 import type { Reservation } from '@/lib/types/reservation';
 
 function MovementRow({
@@ -42,9 +43,12 @@ type Props = {
   arrivals: Reservation[];
   departures: Reservation[];
   alerts?: AlertItem[];
+  maskGuestNames?: boolean;
+  compact?: boolean;
 };
 
-export function DailyMovements({ arrivals, departures, alerts = [] }: Props) {
+export function DailyMovements({ arrivals, departures, alerts = [], maskGuestNames = false, compact = false }: Props) {
+  const displayName = (name: string) => (maskGuestNames ? maskGuestName(name) : name);
   const defaultAlerts: AlertItem[] = alerts.length > 0 ? alerts : [
     { label: 'DND Odalar', count: 3, href: '/housekeeping/rooms' },
     { label: 'Kayıp Oda Anahtarları', count: 1, href: '/guest-relations/lost-found' },
@@ -65,7 +69,7 @@ export function DailyMovements({ arrivals, departures, alerts = [] }: Props) {
             arrivals.slice(0, 6).map((r) => (
               <MovementRow
                 key={r.id}
-                name={r.guestName}
+                name={displayName(r.guestName)}
                 meta={arrivalMeta(r)}
                 time="14:00"
                 tone="in"
@@ -73,9 +77,11 @@ export function DailyMovements({ arrivals, departures, alerts = [] }: Props) {
             ))
           )}
         </div>
-        <Link href="/reception/arrivals" className="roomio-movements__more">
-          Tümünü gör
-        </Link>
+        {compact ? null : (
+          <Link href="/reception/arrivals" className="roomio-movements__more">
+            Tümünü gör
+          </Link>
+        )}
       </section>
 
       <section className="roomio-movements__block">
@@ -90,7 +96,7 @@ export function DailyMovements({ arrivals, departures, alerts = [] }: Props) {
             departures.slice(0, 6).map((r) => (
               <MovementRow
                 key={r.id}
-                name={r.guestName}
+                name={displayName(r.guestName)}
                 meta={departureMeta(r)}
                 time="11:00"
                 tone="out"
@@ -98,9 +104,11 @@ export function DailyMovements({ arrivals, departures, alerts = [] }: Props) {
             ))
           )}
         </div>
-        <Link href="/reception/departures" className="roomio-movements__more">
-          Tümünü gör
-        </Link>
+        {compact ? null : (
+          <Link href="/reception/departures" className="roomio-movements__more">
+            Tümünü gör
+          </Link>
+        )}
       </section>
 
       <section className="roomio-movements__block roomio-movements__block--alerts">
