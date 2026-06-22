@@ -6,9 +6,12 @@ type Props = {
   children: React.ReactNode;
 };
 
-/** Ana sayfayı mevcut içerik alanına kaydırmasız sığdırır — yatayda tam genişlik korunur. */
+/** Ana sayfayı mevcut içerik alanına kaydırmasız, orantılı sığdırır. */
 export function DashboardOneScreen({ children }: Props) {
-  const { shellRef, rootRef } = useOneScreenFit<HTMLDivElement, HTMLDivElement>({ minScale: 0.78 });
+  const { shellRef, rootRef } = useOneScreenFit<HTMLDivElement, HTMLDivElement>({
+    minScale: 0.78,
+    uniformScale: true,
+  });
 
   return (
     <div ref={shellRef} className="roomio-dashboard-fit">

@@ -3,14 +3,16 @@
 import { useEffect, useRef } from 'react';
 
 type Options = {
-  /** Minimum dikey ölçek — daha küçük değer daha fazla sıkıştırır */
+  /** Minimum ölçek — daha küçük değer daha fazla sıkıştırır */
   minScale?: number;
+  /** true: orantılı scale (x+y), false: yalnızca dikey scaleY */
+  uniformScale?: boolean;
 };
 
 const REFIT_DELAYS_MS = [0, 80, 240, 600, 1200, 2000];
 
 /**
- * İçeriği flex kabuğuna kaydırmasız sığdırır (yalnızca dikey scaleY).
+ * İçeriği flex kabuğuna kaydırmasız sığdırır (orantılı scale veya yalnızca scaleY).
  * Kullanılabilir yükseklik .roomio-content içinde kardeş öğeler düşülerek hesaplanır.
  */
 export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLElement>(
@@ -19,6 +21,7 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
   const shellRef = useRef<TShell>(null);
   const rootRef = useRef<TRoot>(null);
   const minScale = options.minScale ?? 0.48;
+  const uniformScale = options.uniformScale ?? true;
 
   useEffect(() => {
     const shell = shellRef.current;
@@ -119,13 +122,18 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
             return;
           }
 
-          let scaleY = Math.max(minScale, available / needed);
-          if (needed * scaleY > available + 1) {
-            scaleY = available / needed;
+          let scale = Math.max(minScale, available / needed);
+          if (needed * scale > available + 1) {
+            scale = available / needed;
           }
-          rootEl2.style.transform = `scaleY(${scaleY})`;
-          rootEl2.style.transformOrigin = 'top left';
-          shellEl2.style.height = `${Math.floor(needed * scaleY)}px`;
+          if (uniformScale) {
+            rootEl2.style.transform = `scale(${scale})`;
+            rootEl2.style.transformOrigin = 'top center';
+          } else {
+            rootEl2.style.transform = `scaleY(${scale})`;
+            rootEl2.style.transformOrigin = 'top left';
+          }
+          shellEl2.style.height = `${Math.floor(needed * scale)}px`;
         });
       });
     }
@@ -156,7 +164,7 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
       siblingObserver?.disconnect();
       window.removeEventListener('resize', fit);
     };
-  }, [minScale]);
+  }, [minScale, uniformScale]);
 
   return { shellRef, rootRef };
 }
