@@ -58,6 +58,38 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
       return shellEl.clientHeight;
     }
 
+    function measureNeeded(rootEl: HTMLElement, width: number): number {
+      const prev = {
+        position: rootEl.style.position,
+        top: rootEl.style.top,
+        left: rootEl.style.left,
+        width: rootEl.style.width,
+        transform: rootEl.style.transform,
+        visibility: rootEl.style.visibility,
+        zIndex: rootEl.style.zIndex,
+      };
+
+      rootEl.style.position = 'fixed';
+      rootEl.style.top = '0';
+      rootEl.style.left = '-10000px';
+      rootEl.style.width = `${width}px`;
+      rootEl.style.transform = 'none';
+      rootEl.style.visibility = 'hidden';
+      rootEl.style.zIndex = '-1';
+
+      const needed = rootEl.scrollHeight;
+
+      rootEl.style.position = prev.position;
+      rootEl.style.top = prev.top;
+      rootEl.style.left = prev.left;
+      rootEl.style.width = prev.width;
+      rootEl.style.transform = prev.transform;
+      rootEl.style.visibility = prev.visibility;
+      rootEl.style.zIndex = prev.zIndex;
+
+      return needed;
+    }
+
     function fit() {
       const shellEl = shellRef.current;
       const rootEl = rootRef.current;
@@ -73,23 +105,17 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
           const available = Math.floor(measureAvailable(shellEl2));
           if (available <= 0) return;
 
-          // flex:1 kabuğu height:auto ile de kalan alana sıkışır — ölçüm için flex'i kapat
-          const prevFlex = shellEl2.style.flex;
-          rootEl2.style.transform = 'none';
-          rootEl2.style.width = '100%';
-          shellEl2.style.flex = '0 0 auto';
-          shellEl2.style.height = 'auto';
-          shellEl2.style.maxHeight = 'none';
-          shellEl2.style.overflow = 'visible';
+          const width = shellEl2.offsetWidth || rootEl2.offsetWidth;
+          const needed = measureNeeded(rootEl2, width);
 
-          const needed = rootEl2.scrollHeight;
-
-          shellEl2.style.flex = prevFlex || '';
           shellEl2.style.overflow = 'hidden';
           shellEl2.style.maxHeight = `${available}px`;
           shellEl2.style.height = `${available}px`;
+          rootEl2.style.transform = 'none';
+          rootEl2.style.width = '100%';
 
           if (needed <= available + 1) {
+            shellEl2.style.height = `${needed}px`;
             return;
           }
 

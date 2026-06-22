@@ -390,17 +390,17 @@
 }
 
 .roomio-dashboard--one-screen .roomio-nr-board {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
 .roomio-dashboard--one-screen .roomio-nr-floor {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: auto;
 }
 
 .roomio-dashboard--one-screen .roomio-nr-floor-head {
