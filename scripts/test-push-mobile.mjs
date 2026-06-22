@@ -9,8 +9,14 @@ import { spawn } from 'node:child_process';
 import { parseEnvFile } from './parse-env-file.mjs';
 import { pickPort, waitForHealth, baseUrlForPort } from './roomio-port.mjs';
 
-const BASE = process.env.ROOMIO_URL ?? readActivePort() ?? null;
-const USE_VAPID_SERVER = process.env.ROOMIO_PUSH_TEST_VAPID !== '0';
+const PROD = process.env.ROOMIO_PRODUCTION_URL?.replace(/\/$/, '') ?? null;
+const preferProd =
+  process.env.ROOMIO_PUSH_TEST_PRODUCTION === '1' || Boolean(PROD && !process.env.ROOMIO_URL);
+const BASE = preferProd
+  ? PROD
+  : (process.env.ROOMIO_URL ?? readActivePort() ?? PROD ?? null);
+const USE_VAPID_SERVER =
+  process.env.ROOMIO_PUSH_TEST_VAPID !== '0' && !preferProd;
 
 function readActivePort() {
   try {
