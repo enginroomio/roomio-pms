@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { BedDouble, ClipboardList, LayoutGrid } from 'lucide-react';
 import { HousekeepingPano } from '@/components/housekeeping/HousekeepingPano';
+import { HkMobileOneScreen } from '@/components/HkMobileOneScreen';
 import { HkPushRegister } from '@/components/housekeeping/HkPushRegister';
 import { HkOnlinePanel } from '@/components/housekeeping/HkOnlinePanel';
 import { showHkBrowserNotification } from '@/lib/client/show-hk-notification';
@@ -12,7 +13,6 @@ import { patchHkRoom } from '@/lib/client/hk-update';
 import { roomioFetch } from '@/lib/client/api';
 import { enqueueSync } from '@/lib/sync/engine';
 import type { HousekeepingBoardRow } from '@/lib/rooms/inventory';
-import '@/app/styles/hk-mobile.css';
 
 const NAV = [
   { href: '/housekeeping/mobile', label: 'Pano', icon: LayoutGrid },
@@ -97,47 +97,50 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
   }, []);
 
   return (
-    <div className="roomio-hk-mobile">
-      {pushAlert ? (
-        <div className="roomio-hk-push-alert" role="status">
-          <strong>{pushAlert.title}</strong>
-          <span>{pushAlert.body}</span>
-          <button type="button" onClick={() => setPushAlert(null)} aria-label="Kapat">
-            ×
-          </button>
-        </div>
-      ) : null}
-      <header className="roomio-hk-mobile__header">
-        <div>
-          <p className="roomio-hk-mobile__eyebrow">Kat Hizmetleri</p>
-          <h1>HK Mobil</h1>
-        </div>
-        {queuedCount > 0 ? (
-          <span className="roomio-hk-mobile__badge">{queuedCount} kuyruk</span>
+    <>
+      <HkMobileOneScreen>
+        {pushAlert ? (
+          <div className="roomio-hk-push-alert" role="status">
+            <strong>{pushAlert.title}</strong>
+            <span>{pushAlert.body}</span>
+            <button type="button" onClick={() => setPushAlert(null)} aria-label="Kapat">
+              ×
+            </button>
+          </div>
         ) : null}
-        <HkPushRegister />
-      </header>
-      <HkOnlinePanel />
+        <header className="roomio-hk-mobile__header">
+          <div>
+            <p className="roomio-hk-mobile__eyebrow">Kat Hizmetleri</p>
+            <h1>HK Mobil</h1>
+          </div>
+          {queuedCount > 0 ? (
+            <span className="roomio-hk-mobile__badge">{queuedCount} kuyruk</span>
+          ) : null}
+          <HkPushRegister />
+        </header>
+        <HkOnlinePanel compact />
 
-      <HousekeepingPano
-        board={board}
-        selectedFloor={floor}
-        onFloorChange={setFloor}
-        selectedRoom={selectedRoom}
-        onRoomSelect={setSelectedRoom}
-        onStatusChange={(roomNo, status) => void updateStatus(roomNo, status)}
-        savingRoom={savingRoom}
-      />
+        <HousekeepingPano
+          board={board}
+          selectedFloor={floor}
+          onFloorChange={setFloor}
+          selectedRoom={selectedRoom}
+          onRoomSelect={setSelectedRoom}
+          onStatusChange={(roomNo, status) => void updateStatus(roomNo, status)}
+          savingRoom={savingRoom}
+          variant="mobile"
+        />
 
-      <nav className="roomio-hk-mobile__nav" aria-label="HK mobil menü">
-        {NAV.map(({ href, label, icon: Icon }) => (
-          <Link key={href} href={href} className="roomio-hk-mobile__nav-item">
-            <Icon size={20} />
-            <span>{label}</span>
-          </Link>
-        ))}
-      </nav>
-    </div>
+        <nav className="roomio-hk-mobile__nav" aria-label="HK mobil menü">
+          {NAV.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} className="roomio-hk-mobile__nav-item">
+              <Icon size={20} />
+              <span>{label}</span>
+            </Link>
+          ))}
+        </nav>
+      </HkMobileOneScreen>
+    </>
   );
 }
 
@@ -151,6 +154,6 @@ export function HousekeepingMobileLoader() {
       .catch(() => setBoard([]));
   }, []);
 
-  if (!board) return <div className="roomio-hk-mobile roomio-hk-mobile--loading">Yükleniyor…</div>;
+  if (!board) return <div className="roomio-hk-mobile-shell roomio-hk-mobile--loading">Yükleniyor…</div>;
   return <HousekeepingMobileClient initialBoard={board} />;
 }

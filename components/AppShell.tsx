@@ -30,6 +30,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <div className="roomio-wifi-shell">{children}</div>;
   }
 
+  if (pathname.startsWith('/housekeeping/mobile')) {
+    return (
+      <div className="roomio-viewport-host roomio-viewport-host--hk">
+        <div className="roomio-viewport-canvas">
+          <div className="roomio-hk-mobile-shell">{children}</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="roomio-viewport-host">
       <div className="roomio-viewport-canvas">
