@@ -7,7 +7,7 @@ const BASE =
   process.env.ROOMIO_PRODUCTION_URL?.replace(/\/$/, '')
   ?? (process.env.ROOMIO_CUSTOM_DOMAIN
     ? `https://${process.env.ROOMIO_CUSTOM_DOMAIN.replace(/^https?:\/\//, '')}`
-    : 'https://pms.roomio.io');
+    : 'https://roomio-pms-v2.onrender.com');
 
 const PING_URL = `${BASE}/api/health`;
 

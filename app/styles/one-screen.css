@@ -1,0 +1,40 @@
+/* Tüm sayfalar — tek ekran, kaydırma yok */
+.roomio-content {
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.roomio-main {
+  overflow: hidden;
+}
+
+.roomio-content:has(.roomio-one-screen-fit) {
+  padding: 8px 10px 6px !important;
+}
+
+.roomio-content:has(.roomio-one-screen-fit__body--dashboard) .roomio-release-notice {
+  display: none;
+}
+
+.roomio-one-screen-fit {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.roomio-one-screen-fit__body {
+  width: 100%;
+  min-width: 0;
+  will-change: transform;
+}
+
+.roomio-one-screen-fit__body--page {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

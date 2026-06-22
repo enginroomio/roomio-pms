@@ -27,32 +27,7 @@
   gap: 18px;
 }
 
-/* Ana sayfa — tek ekran, dikey kaydırma yok */
-.roomio-content:has(.roomio-dashboard-fit) {
-  overflow: hidden !important;
-  display: flex;
-  flex-direction: column;
-  padding: 8px 10px 6px !important;
-  min-height: 0;
-}
-
-.roomio-main:has(.roomio-dashboard-fit) {
-  overflow: hidden;
-}
-
-/* Güncelleme banner'ı ana sayfada yer kaplamasın — rack için alan bırak */
-.roomio-content:has(.roomio-dashboard-fit) .roomio-release-notice {
-  display: none;
-}
-
-.roomio-dashboard-fit {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-  width: 100%;
-  overflow: hidden;
-}
-
+/* Ana sayfa — kompakt tek ekran düzeni (ölçek AppShell ContentOneScreen) */
 .roomio-dashboard--one-screen {
   display: flex;
   flex-direction: column;

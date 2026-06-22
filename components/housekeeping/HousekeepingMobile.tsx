@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { BedDouble, ClipboardList, LayoutGrid } from 'lucide-react';
 import { HousekeepingPano } from '@/components/housekeeping/HousekeepingPano';
-import { HkMobileOneScreen } from '@/components/HkMobileOneScreen';
 import { HkPushRegister } from '@/components/housekeeping/HkPushRegister';
 import { HkOnlinePanel } from '@/components/housekeeping/HkOnlinePanel';
 import { showHkBrowserNotification } from '@/lib/client/show-hk-notification';
@@ -98,8 +97,7 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
 
   return (
     <>
-      <HkMobileOneScreen>
-        {pushAlert ? (
+      {pushAlert ? (
           <div className="roomio-hk-push-alert" role="status">
             <strong>{pushAlert.title}</strong>
             <span>{pushAlert.body}</span>
@@ -139,7 +137,6 @@ export function HousekeepingMobileClient({ initialBoard }: { initialBoard: House
             </Link>
           ))}
         </nav>
-      </HkMobileOneScreen>
     </>
   );
 }

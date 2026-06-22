@@ -9,9 +9,10 @@ type Props = {
   selectedFloor: number | 'ALL';
   onFloorChange: (floor: number | 'ALL') => void;
   selectedRoom: string | null;
-  onRoomSelect: (roomNo: string) => void;
+  onRoomSelect: (roomNo: string | null) => void;
   onStatusChange: (roomNo: string, status: HousekeepingBoardRow['status']) => void;
   savingRoom: string | null;
+  variant?: 'default' | 'mobile';
 };
 
 const HK_STAFF = [
@@ -49,17 +50,21 @@ export function HousekeepingPano({
   onRoomSelect,
   onStatusChange,
   savingRoom,
+  variant = 'default',
 }: Props) {
   const counts = countByStatus(board);
   const floors = floorCounts(board);
+  const isMobile = variant === 'mobile';
   const visibleFloors = selectedFloor === 'ALL'
     ? FLOORS
     : FLOORS.filter((f) => f.floor === selectedFloor);
 
   return (
-    <div className="roomio-hk-pano">
+    <div className={`roomio-hk-pano${isMobile ? ' roomio-hk-pano--mobile' : ''}`}>
       <div className="roomio-hk-pano__head">
-        <h2 className="roomio-hk-pano__title">Housekeeping Pano — {board.length} Oda</h2>
+        <h2 className="roomio-hk-pano__title">
+          {isMobile ? `${board.length} Oda` : `Housekeeping Pano — ${board.length} Oda`}
+        </h2>
         <div className="roomio-kpi-strip roomio-hk-pano__kpi">
           <StatTile label="Temiz" value={String(counts.clean)} icon={Sparkles} className="roomio-hk-kpi--clean" />
           <StatTile label="Kirli" value={String(counts.dirty)} icon={ClipboardCheck} className="roomio-hk-kpi--dirty" />
@@ -123,6 +128,7 @@ export function HousekeepingPano({
           </div>
         </div>
 
+        {!isMobile ? (
         <aside className="roomio-hk-pano__side">
           <div className="roomio-card roomio-hk-side-card">
             <h3 className="roomio-card-title">Kat Görevlileri</h3>
@@ -169,6 +175,60 @@ export function HousekeepingPano({
             </button>
           </div>
         </aside>
+        ) : null}
+      </div>
+
+      {isMobile && selectedRoom ? (
+        <MobileRoomBar
+          room={board.find((r) => r.roomNo === selectedRoom)!}
+          saving={savingRoom === selectedRoom}
+          onStatusChange={onStatusChange}
+          onClose={() => onRoomSelect(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function MobileRoomBar({
+  room,
+  saving,
+  onStatusChange,
+  onClose,
+}: {
+  room: HousekeepingBoardRow;
+  saving: boolean;
+  onStatusChange: (roomNo: string, status: HousekeepingBoardRow['status']) => void;
+  onClose: () => void;
+}) {
+  if (!room) return null;
+
+  return (
+    <div className="roomio-hk-mobile-room-bar">
+      <div className="roomio-hk-mobile-room-bar__info">
+        <strong>Oda {room.roomNo}</strong>
+        <span>{HK_STATUS_LABELS[room.status]}</span>
+      </div>
+      <div className="roomio-hk-mobile-room-bar__actions">
+        <button
+          type="button"
+          className="roomio-btn roomio-btn--primary roomio-btn--sm"
+          disabled={saving}
+          onClick={() => onStatusChange(room.roomNo, 'CLEAN')}
+        >
+          Temiz
+        </button>
+        <button
+          type="button"
+          className="roomio-btn roomio-btn--secondary roomio-btn--sm"
+          disabled={saving}
+          onClick={() => onStatusChange(room.roomNo, 'INSPECT')}
+        >
+          Kontrol
+        </button>
+        <button type="button" className="roomio-btn roomio-btn--ghost roomio-btn--sm" onClick={onClose}>
+          Kapat
+        </button>
       </div>
     </div>
   );

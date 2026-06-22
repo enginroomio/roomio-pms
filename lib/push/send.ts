@@ -20,7 +20,7 @@ export async function sendHkPush(payload: {
     return { sent: 0, failed: 0, errors: ['VAPID yapılandırılmamış'] };
   }
 
-  const subs = await listPushSubscriptions();
+  const subs = await listPushSubscriptions('hk');
   let sent = 0;
   let failed = 0;
   const errors: string[] = [];

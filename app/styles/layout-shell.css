@@ -60,7 +60,7 @@ html[data-fit='1'] .roomio-viewport-canvas {
   min-width: 0;
   width: 100%;
   padding: 14px 12px 10px;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .roomio-release-notice {

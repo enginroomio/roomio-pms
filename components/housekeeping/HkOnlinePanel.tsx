@@ -10,7 +10,7 @@ type HkSubscriber = {
   lastSeenAt: string | null;
 };
 
-export function HkOnlinePanel() {
+export function HkOnlinePanel({ compact = false }: { compact?: boolean }) {
   const [subscribers, setSubscribers] = useState<HkSubscriber[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,15 +50,15 @@ export function HkOnlinePanel() {
   const registeredCount = subscribers.length;
 
   if (loading && registeredCount === 0) {
-    return <p className="roomio-hk-online">Mobil bağlantı kontrol ediliyor…</p>;
+    return <p className={`roomio-hk-online${compact ? ' roomio-hk-online--compact' : ''}`}>Mobil bağlantı kontrol ediliyor…</p>;
   }
 
   return (
-    <div className="roomio-hk-online">
+    <div className={`roomio-hk-online${compact ? ' roomio-hk-online--compact' : ''}`}>
       <p className="roomio-hk-online__summary">
         Kayıtlı: <strong>{registeredCount}</strong> · Online: <strong>{onlineCount}</strong>
       </p>
-      {subscribers.length > 0 ? (
+      {!compact && subscribers.length > 0 ? (
         <ul className="roomio-hk-online__list">
           {subscribers.map((s) => (
             <li key={s.id}>
@@ -68,9 +68,19 @@ export function HkOnlinePanel() {
             </li>
           ))}
         </ul>
-      ) : (
+      ) : null}
+      {!compact && subscribers.length === 0 ? (
         <p className="roomio-hk-online__empty">Henüz kayıtlı HK mobil cihaz yok</p>
-      )}
+      ) : null}
+      {compact && subscribers.length > 0 ? (
+        <p className="roomio-hk-online__chips">
+          {subscribers.map((s) => (
+            <span key={s.id} className={s.online ? 'is-online' : ''}>
+              {s.deviceLabel}
+            </span>
+          ))}
+        </p>
+      ) : null}
     </div>
   );
 }

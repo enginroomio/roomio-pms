@@ -1,6 +1,5 @@
 import { DailyMovements } from '@/components/DailyMovements';
 import { DashboardKpiStrip } from '@/components/DashboardKpiStrip';
-import { DashboardOneScreen } from '@/components/DashboardOneScreen';
 import { DashboardWelcome } from '@/components/DashboardWelcome';
 import { QuickActions } from '@/components/QuickActions';
 import { DashboardRoomRack } from '@/components/DashboardRoomRack';
@@ -13,7 +12,7 @@ export default async function HomePage() {
   const oooCount = Object.values(snapshot.hkMap).filter((r) => r.hkStatus === 'OOO' || r.hkStatus === 'OOS').length;
 
   return (
-    <DashboardOneScreen>
+    <>
       <DashboardWelcome
         arrivals={snapshot.arrivals.length}
         departures={snapshot.departures.length}
@@ -51,6 +50,6 @@ export default async function HomePage() {
           ]}
         />
       </div>
-    </DashboardOneScreen>
+    </>
   );
 }

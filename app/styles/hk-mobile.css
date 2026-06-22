@@ -11,14 +11,20 @@
   min-width: 0;
 }
 
-.roomio-hk-mobile-fit {
+.roomio-hk-mobile-shell .roomio-one-screen-fit {
   flex: 1;
   min-height: 0;
-  min-width: 0;
-  width: 100%;
-  overflow: hidden;
 }
 
+.roomio-one-screen-fit__body.roomio-hk-mobile--one-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+}
+
+.roomio-hk-mobile-fit,
 .roomio-hk-mobile {
   display: flex;
   flex-direction: column;
@@ -30,11 +36,6 @@
 
 .roomio-hk-mobile--one-screen {
   will-change: transform;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 }
 
 .roomio-hk-mobile--loading {

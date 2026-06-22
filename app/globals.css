@@ -4,6 +4,7 @@
  */
 @import './styles/base.css';
 @import './styles/layout-shell.css';
+@import './styles/one-screen.css';
 @import './styles/layout-nav.css';
 @import './styles/dashboard.css';
 @import './styles/rack.css';
@@ -11,3 +12,4 @@
 @import './styles/housekeeping.css';
 @import './styles/reservations.css';
 @import './styles/modules.css';
+@import './styles/hk-mobile.css';

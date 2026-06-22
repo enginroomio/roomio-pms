@@ -20,11 +20,19 @@ import { HeaderUser } from '@/components/auth/HeaderUser';
 import { PropertySwitcher } from '@/components/property/PropertySwitcher';
 import { LocaleSwitcher } from '@/components/i18n/LocaleSwitcher';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { ContentOneScreen, type OneScreenVariant } from '@/components/ContentOneScreen';
 import { useRoomioShortcuts } from '@/lib/shortcuts';
+
+function oneScreenVariant(pathname: string): OneScreenVariant {
+  if (pathname === '/') return 'dashboard';
+  if (pathname.startsWith('/housekeeping/mobile')) return 'hk';
+  return 'default';
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   useRoomioShortcuts();
+  const screenVariant = oneScreenVariant(pathname);
 
   if (pathname.startsWith('/wifi')) {
     return <div className="roomio-wifi-shell">{children}</div>;
@@ -32,9 +40,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (pathname.startsWith('/housekeeping/mobile')) {
     return (
-      <div className="roomio-viewport-host roomio-viewport-host--hk">
+      <div className="roomio-viewport-host">
         <div className="roomio-viewport-canvas">
-          <div className="roomio-hk-mobile-shell">{children}</div>
+          <div className="roomio-hk-mobile-shell">
+            <ContentOneScreen variant="hk">{children}</ContentOneScreen>
+          </div>
         </div>
       </div>
     );
@@ -82,7 +92,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Suspense fallback={null}>
                 <ReleaseNotice />
               </Suspense>
-              {children}
+              <ContentOneScreen variant={screenVariant}>{children}</ContentOneScreen>
             </main>
             <ShortcutBar />
           </div>
