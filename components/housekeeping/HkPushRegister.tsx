@@ -184,8 +184,12 @@ export function HkPushRegister() {
         const linked = await browserHasPushSubscription();
         setReady(linked);
         if (linked) await sendPresenceHeartbeat();
-        const message = err instanceof Error ? err.message : 'Kayıt başarısız';
-        setHint(linked ? `Sunucu senkronu: ${message}` : message);
+        const raw = err instanceof Error ? err.message : 'Kayıt başarısız';
+        const pushUnavailable = /push service not available|registration failed/i.test(raw);
+        const message = pushUnavailable ? 'Push bildirimi bu ortamda kullanılamıyor' : raw;
+        if (!quiet || !pushUnavailable) {
+          setHint(linked ? `Sunucu senkronu: ${message}` : message);
+        }
         await refreshServerCount();
       } finally {
         if (!quiet) setBusy(false);
