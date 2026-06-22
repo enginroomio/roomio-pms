@@ -21,6 +21,16 @@
   flex: 1;
 }
 
+/* Kısa/geniş ekranlarda 1440×900 tuvali orantılı küçült, ortala — letterbox OK */
+html[data-fit='1'] .roomio-viewport-host {
+  align-items: flex-start;
+  justify-content: center;
+}
+
+html[data-fit='1'] .roomio-viewport-canvas {
+  flex: 0 0 auto;
+}
+
 .roomio-viewport-canvas > .roomio-app {
   flex: 1;
   min-height: 0;

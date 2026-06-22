@@ -6,11 +6,12 @@ type Props = {
   children: React.ReactNode;
 };
 
-/** Ana sayfayı mevcut içerik alanına kaydırmasız, orantılı sığdırır. */
+/** Ana sayfa — ViewportProvider tuval ölçeği + kompakt layout ile tek ekran. */
 export function DashboardOneScreen({ children }: Props) {
   const { shellRef, rootRef } = useOneScreenFit<HTMLDivElement, HTMLDivElement>({
     minScale: 0.78,
     uniformScale: true,
+    skipWhenViewportFit: true,
   });
 
   return (

@@ -7,6 +7,8 @@ type Options = {
   minScale?: number;
   /** true: orantılı scale (x+y), false: yalnızca dikey scaleY */
   uniformScale?: boolean;
+  /** ViewportProvider tuval ölçeği aktifken iç ölçek uygulama (çift sıkıştırmayı önler) */
+  skipWhenViewportFit?: boolean;
 };
 
 const REFIT_DELAYS_MS = [0, 80, 240, 600, 1200, 2000];
@@ -22,6 +24,7 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
   const rootRef = useRef<TRoot>(null);
   const minScale = options.minScale ?? 0.48;
   const uniformScale = options.uniformScale ?? true;
+  const skipWhenViewportFit = options.skipWhenViewportFit ?? false;
 
   useEffect(() => {
     const shell = shellRef.current;
@@ -32,6 +35,18 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
     const host = root.closest('.roomio-hk-mobile-shell') as HTMLElement | null;
     let frame = 0;
     const timers: number[] = [];
+
+    function viewportFitActive() {
+      return skipWhenViewportFit && document.documentElement.dataset.fit === '1';
+    }
+
+    function resetFitStyles(shellEl: HTMLElement, rootEl: HTMLElement) {
+      shellEl.style.overflow = '';
+      shellEl.style.maxHeight = '';
+      shellEl.style.height = '';
+      rootEl.style.transform = '';
+      rootEl.style.width = '';
+    }
 
     function measureAvailable(shellEl: HTMLElement): number {
       if (content) {
@@ -105,6 +120,11 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
           const rootEl2 = rootRef.current;
           if (!shellEl2 || !rootEl2) return;
 
+          if (viewportFitActive()) {
+            resetFitStyles(shellEl2, rootEl2);
+            return;
+          }
+
           const available = Math.floor(measureAvailable(shellEl2));
           if (available <= 0) return;
 
@@ -154,6 +174,15 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
     }
     if (host) observer.observe(host);
 
+    let fitModeObserver: MutationObserver | null = null;
+    if (skipWhenViewportFit) {
+      fitModeObserver = new MutationObserver(fit);
+      fitModeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-fit'],
+      });
+    }
+
     window.addEventListener('resize', fit);
     document.fonts?.ready.then(fit).catch(() => undefined);
 
@@ -162,9 +191,10 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
       for (const id of timers) window.clearTimeout(id);
       observer.disconnect();
       siblingObserver?.disconnect();
+      fitModeObserver?.disconnect();
       window.removeEventListener('resize', fit);
     };
-  }, [minScale, uniformScale]);
+  }, [minScale, uniformScale, skipWhenViewportFit]);
 
   return { shellRef, rootRef };
 }

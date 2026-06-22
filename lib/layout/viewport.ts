@@ -25,16 +25,6 @@ const TIERS: { max: number; tier: ViewportTier }[] = [
 ];
 
 function computeFit(width: number, height: number) {
-  // Geniş ekranlarda tam genişlik — yatay letterbox yok
-  if (width >= 900) {
-    return {
-      fitScale: 1,
-      fitActive: false,
-      canvasWidth: '100%',
-      canvasHeight: '100%',
-    };
-  }
-
   const scaleW = width / VIEWPORT_REF.width;
   const scaleH = height / VIEWPORT_REF.height;
   const raw = Math.min(scaleW, scaleH, 1);
