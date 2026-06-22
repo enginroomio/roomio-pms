@@ -1,9 +1,6 @@
-import { useCallback, useState } from 'react';
 import { CheckCircle2, ClipboardCheck, Sparkles, Wrench } from 'lucide-react';
 import { StatTile } from '@/components/kit';
-import { HkRoomQuickMenu } from '@/components/housekeeping/HkRoomQuickMenu';
-import { HK_STATUS_LABELS, hkQuickStatusHint, nextHkQuickStatus } from '@/lib/data/housekeeping';
-import { usePointerFine } from '@/lib/client/use-pointer-fine';
+import { HK_STATUS_LABELS } from '@/lib/data/housekeeping';
 import { FLOORS } from '@/lib/rooms/room-config';
 import type { HousekeepingBoardRow } from '@/lib/rooms/inventory';
 
@@ -58,40 +55,9 @@ export function HousekeepingPano({
   const counts = countByStatus(board);
   const floors = floorCounts(board);
   const isMobile = variant === 'mobile';
-  const pointerFine = usePointerFine();
-  const [quickMenu, setQuickMenu] = useState<{ roomNo: string; x: number; y: number } | null>(null);
   const visibleFloors = selectedFloor === 'ALL'
     ? FLOORS
     : FLOORS.filter((f) => f.floor === selectedFloor);
-
-  const handleRoomClick = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>, room: HousekeepingBoardRow) => {
-      if (savingRoom === room.roomNo) return;
-
-      if (pointerFine) {
-        e.preventDefault();
-        const next = nextHkQuickStatus(room.status);
-        onRoomSelect(room.roomNo);
-        if (next !== room.status) {
-          onStatusChange(room.roomNo, next);
-        }
-        return;
-      }
-
-      onRoomSelect(room.roomNo);
-    },
-    [onRoomSelect, onStatusChange, pointerFine, savingRoom],
-  );
-
-  const handleRoomContextMenu = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>, room: HousekeepingBoardRow) => {
-      if (!pointerFine || savingRoom === room.roomNo) return;
-      e.preventDefault();
-      onRoomSelect(room.roomNo);
-      setQuickMenu({ roomNo: room.roomNo, x: e.clientX, y: e.clientY });
-    },
-    [onRoomSelect, pointerFine, savingRoom],
-  );
 
   return (
     <div className={`roomio-hk-pano${isMobile ? ' roomio-hk-pano--mobile' : ''}`}>
@@ -141,14 +107,9 @@ export function HousekeepingPano({
                     <button
                       key={room.roomNo}
                       type="button"
-                      className={`roomio-hk-mini-cell roomio-hk-mini-cell--${room.status.toLowerCase()}${selectedRoom === room.roomNo ? ' is-selected' : ''}${savingRoom === room.roomNo ? ' is-saving' : ''}`}
-                      onClick={(e) => handleRoomClick(e, room)}
-                      onContextMenu={(e) => handleRoomContextMenu(e, room)}
-                      title={
-                        pointerFine
-                          ? `${room.roomNo} · ${HK_STATUS_LABELS[room.status]}${room.guestName ? ` · ${room.guestName}` : ''} — ${hkQuickStatusHint(room.status)}`
-                          : `${room.roomNo} · ${HK_STATUS_LABELS[room.status]}${room.guestName ? ` · ${room.guestName}` : ''}`
-                      }
+                      className={`roomio-hk-mini-cell roomio-hk-mini-cell--${room.status.toLowerCase()}${selectedRoom === room.roomNo ? ' is-selected' : ''}`}
+                      onClick={() => onRoomSelect(room.roomNo)}
+                      title={`${room.roomNo} · ${HK_STATUS_LABELS[room.status]}${room.guestName ? ` · ${room.guestName}` : ''}`}
                     >
                       {room.roomNo}
                     </button>
@@ -217,27 +178,12 @@ export function HousekeepingPano({
         ) : null}
       </div>
 
-      {isMobile && selectedRoom && !pointerFine ? (
+      {isMobile && selectedRoom ? (
         <MobileRoomBar
           room={board.find((r) => r.roomNo === selectedRoom)!}
           saving={savingRoom === selectedRoom}
           onStatusChange={onStatusChange}
           onClose={() => onRoomSelect(null)}
-        />
-      ) : null}
-
-      {quickMenu ? (
-        <HkRoomQuickMenu
-          roomNo={quickMenu.roomNo}
-          current={board.find((r) => r.roomNo === quickMenu.roomNo)?.status ?? 'CLEAN'}
-          x={quickMenu.x}
-          y={quickMenu.y}
-          saving={savingRoom === quickMenu.roomNo}
-          onSelect={(status) => {
-            onStatusChange(quickMenu.roomNo, status);
-            setQuickMenu(null);
-          }}
-          onClose={() => setQuickMenu(null)}
         />
       ) : null}
     </div>
