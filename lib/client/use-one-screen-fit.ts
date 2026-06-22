@@ -73,22 +73,30 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
           const available = Math.floor(measureAvailable(shellEl2));
           if (available <= 0) return;
 
-          shellEl2.style.height = `${available}px`;
-          shellEl2.style.maxHeight = `${available}px`;
-          shellEl2.style.overflow = 'hidden';
-
+          // Önce doğal yüksekliği ölç — shell kısıtlanmadan scrollHeight gerçek içerik boyutunu verir
           rootEl2.style.transform = 'none';
           rootEl2.style.width = '100%';
+          shellEl2.style.height = 'auto';
+          shellEl2.style.maxHeight = 'none';
+          shellEl2.style.overflow = 'visible';
 
           const needed = rootEl2.scrollHeight;
+
+          shellEl2.style.overflow = 'hidden';
+          shellEl2.style.maxHeight = `${available}px`;
+          shellEl2.style.height = `${available}px`;
 
           if (needed <= available + 1) {
             return;
           }
 
-          const scaleY = Math.max(minScale, available / needed);
+          let scaleY = Math.max(minScale, available / needed);
+          if (needed * scaleY > available + 1) {
+            scaleY = available / needed;
+          }
           rootEl2.style.transform = `scaleY(${scaleY})`;
           rootEl2.style.transformOrigin = 'top left';
+          shellEl2.style.height = `${Math.floor(needed * scaleY)}px`;
         });
       });
     }
