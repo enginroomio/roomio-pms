@@ -44,6 +44,21 @@ export const HK_STATUS_LABELS: Record<RoomStatus, string> = {
   DND: 'Rahatsız Etmeyin',
 };
 
+/** Sapphire/Elektra tarzı hızlı tıklama döngüsü: Kirli → Kontrol → Temiz */
+export const HK_QUICK_CYCLE = ['DIRTY', 'INSPECT', 'CLEAN'] as const;
+
+export function nextHkQuickStatus(current: RoomStatus): RoomStatus {
+  if (current === 'OOO' || current === 'DND') return 'DIRTY';
+  const idx = HK_QUICK_CYCLE.indexOf(current as (typeof HK_QUICK_CYCLE)[number]);
+  if (idx === -1) return 'DIRTY';
+  return HK_QUICK_CYCLE[(idx + 1) % HK_QUICK_CYCLE.length];
+}
+
+export function hkQuickStatusHint(current: RoomStatus): string {
+  const next = nextHkQuickStatus(current);
+  return `Tıkla: ${HK_STATUS_LABELS[next]}`;
+}
+
 export const HK_TASK_LABELS: Record<HkTask['taskType'], string> = {
   checkout: 'Çıkış temizliği',
   stayover: 'Konaklama',
