@@ -73,15 +73,18 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
           const available = Math.floor(measureAvailable(shellEl2));
           if (available <= 0) return;
 
-          // Önce doğal yüksekliği ölç — shell kısıtlanmadan scrollHeight gerçek içerik boyutunu verir
+          // flex:1 kabuğu height:auto ile de kalan alana sıkışır — ölçüm için flex'i kapat
+          const prevFlex = shellEl2.style.flex;
           rootEl2.style.transform = 'none';
           rootEl2.style.width = '100%';
+          shellEl2.style.flex = '0 0 auto';
           shellEl2.style.height = 'auto';
           shellEl2.style.maxHeight = 'none';
           shellEl2.style.overflow = 'visible';
 
           const needed = rootEl2.scrollHeight;
 
+          shellEl2.style.flex = prevFlex || '';
           shellEl2.style.overflow = 'hidden';
           shellEl2.style.maxHeight = `${available}px`;
           shellEl2.style.height = `${available}px`;
