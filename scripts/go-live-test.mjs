@@ -24,6 +24,7 @@ async function probe(base, label) {
       name: 'health',
       pass: healthOk,
       database: health.body?.checks?.database?.ok,
+      detail: health.body?.checks?.database?.detail,
       monitoring: health.body?.checks?.monitoring?.detail,
     });
     if (!healthOk) out.ok = false;
@@ -79,7 +80,7 @@ for (const block of [results.production, results.local]) {
     continue;
   }
   for (const step of block.steps) {
-    console.log(`  ${step.pass ? '✓' : '✗'} ${step.name}${step.sent != null ? ` sent=${step.sent}` : ''}${step.count != null ? ` count=${step.count} online=${step.online}` : ''}${step.database != null ? ` db=${step.database}` : ''}${step.note ? ` (${step.note})` : ''}`);
+    console.log(`  ${step.pass ? '✓' : '✗'} ${step.name}${step.sent != null ? ` sent=${step.sent}` : ''}${step.count != null ? ` count=${step.count} online=${step.online}` : ''}${step.database != null ? ` db=${step.database}` : ''}${step.detail ? ` (${step.detail})` : ''}${step.note ? ` (${step.note})` : ''}`);
   }
   console.log(`  → ${block.ok ? 'PASS' : 'FAIL'}`);
 }

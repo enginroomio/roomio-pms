@@ -58,6 +58,7 @@
     "deploy:faz15": "node scripts/deploy-faz15.mjs",
     "deploy:render": "node scripts/deploy-render.mjs",
     "render:postgres:setup": "node scripts/render-postgres-setup.mjs",
+    "render:postgres:verify": "node scripts/render-postgres-verify.mjs",
     "render:domain:setup": "node scripts/render-custom-domain.mjs",
     "render:uptime:setup": "node scripts/render-uptime-setup.mjs",
     "render:go-live": "node scripts/render-go-live.mjs",

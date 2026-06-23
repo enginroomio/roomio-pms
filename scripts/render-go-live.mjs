@@ -98,9 +98,14 @@ function step4HkMobile() {
 
 function step5Postgres() {
   console.log('\n══ Adım 5/5 — Postgres kalıcılık ══\n');
-  console.log('✓ roomio-db bağlı (Internal DATABASE_URL)');
-  console.log('ℹ Render Postgres trial ~21 Temmuz 2026 — Starter\'a geçin veya Neon\'a taşıyın');
-  console.log('  npm run render:postgres:setup\n');
+  spawnSync('node', ['scripts/render-postgres-verify.mjs'], {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      ROOMIO_PRODUCTION_URL: productionUrl() ?? DOMAIN_URL,
+    },
+  });
+  console.log('Kurulum rehberi: npm run render:postgres:setup\n');
   return true;
 }
 

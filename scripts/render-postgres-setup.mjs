@@ -4,9 +4,10 @@
  * Kullanım: npm run render:postgres:setup
  */
 import { spawnSync } from 'node:child_process';
+import { customDomainUrl, productionUrl } from './render-production.mjs';
 
 const SERVICE = process.env.RENDER_SERVICE_NAME ?? 'roomio-pms-v2';
-const PROD = process.env.ROOMIO_PRODUCTION_URL ?? 'https://roomio-pms-v2.onrender.com';
+const PROD = (productionUrl() ?? customDomainUrl()).replace(/\/$/, '');
 
 console.log('\n── Render PostgreSQL (kalıcı veri) ──\n');
 console.log('ℹ Render free web servisinde disk yok — SQLite /tmp\'de sıfırlanır.');
@@ -29,8 +30,8 @@ console.log('5. ROOMIO_PUSH_STORE artık gerekmez (push DB\'de) — silebilirsin
 console.log('6. Save Changes → Manual Deploy\n');
 
 console.log('📋 Adım 3 — Doğrula\n');
-console.log(`curl ${PROD}/api/health`);
-console.log('Beklenen: checks.database.ok=true, monitoring içinde push:subs:N\n');
+console.log(`npm run render:postgres:verify`);
+console.log('Beklenen: Veritabanı: postgresql ✓ kalıcı\n');
 
 console.log('📋 Kod tarafı (otomatik)\n');
 console.log('- Docker entrypoint: DATABASE_URL\'e göre prisma generate + db push');

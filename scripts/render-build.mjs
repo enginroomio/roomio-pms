@@ -3,8 +3,10 @@
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { prismaSchemaPath } from './prisma-schema.mjs';
 
 const buildDb = process.env.DATABASE_URL ?? 'file:/tmp/roomio.db';
+const schema = prismaSchemaPath(buildDb);
 
 if (buildDb.startsWith('file:')) {
   mkdirSync(dirname(buildDb.replace(/^file:/, '')), { recursive: true });
@@ -33,7 +35,7 @@ function run(cmd, args, extraEnv = {}) {
 }
 
 run('npm', ['ci', '--ignore-scripts', '--include=dev'], { NODE_ENV: 'development', npm_config_production: 'false' });
-run('npm', ['run', 'db:generate']);
-run('npx', ['prisma', 'db', 'push', '--schema=prisma/schema.prisma', '--skip-generate']);
+run('npx', ['prisma', 'generate', `--schema=${schema}`]);
+run('npx', ['prisma', 'db', 'push', `--schema=${schema}`, '--skip-generate']);
 run('npm', ['run', 'build'], { NODE_ENV: 'production' });
 console.log('\n✅ render-build tamam');

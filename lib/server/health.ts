@@ -28,7 +28,9 @@ export async function collectHealthStatus() {
 
   try {
     await prisma.$queryRaw`SELECT 1`;
-    checks.database = { ok: true };
+    const dbUrl = process.env.DATABASE_URL ?? '';
+    const provider = dbUrl.startsWith('postgres') ? 'postgresql' : 'sqlite';
+    checks.database = { ok: true, detail: provider };
   } catch (e) {
     checks.database = { ok: false, detail: e instanceof Error ? e.message : 'database error' };
   }
