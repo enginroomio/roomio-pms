@@ -3,17 +3,25 @@
  * Render free tier uyku — UptimeRobot ile 5 dk ping rehberi.
  * Kullanım: npm run render:uptime:setup
  */
-const BASE =
-  process.env.ROOMIO_PRODUCTION_URL?.replace(/\/$/, '')
-  ?? (process.env.ROOMIO_CUSTOM_DOMAIN
-    ? `https://${process.env.ROOMIO_CUSTOM_DOMAIN.replace(/^https?:\/\//, '')}`
-    : 'https://roomio-pms-v2.onrender.com');
+import { customDomainUrl, productionUrl, waitForHealth } from './render-production.mjs';
 
+const BASE = (productionUrl() ?? customDomainUrl()).replace(/\/$/, '');
 const PING_URL = `${BASE}/api/health`;
 
 console.log('\n── UptimeRobot — cold start azaltma ──\n');
 console.log('Render free tier ~15 dk işlem yoksa uyur; ilk istek 30–60 sn sürebilir.');
 console.log('5 dakikada bir health ping ile servis uyanık kalır.\n');
+
+console.log(`Canlı URL kontrolü → ${PING_URL}`);
+const health = await waitForHealth(BASE, 3, 3000);
+if (health.ok) {
+  console.log(`✓ Health OK · uptime ${health.body?.uptimeSec ?? '?'}s`);
+  if ((health.body?.uptimeSec ?? 0) < 120) {
+    console.log('ℹ Sunucu yeni başlamış — birkaç dakika sonra UptimeRobot kurun');
+  }
+} else {
+  console.log(`✗ Health başarısız (${health.reason ?? 'unknown'}) — önce deploy/domain kontrol edin`);
+}
 
 console.log('📋 Adım 1 — Hesap\n');
 console.log('1. https://uptimerobot.com → Sign Up (ücretsiz, 50 monitor)');

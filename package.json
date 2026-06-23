@@ -50,6 +50,7 @@
     "test:push-mobile": "node scripts/test-push-mobile.mjs",
     "test:push-mobile:prod": "ROOMIO_PUSH_TEST_PRODUCTION=1 node scripts/test-push-mobile.mjs",
     "go-live:test": "node scripts/go-live-test.mjs",
+    "go-live:verify": "node scripts/render-go-live-verify.mjs",
     "test:deploy": "node scripts/test-deploy-prod.mjs",
     "deploy:fly": "node scripts/deploy-fly.mjs",
     "deploy:fly:live": "node scripts/fly-deploy-live.mjs",

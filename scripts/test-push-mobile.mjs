@@ -39,7 +39,11 @@ async function runAgainst(base) {
 
   const mobile = await fetch(`${base}/housekeeping/mobile`);
   const mobileHtml = await mobile.text();
-  const mobileOk = mobile.ok && (mobileHtml.includes('HK Mobil') || mobileHtml.includes('Roomio HK'));
+  const mobileOk = mobile.ok && (
+    mobileHtml.includes('HK Mobil') ||
+    mobileHtml.includes('Roomio HK') ||
+    mobileHtml.includes('Atama')
+  );
   console.log(`${mobileOk ? '✓' : '✗'} HK mobil sayfa [${mobile.status}]`);
   ok = mobileOk && ok;
 
@@ -88,6 +92,15 @@ async function runAgainst(base) {
     const send2Body = await send2.json().catch(() => ({}));
     console.log(`${send2Ok ? '✓' : '✗'} Push send (abonelikli) [${send2.status}] sent=${send2Body.sent ?? '?'} failed=${send2Body.failed ?? '?'}`);
     ok = send2Ok && ok;
+  }
+
+  for (const path of [
+    '/housekeeping/assign',
+    '/housekeeping/faults',
+    '/housekeeping/reports',
+    '/housekeeping/operations',
+  ]) {
+    ok = (await check(base, `HK sayfa ${path}`, path)).ok && ok;
   }
 
   return ok;

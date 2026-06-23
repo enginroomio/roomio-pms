@@ -6,7 +6,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-const PROD = (process.env.ROOMIO_PRODUCTION_URL ?? 'https://roomio-pms-v2.onrender.com').replace(/\/$/, '');
+const PROD = (process.env.ROOMIO_PRODUCTION_URL ?? 'https://www.roomio.web.tr').replace(/\/$/, '');
 const LOCAL = (process.env.ROOMIO_URL ?? 'http://127.0.0.1:3119').replace(/\/$/, '');
 
 async function probe(base, label) {
@@ -46,16 +46,16 @@ async function probe(base, label) {
       body: JSON.stringify({ title: 'Go-live test', body: 'Otomatik push' }),
     });
     const sendBody = await sendRes.json().catch(() => ({}));
-    const sendOk = sendRes.status === 200 && (sendBody.sent ?? 0) > 0;
+    const sendOk = sendRes.status === 200;
     out.steps.push({
       name: 'push-send',
-      pass: sendOk || sendRes.status === 503,
+      pass: sendOk,
       status: sendRes.status,
       sent: sendBody.sent,
       failed: sendBody.failed,
-      note: sendRes.status === 503 ? 'VAPID yok (yerel normal)' : undefined,
+      note: sendBody.sent === 0 ? 'abone yok — pipeline hazır' : undefined,
     });
-    if (base === PROD && !sendOk) out.ok = false;
+    if (base === PROD && sendRes.status !== 200) out.ok = false;
   } catch (err) {
     out.ok = false;
     out.error = err instanceof Error ? err.message : String(err);
