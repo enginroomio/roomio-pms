@@ -518,3 +518,88 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Canlı operasyon merkezi (mockup referansından) */
+.roomio-hk-hub-mock--live {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--hk-hub-border);
+}
+
+.roomio-hk-hub-mock--live .roomio-hk-hub-mock__toolbar {
+  padding: 10px 14px;
+  background: #fff;
+  border-bottom: 1px solid var(--hk-hub-border);
+}
+
+.roomio-hk-hub-mock__search-wrap {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.roomio-hk-hub-mock__search-wrap input {
+  flex: 1;
+  border: 1px solid var(--hk-hub-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.roomio-hk-hub-mock__refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--hk-hub-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.roomio-hk-hub-mock__error {
+  margin: 0;
+  padding: 10px 14px;
+  background: #fef3f2;
+  color: #b42318;
+  font-size: 0.8rem;
+}
+
+.roomio-hk-hub-mock__assign-btn {
+  margin-top: 10px;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--hk-hub-teal);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.roomio-hk-hub-mock__assign-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.roomio-hk-hub-mock__report-sheet {
+  margin-top: 10px;
+  max-height: 420px;
+  overflow: auto;
+  border-radius: 8px;
+}
+
+.roomio-hk-hub-mock__report-sheet .roomio-hk-report-sheet {
+  box-shadow: none;
+  border-radius: 8px;
+}
+
+.roomio-hk-hub-mock__report-empty {
+  color: #667085;
+  font-style: italic;
+}

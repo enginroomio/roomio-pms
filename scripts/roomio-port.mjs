@@ -123,6 +123,7 @@ export async function verifyServerBuild(baseUrl) {
 export async function verifyCanaryRoutes(baseUrl) {
   const probes = [
     { path: '/housekeeping/mobile', statuses: [200] },
+    { path: '/housekeeping/operations', statuses: [200] },
     { path: '/housekeeping/faults', statuses: [200] },
     { path: '/housekeeping/reports', statuses: [200] },
     { path: '/api/housekeeping/faults', statuses: [200] },

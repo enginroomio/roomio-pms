@@ -188,6 +188,8 @@ function OperationsView({
   selected,
   toggle,
   assignStaff,
+  tab,
+  roomHints,
 }: {
   rooms: AssignRoom[];
   floor: number;
@@ -195,45 +197,62 @@ function OperationsView({
   selected: Set<string>;
   toggle: (roomNo: string) => void;
   assignStaff: string;
+  tab: 'floor' | 'staff' | 'all';
+  roomHints?: Record<string, string>;
 }) {
-  const floorRooms = rooms.filter((r) => r.floor === floor);
-  const workCount = floorRooms.filter((r) => r.status === 'DIRTY' || r.status === 'INSPECT').length;
+  const displayRooms = useMemo(() => {
+    if (tab === 'staff') return rooms.filter((r) => r.assignee === assignStaff);
+    if (tab === 'all') return rooms;
+    return rooms.filter((r) => r.floor === floor);
+  }, [rooms, tab, floor, assignStaff]);
+
+  const workCount = displayRooms.filter((r) => r.status === 'DIRTY' || r.status === 'INSPECT').length;
 
   return (
     <>
-      <div className="roomio-hk-assign-pro__floor-row">
-        <label>Kat</label>
-        {[1, 2, 3, 4, 5].map((f) => (
-          <button
-            key={f}
-            type="button"
-            className={`roomio-hk-assign-pro__pill${floor === f ? ' is-active' : ''}`}
-            onClick={() => setFloor(f)}
-          >
-            {f}
-          </button>
-        ))}
-        <button type="button" className="roomio-hk-assign-pro__pill roomio-hk-assign-pro__pill--ghost">
-          Katları dağıt
-        </button>
-        <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--pro-muted)' }}>
-          Kat {floor} · {workCount} iş odası
-        </span>
-      </div>
+      {tab === 'floor' ? (
+        <div className="roomio-hk-assign-pro__floor-row">
+          <label>Kat</label>
+          {[1, 2, 3, 4, 5].map((f) => (
+            <button
+              key={f}
+              type="button"
+              className={`roomio-hk-assign-pro__pill${floor === f ? ' is-active' : ''}`}
+              onClick={() => setFloor(f)}
+            >
+              {f}
+            </button>
+          ))}
+          <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--pro-muted)' }}>
+            Kat {floor} · {workCount} iş odası
+          </span>
+        </div>
+      ) : (
+        <div className="roomio-hk-assign-pro__floor-row">
+          <span style={{ fontSize: '0.72rem', color: 'var(--pro-muted)' }}>
+            {tab === 'staff' ? `${assignStaff} · ${workCount} oda` : `Tüm katlar · ${workCount} iş odası`}
+          </span>
+        </div>
+      )}
       <div className="roomio-hk-assign-pro__grid">
-        {floorRooms.map((r) => (
+        {displayRooms.map((r) => (
           <button
             key={r.roomNo}
             type="button"
             className={`roomio-hk-assign-pro__room${selected.has(r.roomNo) ? ' is-selected' : ''}`}
             onClick={() => toggle(r.roomNo)}
           >
-            <span className="roomio-hk-assign-pro__room-no">{r.roomNo}</span>
+            <span className="roomio-hk-assign-pro__room-no">
+              {tab === 'all' ? `${r.floor}·${r.roomNo}` : r.roomNo}
+            </span>
             <span
               className={`roomio-hk-assign-pro__room-status roomio-hk-assign-pro__room-status--${statusSlug(r.status)}`}
             >
               {HK_STATUS_LABELS[r.status]}
             </span>
+            {roomHints?.[r.roomNo] ? (
+              <span className="roomio-hk-assign-pro__room-hint">{roomHints[r.roomNo]}</span>
+            ) : null}
           </button>
         ))}
       </div>
@@ -243,28 +262,39 @@ function OperationsView({
 
 function KanbanView({
   rooms,
+  assignStaff,
   onAssign,
+  roomHints,
 }: {
   rooms: AssignRoom[];
+  assignStaff: string;
   onAssign: (roomNo: string, staffName: string | undefined) => void;
+  roomHints?: Record<string, string>;
 }) {
   const unassigned = rooms.filter((r) => !r.assignee && (r.status === 'DIRTY' || r.status === 'INSPECT'));
 
   return (
     <>
       <div className="roomio-hk-assign-pro__pool">
-        <h4>Atanmamış havuz · {unassigned.length} oda</h4>
+        <h4>
+          Atanmamış havuz · {unassigned.length} oda → <strong>{assignStaff}</strong>
+        </h4>
         <div className="roomio-hk-assign-pro__floor-row">
-          {unassigned.map((r) => (
-            <button
-              key={r.roomNo}
-              type="button"
-              className="roomio-hk-assign-pro__pill"
-              onClick={() => onAssign(r.roomNo, HK_STAFF[0]?.name)}
-            >
-              {r.roomNo}
-            </button>
-          ))}
+          {unassigned.length ? (
+            unassigned.map((r) => (
+              <button
+                key={r.roomNo}
+                type="button"
+                className="roomio-hk-assign-pro__pill"
+                title={roomHints?.[r.roomNo]}
+                onClick={() => onAssign(r.roomNo, assignStaff)}
+              >
+                {r.roomNo}
+              </button>
+            ))
+          ) : (
+            <span style={{ fontSize: '0.75rem', color: 'var(--pro-muted)' }}>Havuz boş</span>
+          )}
         </div>
       </div>
       <div className="roomio-hk-assign-pro__kanban">
@@ -272,7 +302,10 @@ function KanbanView({
           const list = rooms.filter((r) => r.assignee === s.name);
           const load = list.length;
           return (
-            <div key={s.id} className="roomio-hk-assign-pro__col">
+            <div
+              key={s.id}
+              className={`roomio-hk-assign-pro__col${assignStaff === s.name ? ' is-target' : ''}`}
+            >
               <div className="roomio-hk-assign-pro__col-head">
                 <strong>{s.name}</strong>
                 <span>
@@ -289,6 +322,7 @@ function KanbanView({
                     <p>
                       {HK_STATUS_LABELS[r.status]}
                       {r.note ? ` · ${r.note}` : ''}
+                      {roomHints?.[r.roomNo] ? ` · ${roomHints[r.roomNo]}` : ''}
                     </p>
                     <button
                       type="button"
@@ -312,10 +346,12 @@ function QueueView({
   rooms,
   assignMap,
   onCycle,
+  roomHints,
 }: {
   rooms: AssignRoom[];
   assignMap: Record<string, string>;
   onCycle: (roomNo: string) => void;
+  roomHints?: Record<string, string>;
 }) {
   const sorted = useMemo(() => {
     const order = { high: 0, med: 1, low: 2 };
@@ -345,6 +381,7 @@ function QueueView({
               <span>
                 {r.guest ?? 'Boş'}
                 {r.note ? ` · ${r.note}` : ''}
+                {roomHints?.[r.roomNo] ? ` · ${roomHints[r.roomNo]}` : ''}
               </span>
             </div>
             <button
@@ -374,6 +411,7 @@ export type HkAssignProAppProps = {
   onExportCsv?: () => void;
   onExportPdf?: () => void;
   onPrintStaffReport?: (staffName: string) => void;
+  roomHints?: Record<string, string>;
 };
 
 function formatToday() {
@@ -394,6 +432,7 @@ export function HkAssignProApp({
   onExportCsv,
   onExportPdf,
   onPrintStaffReport,
+  roomHints,
 }: HkAssignProAppProps) {
   const [mode, setMode] = useState<ViewMode>('operations');
   const [floor, setFloor] = useState(1);
@@ -684,23 +723,33 @@ export function HkAssignProApp({
                       selected={selected}
                       toggle={toggle}
                       assignStaff={assignStaff}
+                      tab={tab}
+                      roomHints={roomHints}
                     />
                   ) : null}
                   {mode === 'kanban' ? (
-                    <KanbanView rooms={filteredRooms} onAssign={(roomNo, staff) => void assignTo(roomNo, staff)} />
+                    <KanbanView
+                      rooms={filteredRooms}
+                      assignStaff={assignStaff}
+                      onAssign={(roomNo, staff) => void assignTo(roomNo, staff)}
+                      roomHints={roomHints}
+                    />
                   ) : null}
                   {mode === 'queue' ? (
                     <QueueView
                       rooms={filteredRooms}
                       assignMap={assignMap}
                       onCycle={(roomNo) => void cycleAssign(roomNo)}
+                      roomHints={roomHints}
                     />
                   ) : null}
                 </>
               ) : null}
             </main>
 
-            <DetailPanel selectedRooms={selectedRooms} assignStaff={assignStaff} />
+            {mode === 'operations' ? (
+              <DetailPanel selectedRooms={selectedRooms} assignStaff={assignStaff} />
+            ) : null}
           </div>
 
           <footer className="roomio-hk-assign-pro__foot">
@@ -716,13 +765,15 @@ export function HkAssignProApp({
               )}
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                type="button"
-                className="roomio-hk-assign-pro__cta roomio-hk-assign-pro__cta--ghost"
-                onClick={() => setSelected(new Set())}
-              >
-                İptal
-              </button>
+              {mode === 'operations' ? (
+                <button
+                  type="button"
+                  className="roomio-hk-assign-pro__cta roomio-hk-assign-pro__cta--ghost"
+                  onClick={() => setSelected(new Set())}
+                >
+                  İptal
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="roomio-hk-assign-pro__cta"

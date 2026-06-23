@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const LINKS = [
   { href: '/housekeeping', label: 'Özet', exact: true },
+  { href: '/housekeeping/operations', label: 'Operasyon' },
   { href: '/housekeeping/rooms', label: 'Oda Durumu' },
   { href: '/housekeeping/tasks', label: 'Görevler' },
 ];

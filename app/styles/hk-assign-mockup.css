@@ -815,3 +815,66 @@
   color: var(--pro-muted);
   font-size: 0.85rem;
 }
+
+.roomio-hk-assign-pro__room-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.58rem;
+  line-height: 1.2;
+  color: #b54708;
+  font-weight: 600;
+}
+
+.roomio-hk-assign-pro__col.is-target {
+  border-color: var(--pro-accent);
+  box-shadow: 0 0 0 1px var(--pro-accent);
+}
+
+.roomio-hk-assign-pro--embedded .roomio-hk-assign-pro__modes {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+.roomio-hk-assign-pro--embedded .roomio-hk-assign-pro__mode {
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.roomio-hk-assign-pro--embedded .roomio-hk-assign-pro__kanban {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.roomio-hk-assign-pro--embedded .roomio-hk-assign-pro__col {
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+.roomio-hk-assign-pro--embedded .roomio-hk-assign-pro__panel {
+  display: none;
+}
+
+.roomio-hk-assign-pro--embedded .roomio-hk-assign-pro__body {
+  grid-template-columns: 1fr;
+}
+
+.roomio-hk-assign-pro--embedded .roomio-hk-assign-pro__aside {
+  border-right: 0;
+  border-bottom: 1px solid var(--pro-border);
+  padding: 10px 12px;
+}
+
+.roomio-hk-assign-pro--embedded .roomio-hk-assign-pro__staff-list {
+  flex-direction: row;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.roomio-hk-assign-pro--embedded .roomio-hk-assign-pro__staff {
+  min-width: 160px;
+  flex-shrink: 0;
+}

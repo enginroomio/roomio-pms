@@ -17,6 +17,7 @@ const routes = [
   '/reception/check-in/3',
   '/reception/guest/1',
   '/housekeeping',
+  '/housekeeping/operations',
   '/housekeeping/rooms',
   '/housekeeping/tasks',
   '/guest-relations',

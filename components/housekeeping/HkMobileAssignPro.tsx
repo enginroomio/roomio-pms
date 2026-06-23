@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   HkAssignProApp,
   type AssignRoom,
@@ -110,6 +110,19 @@ export function HkMobileAssignProClient() {
 
   const exportTitle = 'HK Atama & Rapor';
 
+  const roomHints = useMemo(() => {
+    const hints: Record<string, string> = {};
+    for (const r of guestRequests.filter((g) => g.status === 'pending')) {
+      const label = r.description ? `${r.requestLabel}: ${r.description}` : r.requestLabel;
+      hints[r.roomNo] = hints[r.roomNo] ? `${hints[r.roomNo]} · ${label}` : `Talep: ${label}`;
+    }
+    for (const f of faults.filter((x) => x.status !== 'resolved')) {
+      const label = f.description ? `${f.categoryLabel}: ${f.description}` : f.categoryLabel;
+      hints[f.roomNo] = hints[f.roomNo] ? `${hints[f.roomNo]} · Arıza: ${label}` : `Arıza: ${label}`;
+    }
+    return hints;
+  }, [guestRequests, faults]);
+
   return (
     <>
       <HkAssignProApp
@@ -120,6 +133,7 @@ export function HkMobileAssignProClient() {
         error={error}
         assignBusy={assignBusy}
         totalRooms={boardRows.length}
+        roomHints={roomHints}
         onRefresh={() => void loadRooms()}
         onPersistAssign={persistAssign}
         onExportCsv={() =>
