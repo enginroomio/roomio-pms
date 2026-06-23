@@ -166,6 +166,7 @@ export function ReceptionHubClient() {
           <div className="roomio-quick-actions">
             <Button href="/reception/arrivals">Check-in yap</Button>
             <Button variant="secondary" href="/reception/departures">Check-out yap</Button>
+            <Button variant="secondary" href="/reception/guest-requests">Misafir talebi</Button>
             <Button variant="secondary" href="/reception/departures?tab=fx">Döviz bozdur</Button>
             <Button variant="secondary" href="/reception/vacant?tab=deposit">Depozit al</Button>
             <Button variant="ghost" href="/reservations">Rezervasyon ara</Button>

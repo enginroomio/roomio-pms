@@ -1,4 +1,5 @@
 import { HousekeepingMobileClient } from '@/components/housekeeping/HousekeepingMobile';
+import { buildHkMobileAlerts } from '@/lib/housekeeping/alerts';
 import { getDashboardSnapshot } from '@/lib/server/dashboard-data';
 
 export const metadata = {
@@ -9,11 +10,6 @@ export const metadata = {
 export default async function HousekeepingMobilePage() {
   const snapshot = await getDashboardSnapshot();
 
-  const dndCount = Object.values(snapshot.hkMap).filter((r) => r.hkStatus === 'DND').length;
-  const oooCount = Object.values(snapshot.hkMap).filter(
-    (r) => r.hkStatus === 'OOO' || r.hkStatus === 'OOS',
-  ).length;
-
   return (
     <HousekeepingMobileClient
       snapshot={{
@@ -22,11 +18,7 @@ export default async function HousekeepingMobilePage() {
         hkMap: snapshot.hkMap,
         arrivals: snapshot.arrivals,
         departures: snapshot.departures,
-        alerts: [
-          { label: 'DND Odalar', count: dndCount, href: '/housekeeping/rooms' },
-          { label: 'Bakım / OOO', count: oooCount, href: '/housekeeping/rooms' },
-          { label: 'Bugün çıkış', count: snapshot.departures.length, href: '/reception/departures' },
-        ],
+        alerts: buildHkMobileAlerts(snapshot.hkMap, snapshot.departures.length),
       }}
     />
   );

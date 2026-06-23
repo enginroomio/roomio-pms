@@ -12,6 +12,7 @@ const routes = [
   '/reception/arrivals',
   '/reception/departures',
   '/reception/vacant',
+  '/reception/guest-requests',
   '/rooms',
   '/reception/check-in/3',
   '/reception/guest/1',

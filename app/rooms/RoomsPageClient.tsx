@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { RoomRackGrid } from '@/components/RoomRackGrid';
 import { Button } from '@/components/ui';
+import { useLiveHkMap } from '@/lib/client/use-live-hk-map';
 import { PROPERTY } from '@/lib/navigation';
 import { getAllRooms } from '@/lib/rooms/inventory';
 import {
@@ -25,9 +26,10 @@ type Props = {
   hkMap: Record<string, HkRoomRecord>;
 };
 
-export function RoomsPageClient({ reservations, businessDate, hkMap }: Props) {
+export function RoomsPageClient({ reservations, businessDate, hkMap: initialHkMap }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { hkMap, pullFromServer } = useLiveHkMap(initialHkMap);
   const tab: Tab = searchParams.get('tab') === 'blocking' ? 'blocking' : 'rack';
   const [refreshKey, setRefreshKey] = useState(0);
   const [blocks, setBlocks] = useState<RoomBlock[]>(() => getRoomBlocks());
@@ -119,6 +121,7 @@ export function RoomsPageClient({ reservations, businessDate, hkMap }: Props) {
             hkMap={hkMap}
             onRefresh={() => {
               setRefreshKey((k) => k + 1);
+              void pullFromServer();
               router.refresh();
             }}
           />

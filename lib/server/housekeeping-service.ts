@@ -101,6 +101,8 @@ export async function updateHkRoom(
       body: `${label} — HK durumu güncellendi`,
       tag: `hk-${roomNo}`,
       url: '/housekeeping/mobile',
+      roomNo,
+      hkStatus: patch.hkStatus,
     });
   }
 

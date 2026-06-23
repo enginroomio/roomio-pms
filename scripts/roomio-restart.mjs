@@ -8,6 +8,8 @@ import { spawn, execSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { syncStandaloneAssets } from './sync-standalone-assets.mjs';
+import { roomioDatabaseUrl } from './roomio-db-url.mjs';
 import {
   baseUrlForPort,
   findWorkingPort,
@@ -51,11 +53,12 @@ function cleanBuild() {
 
 async function main() {
   const force = process.argv.includes('--force');
+  const quick = process.argv.includes('--quick');
 
   console.log('[restart] Güncel sunucu aranıyor…');
   if (process.argv.includes('--prune')) await pruneStaleServers();
 
-  const existing = force ? null : await findWorkingPort();
+  const existing = force || quick ? null : await findWorkingPort();
   if (existing) {
     writeActivePort(existing);
     const baseUrl = baseUrlForPort(existing);
@@ -77,38 +80,46 @@ async function main() {
   if (!devMode) {
     run('npm', ['run', 'db:push']);
 
-    if (!hasValidBuild() || process.argv.includes('--force-build') || force) {
-      cleanBuild();
+    const mustBuild = !hasValidBuild() || process.argv.includes('--force-build');
+    if (mustBuild) {
+      if (process.argv.includes('--force-build') || force) cleanBuild();
+      console.log('[restart] Production build…');
+      try {
+        run('npm', ['run', 'build']);
+      } catch {
+        cleanBuild();
+        run('npm', ['run', 'build']);
+      }
+      run('node', ['scripts/write-release-manifest.mjs']);
     }
-
-    console.log('[restart] Production build…');
-    try {
-      run('npm', ['run', 'build']);
-    } catch {
-      cleanBuild();
-      run('npm', ['run', 'build']);
-    }
-
-    run('node', ['scripts/write-release-manifest.mjs']);
+    syncStandaloneAssets();
   }
 
   const port = await preparePort();
   writeActivePort(port);
 
-  const nextBin = join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next');
-  const args = devMode
-    ? [nextBin, 'dev', '-H', HOST, '-p', String(port)]
-    : [nextBin, 'start', '-H', HOST, '-p', String(port)];
-
   const baseUrl = baseUrlForPort(port);
   console.log(`[restart] Sunucu başlatılıyor → ${baseUrl}`);
 
-  const child = spawn(process.execPath, args, {
-    cwd: ROOT,
-    stdio: 'inherit',
-    detached: false,
-    env: { ...process.env, NODE_ENV: devMode ? 'development' : 'production' },
-  });
+  const standaloneServer = join(ROOT, '.next', 'standalone', 'server.js');
+  const useStandalone = !devMode && existsSync(standaloneServer);
+
+  const dbUrl = roomioDatabaseUrl();
+  const prodEnv = { ...process.env, NODE_ENV: 'production', PORT: String(port), HOSTNAME: HOST, DATABASE_URL: dbUrl };
+
+  const child = useStandalone
+    ? spawn(process.execPath, [standaloneServer], {
+        cwd: join(ROOT, '.next', 'standalone'),
+        stdio: 'inherit',
+        detached: false,
+        env: prodEnv,
+      })
+    : spawn(process.execPath, [join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next'), ...(devMode ? ['dev'] : ['start']), '-H', HOST, '-p', String(port)], {
+        cwd: ROOT,
+        stdio: 'inherit',
+        detached: false,
+        env: { ...process.env, NODE_ENV: devMode ? 'development' : 'production', DATABASE_URL: dbUrl },
+      });
 
   child.on('exit', (code) => process.exit(code ?? 0));
 

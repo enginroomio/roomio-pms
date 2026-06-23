@@ -1,7 +1,7 @@
 'use client';
 
-import { HousekeepingRoomsClient } from '@/components/housekeeping/HousekeepingScreens';
+import { HkMobileRoomsClient } from '@/components/housekeeping/HkMobileRooms';
 
 export default function HousekeepingRoomsPage() {
-  return <HousekeepingRoomsClient />;
+  return <HkMobileRoomsClient />;
 }

@@ -23,9 +23,25 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { ContentOneScreen, type OneScreenVariant } from '@/components/ContentOneScreen';
 import { useRoomioShortcuts } from '@/lib/shortcuts';
 
+function isMockupRoute(pathname: string): boolean {
+  return pathname.includes('/mockup');
+}
+
+function isHkMobileRoute(pathname: string): boolean {
+  return (
+    pathname.startsWith('/housekeeping/mobile') ||
+    pathname.startsWith('/housekeeping/rooms') ||
+    pathname.startsWith('/housekeeping/assign') ||
+    pathname.startsWith('/housekeeping/tasks') ||
+    pathname.startsWith('/housekeeping/faults') ||
+    pathname.startsWith('/housekeeping/reports')
+  );
+}
+
 function oneScreenVariant(pathname: string): OneScreenVariant {
   if (pathname === '/') return 'dashboard';
   if (pathname.startsWith('/housekeeping/mobile')) return 'hk';
+  if (isHkMobileRoute(pathname)) return 'hk-scroll';
   return 'default';
 }
 
@@ -38,12 +54,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <div className="roomio-wifi-shell">{children}</div>;
   }
 
-  if (pathname.startsWith('/housekeeping/mobile')) {
+  if (isMockupRoute(pathname)) {
+    return <div className="roomio-mockup-shell">{children}</div>;
+  }
+
+  if (isHkMobileRoute(pathname)) {
     return (
       <div className="roomio-viewport-host">
         <div className="roomio-viewport-canvas">
           <div className="roomio-hk-mobile-shell">
-            <ContentOneScreen variant="hk">{children}</ContentOneScreen>
+            <ContentOneScreen variant={screenVariant}>{children}</ContentOneScreen>
           </div>
         </div>
       </div>

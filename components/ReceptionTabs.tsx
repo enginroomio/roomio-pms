@@ -9,6 +9,7 @@ const LINKS = [
   { href: '/reception/arrivals', label: 'Bugün Giriş' },
   { href: '/reception/departures', label: 'Bugün Çıkış' },
   { href: '/reception/vacant', label: 'Boş Odalar' },
+  { href: '/reception/guest-requests', label: 'Misafir Talepleri' },
 ];
 
 export function ReceptionTabs() {

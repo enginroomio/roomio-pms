@@ -9,8 +9,10 @@ import {
   HkToolbar,
   HousekeepingPano,
 } from '@/components/housekeeping/HousekeepingPano';
+import { HkRoomContextMenu, type HkRoomMenuState } from '@/components/housekeeping/HkRoomContextMenu';
 import { HK_STATUS_LABELS } from '@/lib/data/housekeeping';
 import { patchHkRoom } from '@/lib/client/hk-update';
+import { usePointerFine } from '@/lib/client/use-pointer-fine';
 import { roomioFetch } from '@/lib/client/api';
 import type { HousekeepingBoardRow } from '@/lib/rooms/inventory';
 
@@ -25,10 +27,12 @@ type HubProps = {
 };
 
 export function HousekeepingHubClient({ initialBoard }: HubProps) {
+  const pointerFine = usePointerFine();
   const [board, setBoard] = useState(initialBoard);
   const [floor, setFloor] = useState<number | 'ALL'>('ALL');
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [savingRoom, setSavingRoom] = useState<string | null>(null);
+  const [roomMenu, setRoomMenu] = useState<HkRoomMenuState>(null);
 
   useEffect(() => {
     setBoard(initialBoard);
@@ -40,21 +44,40 @@ export function HousekeepingHubClient({ initialBoard }: HubProps) {
       const result = await patchHkRoom(roomNo, status);
       if (!result.ok) throw new Error('Güncellenemedi');
       setBoard((prev) => prev.map((r) => (r.roomNo === roomNo ? { ...r, status } : r)));
+      setRoomMenu(null);
     } finally {
       setSavingRoom(null);
     }
   }, []);
 
+  const openRoomMenu = useCallback(
+    (roomNo: string, event: React.MouseEvent) => {
+      const current = board.find((r) => r.roomNo === roomNo)?.status ?? 'CLEAN';
+      setRoomMenu({ roomNo, x: event.clientX, y: event.clientY, currentStatus: current });
+    },
+    [board],
+  );
+
   return (
-    <HousekeepingPano
-      board={board}
-      selectedFloor={floor}
-      onFloorChange={setFloor}
-      selectedRoom={selectedRoom}
-      onRoomSelect={setSelectedRoom}
-      onStatusChange={(roomNo, status) => void updateStatus(roomNo, status)}
-      savingRoom={savingRoom}
-    />
+    <>
+      <HousekeepingPano
+        board={board}
+        selectedFloor={floor}
+        onFloorChange={setFloor}
+        selectedRoom={selectedRoom}
+        onRoomSelect={setSelectedRoom}
+        onStatusChange={(roomNo, status) => void updateStatus(roomNo, status)}
+        savingRoom={savingRoom}
+        hkInteractive={pointerFine}
+        onRoomContextMenu={openRoomMenu}
+      />
+      <HkRoomContextMenu
+        menu={roomMenu}
+        savingRoom={savingRoom}
+        onSelect={(roomNo, status) => void updateStatus(roomNo, status)}
+        onClose={() => setRoomMenu(null)}
+      />
+    </>
   );
 }
 

@@ -7,6 +7,8 @@ type Options = {
   minScale?: number;
   /** true: orantılı scale (x+y), false: yalnızca dikey scaleY */
   uniformScale?: boolean;
+  /** true: taşan içerikte küçültme yerine kaydırma */
+  allowScroll?: boolean;
 };
 
 const REFIT_DELAYS_MS = [0, 80, 240, 600, 1200, 2000];
@@ -22,6 +24,7 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
   const rootRef = useRef<TRoot>(null);
   const minScale = options.minScale ?? 0.48;
   const uniformScale = options.uniformScale ?? true;
+  const allowScroll = options.allowScroll ?? false;
 
   useEffect(() => {
     const shell = shellRef.current;
@@ -111,14 +114,14 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
           const width = shellEl2.offsetWidth || rootEl2.offsetWidth;
           const needed = measureNeeded(rootEl2, width);
 
-          shellEl2.style.overflow = 'hidden';
+          shellEl2.style.overflow = allowScroll ? 'auto' : 'hidden';
           shellEl2.style.maxHeight = `${available}px`;
           shellEl2.style.height = `${available}px`;
           rootEl2.style.transform = 'none';
           rootEl2.style.width = '100%';
 
-          if (needed <= available + 1) {
-            shellEl2.style.height = `${needed}px`;
+          if (allowScroll || needed <= available + 1) {
+            shellEl2.style.height = allowScroll ? `${available}px` : `${needed}px`;
             return;
           }
 
@@ -171,7 +174,7 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
       fitModeObserver.disconnect();
       window.removeEventListener('resize', fit);
     };
-  }, [minScale, uniformScale]);
+  }, [minScale, uniformScale, allowScroll]);
 
   return { shellRef, rootRef };
 }

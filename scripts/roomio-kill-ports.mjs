@@ -3,7 +3,7 @@
 import { execSync } from 'node:child_process';
 
 const PORT_START = Number(process.env.ROOMIO_PORT_START ?? 3100);
-const PORT_END = Number(process.env.ROOMIO_PORT_END ?? 3200);
+const PORT_END = Number(process.env.ROOMIO_PORT_END ?? 3220);
 
 function killPortUnix(port) {
   try {

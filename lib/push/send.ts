@@ -15,12 +15,38 @@ export async function sendHkPush(payload: {
   body: string;
   tag?: string;
   url?: string;
+  roomNo?: string;
+  hkStatus?: string;
+  eventType?: string;
+  faultId?: string;
 }): Promise<{ sent: number; failed: number; errors: string[] }> {
+  return sendRolePush('hk', payload);
+}
+
+export async function sendRolePush(
+  roles: string | string[],
+  payload: {
+    title: string;
+    body: string;
+    tag?: string;
+    url?: string;
+    roomNo?: string;
+    hkStatus?: string;
+    eventType?: string;
+    faultId?: string;
+  },
+): Promise<{ sent: number; failed: number; errors: string[] }> {
   if (!pushConfigured() || !configureVapid()) {
     return { sent: 0, failed: 0, errors: ['VAPID yapılandırılmamış'] };
   }
 
-  const subs = await listPushSubscriptions('hk');
+  const roleList = Array.isArray(roles) ? roles : [roles];
+  const allSubs = await listPushSubscriptions();
+  const subs = allSubs.filter((sub) => {
+    if (!sub.role) return roleList.includes('hk');
+    return roleList.includes(sub.role);
+  });
+
   let sent = 0;
   let failed = 0;
   const errors: string[] = [];
@@ -28,10 +54,19 @@ export async function sendHkPush(payload: {
     title: payload.title,
     body: payload.body,
     tag: payload.tag ?? 'roomio-hk',
-    data: { url: payload.url ?? '/housekeeping/mobile' },
+    data: {
+      url: payload.url ?? '/housekeeping/mobile',
+      eventType: payload.eventType,
+      faultId: payload.faultId,
+      ...(payload.roomNo ? { roomNo: payload.roomNo } : {}),
+      ...(payload.hkStatus ? { hkStatus: payload.hkStatus } : {}),
+    },
   });
 
+  const seen = new Set<string>();
   for (const sub of subs) {
+    if (seen.has(sub.endpoint)) continue;
+    seen.add(sub.endpoint);
     try {
       await webpush.sendNotification(
         {

@@ -33,6 +33,7 @@ const ROUTES = [
   '/reception/departures',
   '/reception/inhouse',
   '/reception/vacant',
+  '/reception/guest-requests',
   '/guest-relations/info-rack',
   '/guest-relations/complaints',
   '/guest-relations/traces',

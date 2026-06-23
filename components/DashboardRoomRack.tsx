@@ -10,9 +10,19 @@ type Props = {
   reservations?: Reservation[];
   businessDate?: string;
   hkMap?: Record<string, HkRoomRecord>;
+  hkInteractive?: boolean;
+  savingRoom?: string | null;
+  onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
 };
 
-export function DashboardRoomRack({ reservations, businessDate, hkMap }: Props) {
+export function DashboardRoomRack({
+  reservations,
+  businessDate,
+  hkMap,
+  hkInteractive,
+  savingRoom,
+  onRoomContextMenu,
+}: Props) {
   const [floor, setFloor] = useState<number | 'all'>('all');
 
   useEffect(() => {
@@ -32,6 +42,9 @@ export function DashboardRoomRack({ reservations, businessDate, hkMap }: Props) 
         reservations={reservations}
         businessDate={businessDate}
         hkMap={hkMap}
+        hkInteractive={hkInteractive}
+        savingRoom={savingRoom}
+        onRoomContextMenu={onRoomContextMenu}
       />
     </Card>
   );

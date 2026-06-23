@@ -12,7 +12,7 @@ import net from 'node:net';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const HOST = process.env.ROOMIO_HOST ?? '127.0.0.1';
 const PREFERRED = Number(process.env.ROOMIO_PORT ?? 3100);
-const PORT_END = Number(process.env.ROOMIO_PORT_END ?? 3200);
+const PORT_END = Number(process.env.ROOMIO_PORT_END ?? 3220);
 const RUNTIME_DIR = join(ROOT, '.roomio', 'runtime');
 export const PORT_FILE = join(RUNTIME_DIR, 'active-port.txt');
 
@@ -123,6 +123,10 @@ export async function verifyServerBuild(baseUrl) {
 export async function verifyCanaryRoutes(baseUrl) {
   const probes = [
     { path: '/housekeeping/mobile', statuses: [200] },
+    { path: '/housekeeping/faults', statuses: [200] },
+    { path: '/housekeeping/reports', statuses: [200] },
+    { path: '/api/housekeeping/faults', statuses: [200] },
+    { path: '/api/housekeeping/requests', statuses: [200] },
     { path: '/api/push/vapid-public-key', statuses: [200] },
     { path: '/api/integrations/status', statuses: [200] },
     { path: '/api/monitoring/status', statuses: [200] },
@@ -278,16 +282,29 @@ export async function ensureRoomioServer(options = {}) {
   execSync('npm run db:push', { cwd: ROOT, stdio: 'inherit' });
   execSync('npm run build', { cwd: ROOT, stdio: 'inherit' });
   execSync('node scripts/write-release-manifest.mjs', { cwd: ROOT, stdio: 'inherit' });
+  const { syncStandaloneAssets } = await import('./sync-standalone-assets.mjs');
+  syncStandaloneAssets();
 
   port = await preparePort(PREFERRED);
   const nextBin = join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next');
   const { spawn } = await import('node:child_process');
-  const child = spawn(process.execPath, [nextBin, 'start', '-H', HOST, '-p', String(port)], {
-    cwd: ROOT,
-    detached: true,
-    stdio: 'ignore',
-    env: { ...process.env, NODE_ENV: 'production' },
-  });
+  const { roomioDatabaseUrl } = await import('./roomio-db-url.mjs');
+  const dbUrl = roomioDatabaseUrl();
+  const standaloneServer = join(ROOT, '.next', 'standalone', 'server.js');
+  const useStandalone = existsSync(standaloneServer);
+  const child = useStandalone
+    ? spawn(process.execPath, [standaloneServer], {
+        cwd: join(ROOT, '.next', 'standalone'),
+        detached: true,
+        stdio: 'ignore',
+        env: { ...process.env, NODE_ENV: 'production', PORT: String(port), HOSTNAME: HOST, DATABASE_URL: dbUrl },
+      })
+    : spawn(process.execPath, [nextBin, 'start', '-H', HOST, '-p', String(port)], {
+        cwd: ROOT,
+        detached: true,
+        stdio: 'ignore',
+        env: { ...process.env, NODE_ENV: 'production', DATABASE_URL: dbUrl },
+      });
   child.unref();
 
   const baseUrl = baseUrlForPort(port);

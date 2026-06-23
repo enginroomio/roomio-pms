@@ -379,10 +379,162 @@
   color: #1a6b4a;
 }
 
-/* HK rack — ana sayfa Oda Rack birebir, tek ekran */
+.roomio-hk-mobile__nav-item.is-active {
+  background: rgba(26, 107, 74, 0.14);
+  color: #1a6b4a;
+  font-weight: 700;
+}
+
+.roomio-hk-mini-cell--hk-interactive {
+  cursor: context-menu;
+}
+
+.roomio-nr-cell--hk-interactive {
+  cursor: context-menu;
+}
+
+.roomio-nr-cell--hk-interactive.is-saving {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.roomio-hk-room-menu {
+  position: fixed;
+  z-index: 1200;
+  width: min(210px, calc(100vw - 16px));
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(15, 20, 25, 0.18);
+}
+
+.roomio-hk-room-menu__head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 8px 8px;
+  border-bottom: 1px solid #eaecf0;
+  margin-bottom: 6px;
+}
+
+.roomio-hk-room-menu__head strong {
+  font-size: 0.82rem;
+}
+
+.roomio-hk-room-menu__head span {
+  font-size: 0.68rem;
+  color: #667085;
+}
+
+.roomio-hk-room-menu__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.roomio-hk-room-menu__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #eaecf0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.roomio-hk-room-menu__item small {
+  font-size: 0.62rem;
+  color: #667085;
+  font-weight: 500;
+}
+
+.roomio-hk-room-menu__item:hover:not(:disabled) {
+  border-color: #1a6b4a;
+  background: #f6fef9;
+}
+
+.roomio-hk-room-menu__item.is-current,
+.roomio-hk-room-menu__item:disabled {
+  opacity: 0.72;
+  cursor: default;
+}
+
+.roomio-hk-room-menu__item--clean { border-left: 3px solid #12b76a; }
+.roomio-hk-room-menu__item--dirty { border-left: 3px solid #f04438; }
+.roomio-hk-room-menu__item--inspect { border-left: 3px solid #f79009; }
+.roomio-hk-room-menu__item--ooo { border-left: 3px solid #7a5af8; }
+.roomio-hk-room-menu__item--dnd { border-left: 3px solid #dd2590; }
+
+/* HK rack — sabah panosu + ana sayfa Oda Rack harmanı */
 .roomio-hk-mobile--one-screen.roomio-dashboard--one-screen {
   gap: 4px;
   overflow: hidden;
+}
+
+.roomio-hk-mobile__kpi {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  padding: 0 2px;
+}
+
+.roomio-hk-mobile__kpi-total {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #344054;
+  flex-shrink: 0;
+}
+
+.roomio-hk-mobile__kpi-tiles {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.roomio-hk-mobile--one-screen .roomio-hk-mobile__kpi .roomio-kpi-strip__item {
+  padding: 4px 8px;
+  min-width: 0;
+}
+
+.roomio-hk-mobile--one-screen .roomio-hk-mobile__kpi .roomio-kpi-strip__icon {
+  width: 22px;
+  height: 22px;
+}
+
+.roomio-hk-mobile--one-screen .roomio-hk-mobile__kpi .roomio-kpi-strip__value {
+  font-size: 0.82rem;
+}
+
+.roomio-hk-mobile--one-screen .roomio-hk-mobile__kpi .roomio-kpi-strip__label {
+  font-size: 0.58rem;
+}
+
+.roomio-hk-mobile--one-screen .roomio-hk-online--compact {
+  padding: 4px 8px;
+}
+
+.roomio-hk-mobile--one-screen .roomio-hk-online__summary {
+  font-size: 0.68rem;
+}
+
+.roomio-hk-mobile--one-screen .roomio-hk-online__chips {
+  margin: 4px 0 0;
+  font-size: 0.66rem;
+  gap: 4px;
 }
 
 .roomio-hk-mobile__header--compact {
@@ -469,3 +621,1423 @@
 .roomio-hk-mobile--one-screen .roomio-nr-cell-guest {
   display: none;
 }
+
+.roomio-hk-mobile__header--compact {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roomio-hk-mobile__header--compact h1 {
+  font-size: 1.05rem;
+}
+
+.roomio-hk-liste__exports {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.roomio-hk-liste--one-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.roomio-hk-liste__kpi {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  color: #667085;
+  padding: 0 2px;
+}
+
+.roomio-hk-liste__kpi strong {
+  color: #101828;
+  font-size: 0.85rem;
+}
+
+.roomio-hk-liste__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.roomio-hk-liste__modes {
+  display: flex;
+  gap: 4px;
+  background: #f2f4f7;
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.roomio-hk-liste__mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #475467;
+  cursor: pointer;
+}
+
+.roomio-hk-liste__mode.is-active {
+  background: #fff;
+  color: #1a6b4a;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+}
+
+.roomio-hk-liste__filters {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+}
+
+.roomio-hk-liste__search {
+  min-width: 0;
+}
+
+.roomio-hk-liste__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.roomio-hk-liste__chip {
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #475467;
+  cursor: pointer;
+}
+
+.roomio-hk-liste__chip.is-active {
+  border-color: #1a6b4a;
+  background: #ecfdf3;
+  color: #1a6b4a;
+}
+
+.roomio-hk-liste__chip--action {
+  border-style: dashed;
+  color: #1a6b4a;
+}
+
+.roomio-hk-liste__chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.roomio-hk-liste__staff-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.roomio-hk-liste__staff-card {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+  min-width: 140px;
+  flex: 1;
+}
+
+.roomio-hk-liste__staff-card.is-active {
+  border-color: #1a6b4a;
+  box-shadow: 0 0 0 1px #1a6b4a;
+}
+
+.roomio-hk-liste__staff-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.68rem;
+  color: #475467;
+}
+
+.roomio-hk-liste__staff-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #101828;
+}
+
+.roomio-hk-liste__staff-count {
+  color: #1a6b4a;
+  font-weight: 600;
+}
+
+.roomio-hk-liste__staff-export {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #eaecf0;
+}
+
+.roomio-hk-liste__staff-export button,
+.roomio-hk-liste__section-export button {
+  border: 0;
+  background: #f9fafb;
+  padding: 6px;
+  cursor: pointer;
+  color: #475467;
+}
+
+.roomio-hk-liste__staff-export button:hover,
+.roomio-hk-liste__section-export button:hover {
+  background: #ecfdf3;
+  color: #1a6b4a;
+}
+
+.roomio-hk-liste__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+
+.roomio-hk-liste__section {
+  border: 1px solid #eaecf0;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.roomio-hk-liste__section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: #f9fafb;
+  border-bottom: 1px solid #eaecf0;
+}
+
+.roomio-hk-liste__section-head strong {
+  display: block;
+  font-size: 0.78rem;
+}
+
+.roomio-hk-liste__section-head span {
+  font-size: 0.65rem;
+  color: #667085;
+}
+
+.roomio-hk-liste__section-check,
+.roomio-hk-liste__row-check {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #667085;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.roomio-hk-liste__section-export {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+}
+
+.roomio-hk-liste__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.roomio-hk-liste__rows li {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto minmax(88px, 1fr);
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid #f2f4f7;
+  font-size: 0.72rem;
+}
+
+.roomio-hk-liste__rows li.is-selected {
+  background: #f6fef9;
+}
+
+.roomio-hk-liste__rows li:last-child {
+  border-bottom: 0;
+}
+
+.roomio-hk-liste__row-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.roomio-hk-liste__row-main strong {
+  font-size: 0.8rem;
+}
+
+.roomio-hk-liste__row-main span {
+  color: #667085;
+  font-size: 0.65rem;
+}
+
+.roomio-hk-liste__row-guest {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roomio-hk-liste__row-staff {
+  font-size: 0.65rem;
+  color: #475467;
+  white-space: nowrap;
+}
+
+.roomio-hk-liste__assign-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  box-shadow: 0 -4px 16px rgba(15, 20, 25, 0.06);
+  font-size: 0.72rem;
+}
+
+.roomio-hk-liste__error {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #b42318;
+}
+
+.roomio-hk-liste__empty {
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  color: #667085;
+  font-size: 0.78rem;
+}
+
+.roomio-hk-mobile-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  gap: 10px;
+  padding: 0 10px 8px;
+}
+
+@keyframes roomio-spin {
+  to { transform: rotate(360deg); }
+}
+
+.roomio-spin {
+  animation: roomio-spin 0.9s linear infinite;
+}
+
+
+.roomio-hk-mobile-table {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.roomio-hk-table__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  color: #667085;
+  border-top: 1px solid #eaecf0;
+}
+
+.roomio-hk-assign-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.roomio-hk-assign-grid__floors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.roomio-hk-assign-grid__rooms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 6px;
+  max-height: 180px;
+  overflow: auto;
+  padding: 4px 0;
+}
+
+.roomio-hk-assign-room {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  min-height: 40px;
+  background: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roomio-hk-assign-room.is-selected {
+  border-color: #1a6b4a;
+  background: #ecfdf3;
+  color: #1a6b4a;
+}
+
+.roomio-hk-assign-room--dirty {
+  border-left: 3px solid #f04438;
+}
+
+.roomio-hk-assign-room--inspect {
+  border-left: 3px solid #f79009;
+}
+
+.roomio-hk-assign-room--clean {
+  border-left: 3px solid #12b76a;
+}
+
+.roomio-hk-liste__staff-card .roomio-hk-liste__staff-main {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.roomio-hk-mobile-table__meta {
+  display: block;
+  font-size: 0.68rem;
+  color: #667085;
+  font-weight: 500;
+}
+
+/* HK Liste — okunabilir kart görünümü */
+.roomio-hk-mobile--scroll .roomio-hk-mobile-page {
+  overflow: visible;
+  min-height: 0;
+}
+
+.roomio-hk-liste-readable {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.roomio-hk-liste-readable__toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.roomio-hk-liste-readable__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  background: #fff;
+  min-width: 0;
+}
+
+.roomio-hk-liste-readable__search .roomio-input {
+  border: 0;
+  padding: 10px 0;
+  font-size: 0.9rem;
+  min-width: 0;
+  box-shadow: none;
+}
+
+.roomio-hk-liste-readable__search svg {
+  color: #667085;
+  flex-shrink: 0;
+}
+
+.roomio-hk-liste-readable__toolbar .roomio-select {
+  font-size: 0.88rem;
+  min-height: 42px;
+}
+
+.roomio-hk-liste-readable__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.roomio-hk-liste-readable__chip {
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475467;
+  cursor: pointer;
+}
+
+.roomio-hk-liste-readable__chip.is-active {
+  border-color: #1a6b4a;
+  background: #ecfdf3;
+  color: #1a6b4a;
+}
+
+.roomio-hk-liste-readable__summary {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #667085;
+}
+
+.roomio-hk-liste-readable__summary strong {
+  color: #101828;
+  font-size: 0.95rem;
+}
+
+.roomio-hk-liste-readable__error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #b42318;
+}
+
+.roomio-hk-liste-readable__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+
+.roomio-hk-liste-readable__empty {
+  margin: 0;
+  padding: 24px 12px;
+  text-align: center;
+  color: #667085;
+  font-size: 0.9rem;
+}
+
+.roomio-hk-liste-card {
+  border: 1px solid #eaecf0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.roomio-hk-liste-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.roomio-hk-liste-card__room {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.roomio-hk-liste-card__no {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #101828;
+  letter-spacing: -0.02em;
+}
+
+.roomio-hk-liste-card__meta {
+  font-size: 0.8rem;
+  color: #667085;
+}
+
+.roomio-hk-liste-card__badge {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.roomio-hk-liste-card__badge--clean {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.roomio-hk-liste-card__badge--dirty {
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.roomio-hk-liste-card__badge--inspect {
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.roomio-hk-liste-card__badge--ooo {
+  background: #f2f4f7;
+  color: #344054;
+}
+
+.roomio-hk-liste-card__badge--dnd {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.roomio-hk-liste-card__body {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+@media (max-width: 520px) {
+  .roomio-hk-liste-card__body {
+    grid-template-columns: 1fr;
+  }
+
+  .roomio-hk-liste-readable__toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roomio-hk-liste-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.roomio-hk-liste-card__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #98a2b3;
+}
+
+.roomio-hk-liste-card__value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #344054;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roomio-hk-liste-card__status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475467;
+}
+
+.roomio-hk-liste-card__status .roomio-select {
+  font-size: 0.9rem;
+  min-height: 40px;
+}
+
+/* HK Liste — tek kat, tek ekran grid */
+.roomio-hk-liste-readable--floor-fit {
+  flex: 1;
+  min-height: 0;
+  max-width: none;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.roomio-hk-liste-readable--floor-fit .roomio-hk-liste-readable__toolbar {
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.roomio-hk-liste-readable--floor-fit .roomio-hk-liste-readable__chips {
+  flex-shrink: 0;
+}
+
+.roomio-hk-liste-readable--floor-fit .roomio-hk-liste-readable__summary {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+}
+
+.roomio-hk-liste-readable--floor-fit .roomio-hk-liste-readable__search .roomio-input {
+  padding: 8px 0;
+  font-size: 0.82rem;
+}
+
+.roomio-hk-liste-readable--floor-fit .roomio-hk-liste-readable__toolbar .roomio-select {
+  min-height: 38px;
+  font-size: 0.82rem;
+}
+
+.roomio-hk-liste-readable--floor-fit .roomio-hk-liste-readable__chip {
+  padding: 5px 12px;
+  font-size: 0.78rem;
+}
+
+.roomio-hk-liste-floor-fit {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.roomio-hk-liste-floor-fit__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  grid-auto-flow: row;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+}
+
+.roomio-hk-liste-floor-fit__grid .roomio-hk-mini-cell {
+  min-height: 0;
+  height: 100%;
+  padding: 4px 2px;
+  font-size: 0.82rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  line-height: 1.1;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+
+.roomio-hk-liste-floor-fit__grid .roomio-hk-mini-cell.is-selected {
+  outline: 2px solid #1e3a8a;
+  outline-offset: 1px;
+}
+
+.roomio-hk-liste-floor-fit__grid .roomio-hk-mini-cell--clean {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+}
+
+.roomio-hk-liste-floor-fit__grid .roomio-hk-mini-cell--dirty {
+  background: #fce7f3;
+  color: #9d174d;
+  border-color: #f9a8d4;
+}
+
+.roomio-hk-liste-floor-fit__grid .roomio-hk-mini-cell--inspect {
+  background: #fef9c3;
+  color: #854d0e;
+  border-color: #fde047;
+}
+
+.roomio-hk-liste-floor-fit__grid .roomio-hk-mini-cell--ooo {
+  background: #ffedd5;
+  color: #9a3412;
+  border-color: #fdba74;
+}
+
+.roomio-hk-liste-floor-fit__grid .roomio-hk-mini-cell--dnd {
+  background: #ede9fe;
+  color: #5b21b6;
+  border-color: #c4b5fd;
+}
+
+.roomio-hk-liste-floor-fit__no {
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.roomio-hk-liste-floor-fit__guest {
+  font-size: 0.62rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.roomio-hk-liste-floor-fit__guest--empty {
+  opacity: 0.65;
+}
+
+.roomio-hk-liste-floor-fit__legend {
+  flex-shrink: 0;
+  margin-top: 0;
+  padding-top: 4px;
+  gap: 4px;
+}
+
+.roomio-hk-liste-floor-fit__legend .roomio-hk-legend-item {
+  padding: 2px 8px;
+  font-size: 0.65rem;
+}
+
+.roomio-hk-liste-floor-fit__detail {
+  flex-shrink: 0;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roomio-hk-liste-floor-fit__detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.roomio-hk-liste-floor-fit__detail-no {
+  font-size: 1.1rem;
+  color: #101828;
+}
+
+.roomio-hk-liste-floor-fit__detail-meta {
+  display: block;
+  font-size: 0.75rem;
+  color: #667085;
+  font-weight: 500;
+}
+
+.roomio-hk-liste-floor-fit__detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.roomio-hk-liste-floor-fit__status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475467;
+}
+
+.roomio-hk-liste-floor-fit__status .roomio-select {
+  min-height: 38px;
+  font-size: 0.85rem;
+}
+
+.roomio-hk-mobile-tasks {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+}
+
+.roomio-hk-mobile-task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roomio-hk-mobile-task-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #eaecf0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.roomio-hk-mobile-task-list li.is-done {
+  opacity: 0.65;
+}
+
+.roomio-hk-mobile-task-list__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+}
+
+.roomio-hk-mobile-task-list__meta {
+  font-size: 0.68rem;
+  color: #667085;
+}
+
+.roomio-hk-mobile-task-list__done {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #12b76a;
+}
+
+.roomio-hk-mobile__nav--5 .roomio-hk-mobile__nav-item span {
+  font-size: 0.62rem;
+}
+
+.roomio-hk-faults__list,
+.roomio-hk-reports__req-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roomio-hk-faults__item,
+.roomio-hk-reports__req-list li {
+  border: 1px solid #eaecf0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+}
+
+.roomio-hk-faults__item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.roomio-hk-faults__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.roomio-hk-faults__badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.roomio-hk-faults__cat {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #344054;
+}
+
+.roomio-hk-faults__desc,
+.roomio-hk-faults__meta {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #667085;
+}
+
+.roomio-hk-faults__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.roomio-hk-faults__assign {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.roomio-hk-faults__error {
+  color: #b42318;
+  font-size: 0.8rem;
+  margin: 0 0 8px;
+}
+
+.roomio-hk-faults__empty,
+.roomio-hk-reports__loading {
+  font-size: 0.85rem;
+  color: #667085;
+}
+
+.roomio-hk-reports__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.roomio-hk-reports__tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475467;
+}
+
+.roomio-hk-reports__tabs button.is-active {
+  border-color: #175cd3;
+  background: #eff4ff;
+  color: #175cd3;
+}
+
+.roomio-hk-reports__hint {
+  font-size: 0.75rem;
+  color: #667085;
+  margin: 0 0 12px;
+}
+
+.roomio-hk-reports__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.roomio-hk-reports__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475467;
+}
+
+.roomio-hk-reports__req-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.roomio-hk-reports__req-list small {
+  display: block;
+  font-size: 0.68rem;
+  color: #667085;
+}
+
+.roomio-hk-reports__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.roomio-hk-reports__print-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.roomio-hk-reports__preview {
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.roomio-hk-reports__preview-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eaecf0;
+  font-size: 0.8rem;
+}
+
+.roomio-hk-reports__table-wrap {
+  overflow: auto;
+  max-height: 50vh;
+}
+
+.roomio-hk-reports__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.roomio-hk-reports__table th,
+.roomio-hk-reports__table td {
+  border-bottom: 1px solid #f2f4f7;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.roomio-hk-reports__table tr.has-request td:nth-child(5) {
+  color: #b54708;
+  font-weight: 600;
+}
+
+/* Katçı atama raporu — A4 önizleme */
+.roomio-hk-report-sheet {
+  border: 1px solid #d0d5dd;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
+}
+
+.roomio-hk-report-sheet__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 10px;
+  border-bottom: 2px solid #101828;
+}
+
+.roomio-hk-report-sheet__kicker {
+  margin: 0 0 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+.roomio-hk-report-sheet__hotel {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #101828;
+}
+
+.roomio-hk-report-sheet__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+  font-size: 0.68rem;
+  color: #475467;
+}
+
+.roomio-hk-report-sheet__staff-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 16px 0;
+  padding: 10px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  background: #f9fafb;
+}
+
+.roomio-hk-report-sheet__staff-card strong {
+  display: block;
+  font-size: 0.9rem;
+  color: #175cd3;
+}
+
+.roomio-hk-report-sheet__staff-card span {
+  font-size: 0.72rem;
+  color: #667085;
+}
+
+.roomio-hk-report-sheet__supervisor {
+  text-align: right;
+  font-size: 0.72rem;
+  color: #475467;
+}
+
+.roomio-hk-report-sheet__supervisor small {
+  display: block;
+  color: #98a2b3;
+}
+
+.roomio-hk-report-sheet__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 16px 0;
+}
+
+@media (min-width: 520px) {
+  .roomio-hk-report-sheet__stats {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.roomio-hk-report-sheet__stats > div {
+  border: 1px solid #eaecf0;
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.roomio-hk-report-sheet__stats b {
+  display: block;
+  font-size: 1rem;
+  color: #101828;
+}
+
+.roomio-hk-report-sheet__stats span {
+  font-size: 0.62rem;
+  color: #667085;
+}
+
+.roomio-hk-report-sheet__stats .is-warn b {
+  color: #b54708;
+}
+
+.roomio-hk-report-sheet__stats .is-danger b {
+  color: #b42318;
+}
+
+.roomio-hk-report-sheet__table-wrap {
+  overflow: auto;
+  margin: 12px 16px 0;
+  max-height: 42vh;
+  border: 1px solid #eaecf0;
+  border-radius: 8px;
+}
+
+.roomio-hk-report-sheet__table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 0.68rem;
+}
+
+.roomio-hk-report-sheet__table th,
+.roomio-hk-report-sheet__table td {
+  border-bottom: 1px solid #f2f4f7;
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.roomio-hk-report-sheet__table th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  color: #667085;
+  z-index: 1;
+}
+
+.roomio-hk-report-sheet__table tr.has-request td:nth-child(9) {
+  color: #b54708;
+  font-weight: 600;
+}
+
+.roomio-hk-report-sheet__table tr.has-fault td:nth-child(10) {
+  color: #b42318;
+  font-weight: 600;
+}
+
+.roomio-hk-report-sheet__empty {
+  margin: 16px;
+  font-size: 0.8rem;
+  color: #667085;
+}
+
+.roomio-hk-report-sheet__extras {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 12px 16px 0;
+}
+
+@media (min-width: 640px) {
+  .roomio-hk-report-sheet__extras {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.roomio-hk-report-sheet__panel {
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.roomio-hk-report-sheet__panel h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+}
+
+.roomio-hk-report-sheet__panel h3 span {
+  margin-left: auto;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.roomio-hk-report-sheet__panel ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roomio-hk-report-sheet__panel li {
+  padding: 8px 0;
+  border-top: 1px solid rgba(16, 24, 40, 0.08);
+}
+
+.roomio-hk-report-sheet__panel li strong {
+  display: block;
+  font-size: 0.75rem;
+}
+
+.roomio-hk-report-sheet__panel li span {
+  display: block;
+  font-size: 0.72rem;
+  color: #344054;
+}
+
+.roomio-hk-report-sheet__panel li small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.65rem;
+  color: #667085;
+}
+
+.roomio-hk-report-sheet__panel--requests {
+  border: 1px solid #fec84b;
+  background: #fffaeb;
+}
+
+.roomio-hk-report-sheet__panel--requests h3 span {
+  background: #fef0c7;
+  color: #b54708;
+}
+
+.roomio-hk-report-sheet__panel--faults {
+  border: 1px solid #fda29b;
+  background: #fef3f2;
+}
+
+.roomio-hk-report-sheet__panel--faults h3 span {
+  background: #fee4e2;
+  color: #b42318;
+}
+
+.roomio-hk-report-sheet__panel-empty {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #667085;
+}
+
+.roomio-hk-report-sheet__signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 14px 16px 16px;
+}
+
+.roomio-hk-report-sheet__signatures label {
+  font-size: 0.65rem;
+  color: #667085;
+}
+
+.roomio-hk-report-sheet__signatures .line {
+  margin-top: 6px;
+  border-bottom: 1px solid #101828;
+  height: 28px;
+}
+
+@media print {
+  .roomio-hk-mobile-page .roomio-hk-mobile__header,
+  .roomio-hk-mobile-page .roomio-hk-reports__tabs,
+  .roomio-hk-mobile-page .roomio-hk-reports__toolbar,
+  .roomio-hk-mobile-page .roomio-hk-mobile__nav {
+    display: none !important;
+  }
+
+  .roomio-hk-report-sheet {
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+  }
+
+  .roomio-hk-report-sheet__table-wrap {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+.roomio-hk-room-menu__footer {
+  border-top: 1px solid #eaecf0;
+  padding: 6px;
+}
+
+.roomio-hk-mobile-page .roomio-hk-reports__form label,
+.roomio-hk-mobile-page .roomio-hk-reports__toolbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475467;
+  margin-bottom: 8px;
+}
+
+.roomio-hk-mobile-page .roomio-hk-reports__form {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.roomio-hk-mobile-page .roomio-card.roomio-hk-faults {
+  padding: 12px;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.roomio-hk-mobile-page .roomio-hk-faults {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+

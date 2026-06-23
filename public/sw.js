@@ -1,4 +1,4 @@
-const CACHE = 'roomio-hk-v8';
+const CACHE = 'roomio-hk-v9';
 const SHELL = [
   '/',
   '/manifest.json',
@@ -76,11 +76,12 @@ self.addEventListener('push', (event) => {
   }
   const title = payload.title ?? 'Roomio HK';
   const body = payload.body ?? 'Yeni görev veya oda durumu güncellemesi';
+  const pushData = payload.data ?? { url: '/housekeeping/mobile' };
   const options = {
     body,
     tag: payload.tag ?? 'roomio-hk',
     renotify: true,
-    data: payload.data ?? { url: '/housekeeping/mobile' },
+    data: pushData,
   };
 
   event.waitUntil(
@@ -89,7 +90,13 @@ self.addEventListener('push', (event) => {
       for (const client of clients) {
         client.postMessage({
           type: 'roomio-hk-push',
-          payload: { title, body, tag: options.tag },
+          payload: {
+            title,
+            body,
+            tag: options.tag,
+            roomNo: pushData.roomNo,
+            hkStatus: pushData.hkStatus,
+          },
         });
       }
       await self.registration.showNotification(title, options);

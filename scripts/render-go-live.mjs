@@ -37,12 +37,18 @@ async function step1Production() {
 }
 
 async function step2CustomDomain() {
-  console.log('\n══ Adım 2/5 — Özel domain (pms.roomio.io) ══\n');
-  spawnSync('node', ['scripts/render-custom-domain.mjs'], { stdio: 'inherit' });
+  console.log('\n══ Adım 2/5 — Özel domain (roomio.web.tr) ══\n');
+  spawnSync('node', ['scripts/render-custom-domain.mjs'], {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      ROOMIO_CUSTOM_DOMAIN: process.env.ROOMIO_CUSTOM_DOMAIN ?? 'www.roomio.web.tr',
+    },
+  });
 
   console.log('\n── DNS / SSL doğrulama ──\n');
   console.log(`Denenen URL: ${DOMAIN_URL}`);
-  const health = await waitForHealth(DOMAIN_URL, 6, 4000);
+  const health = await waitForHealth(DOMAIN_URL, 25, 5000);
   if (health.ok) {
     console.log(`✓ ${DOMAIN_URL} canlı`);
     saveProductionUrl(DOMAIN_URL);
@@ -52,12 +58,15 @@ async function step2CustomDomain() {
   }
 
   if (health.reason === 'dns') {
-    console.log('ℹ DNS henüz yayılmamış veya Render\'da domain eklenmemiş');
+    console.log('ℹ DNS henüz yayılmamış — registrar\'da CNAME www kaydını kontrol edin');
+  } else if (health.reason === 'timeout') {
+    console.log('ℹ Zaman aşımı — DNS çözülüyor olabilir; Render cold start 30–90 sn sürebilir');
+    console.log('  Manuel test: curl -v https://www.roomio.web.tr/api/health');
   } else {
     console.log(`ℹ Henüz hazır değil (${health.reason ?? 'bekleniyor'})`);
   }
-  console.log('\n  Sizde: Render → Custom Domains → pms.roomio.io → DNS kaydı');
-  console.log('  Cloudflare: CNAME pms → roomio-pms-v2.onrender.com, SSL Full (strict)');
+  console.log('\n  Sizde: Render → Custom Domains → www.roomio.web.tr → DNS CNAME');
+  console.log('  Registrar: CNAME www → roomio-pms-v2.onrender.com');
   return false;
 }
 
@@ -68,7 +77,7 @@ function step3Uptime() {
     env: {
       ...process.env,
       ROOMIO_PRODUCTION_URL: productionUrl() ?? DOMAIN_URL,
-      ROOMIO_CUSTOM_DOMAIN: process.env.ROOMIO_CUSTOM_DOMAIN ?? 'pms.roomio.io',
+      ROOMIO_CUSTOM_DOMAIN: process.env.ROOMIO_CUSTOM_DOMAIN ?? 'www.roomio.web.tr',
     },
   });
   return true;

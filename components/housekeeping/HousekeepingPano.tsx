@@ -1,3 +1,5 @@
+import type { MouseEvent } from 'react';
+import { HkStatusDots as HkStatusDotsImpl } from '@/components/housekeeping/HkStatusDots';
 import { CheckCircle2, ClipboardCheck, Sparkles, Wrench } from 'lucide-react';
 import { StatTile } from '@/components/kit';
 import { HK_STATUS_LABELS } from '@/lib/data/housekeeping';
@@ -13,6 +15,8 @@ type Props = {
   onStatusChange: (roomNo: string, status: HousekeepingBoardRow['status']) => void;
   savingRoom: string | null;
   variant?: 'default' | 'mobile';
+  hkInteractive?: boolean;
+  onRoomContextMenu?: (roomNo: string, event: MouseEvent) => void;
 };
 
 const HK_STAFF = [
@@ -51,6 +55,8 @@ export function HousekeepingPano({
   onStatusChange,
   savingRoom,
   variant = 'default',
+  hkInteractive = false,
+  onRoomContextMenu,
 }: Props) {
   const counts = countByStatus(board);
   const floors = floorCounts(board);
@@ -107,9 +113,17 @@ export function HousekeepingPano({
                     <button
                       key={room.roomNo}
                       type="button"
-                      className={`roomio-hk-mini-cell roomio-hk-mini-cell--${room.status.toLowerCase()}${selectedRoom === room.roomNo ? ' is-selected' : ''}`}
+                      className={`roomio-hk-mini-cell roomio-hk-mini-cell--${room.status.toLowerCase()}${selectedRoom === room.roomNo ? ' is-selected' : ''}${hkInteractive ? ' roomio-hk-mini-cell--hk-interactive' : ''}`}
                       onClick={() => onRoomSelect(room.roomNo)}
-                      title={`${room.roomNo} · ${HK_STATUS_LABELS[room.status]}${room.guestName ? ` · ${room.guestName}` : ''}`}
+                      title={`${room.roomNo} · ${HK_STATUS_LABELS[room.status]}${room.guestName ? ` · ${room.guestName}` : ''}${hkInteractive ? ' · Sağ tık: durum' : ''}`}
+                      onContextMenu={
+                        hkInteractive && onRoomContextMenu
+                          ? (event) => {
+                              event.preventDefault();
+                              onRoomContextMenu(room.roomNo, event);
+                            }
+                          : undefined
+                      }
                     >
                       {room.roomNo}
                     </button>
@@ -272,24 +286,8 @@ function SelectedRoomPanel({
   );
 }
 
-export function HkStatusDots({ status }: { status: HousekeepingBoardRow['status'] }) {
-  const cols: { key: HousekeepingBoardRow['status']; label: string }[] = [
-    { key: 'CLEAN', label: 'Temiz' },
-    { key: 'DIRTY', label: 'Kirli' },
-    { key: 'INSPECT', label: 'Kontrol' },
-  ];
-
-  return (
-    <div className="roomio-hk-dot-row" aria-label={`HK durumu: ${HK_STATUS_LABELS[status]}`}>
-      {cols.map((col) => (
-        <span
-          key={col.key}
-          className={`roomio-hk-dot${status === col.key ? ' is-active' : ''} roomio-hk-dot--${col.key.toLowerCase()}`}
-          title={col.label}
-        />
-      ))}
-    </div>
-  );
+export function HkStatusDots(props: { status: HousekeepingBoardRow['status'] }) {
+  return <HkStatusDotsImpl {...props} />;
 }
 
 export function HkToolbar({ total, onRefresh }: { total: number; onRefresh: () => void }) {

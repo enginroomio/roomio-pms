@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { completeFaultForRoom, createRoomFault } from '@/lib/server/fault-service';
 import { getHousekeepingBoardServer, updateHkRoom } from '@/lib/server/housekeeping-service';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 import type { RoomHkStatus } from '@/lib/types/room';
@@ -21,5 +22,18 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'roomNo gerekli' }, { status: 400 });
   }
   const room = await updateHkRoom(body.roomNo, body, propertyId);
+
+  if (body.hkStatus === 'OOO') {
+    await createRoomFault({
+      roomNo: body.roomNo,
+      description: body.notes,
+      reportedBy: 'HK',
+      propertyId,
+      skipHkUpdate: true,
+    });
+  } else if (body.hkStatus === 'CLEAN') {
+    await completeFaultForRoom(body.roomNo, 'HK', propertyId);
+  }
+
   return NextResponse.json({ room });
 }

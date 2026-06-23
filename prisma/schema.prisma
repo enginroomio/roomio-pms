@@ -29,6 +29,8 @@ model Property {
   exchangeConfig        ExchangeConfig?
   localeEntries         LocaleEntry[]
   roomHousekeeping      RoomHousekeeping[]
+  roomMaintenanceFaults RoomMaintenanceFault[]
+  hkGuestRequests       HkGuestRequest[]
 }
 
 model AppState {
@@ -245,4 +247,43 @@ model PushSubscription {
   deviceLabel String?
   createdAt   String
   lastSeenAt  String?
+}
+
+model RoomMaintenanceFault {
+  id          String   @id
+  propertyId  String
+  roomNo      String
+  floor       Int      @default(1)
+  category    String
+  description String?
+  status      String   @default("open")
+  assignedTo  String?
+  reportedBy  String?
+  resolvedBy  String?
+  createdAt   String
+  updatedAt   String
+  resolvedAt  String?
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, status])
+  @@index([propertyId, roomNo])
+}
+
+model HkGuestRequest {
+  id            String   @id
+  propertyId    String
+  roomNo        String
+  floor         Int      @default(1)
+  requestType   String
+  description   String?
+  status        String   @default("pending")
+  requestedBy   String   @default("Resepsiyon")
+  assignedStaff String?
+  createdAt     String
+  completedAt   String?
+  property      Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, status])
+  @@index([propertyId, assignedStaff])
+  @@index([propertyId, roomNo])
 }

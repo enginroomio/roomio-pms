@@ -32,6 +32,9 @@ type Props = {
   hkMap?: Record<string, import('@/lib/data/hk-defaults').HkRoomRecord>;
   elektra?: boolean;
   onRefresh?: () => void;
+  hkInteractive?: boolean;
+  savingRoom?: string | null;
+  onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
 };
 
 function applyFilters(
@@ -69,19 +72,40 @@ function RackIcon({ kind }: { kind: RackDisplayIcon }) {
   return null;
 }
 
-function RackPreviewCell({ cell, ctx }: { cell: RackCell; ctx: RackDisplayContext }) {
+function RackPreviewCell({
+  cell,
+  ctx,
+  hkInteractive,
+  savingRoom,
+  onRoomContextMenu,
+}: {
+  cell: RackCell;
+  ctx: RackDisplayContext;
+  hkInteractive?: boolean;
+  savingRoom?: string | null;
+  onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
+}) {
   const display = getRackDisplay(cell, ctx);
+  const saving = savingRoom === cell.room.roomNo;
 
   return (
     <button
       type="button"
-      className="roomio-nr-cell roomio-nr-cell--preview"
+      className={`roomio-nr-cell roomio-nr-cell--preview${hkInteractive ? ' roomio-nr-cell--hk-interactive' : ''}${saving ? ' is-saving' : ''}`}
       style={{
         background: display.color,
         color: display.text,
         borderColor: display.border,
       }}
-      title={`${cell.room.roomNo} · ${display.label}${display.sub ? ` · ${display.sub}` : ''}`}
+      title={`${cell.room.roomNo} · ${display.label}${display.sub ? ` · ${display.sub}` : ''}${hkInteractive ? ' · Sağ tık: durum' : ''}`}
+      onContextMenu={
+        hkInteractive && onRoomContextMenu
+          ? (event) => {
+              event.preventDefault();
+              onRoomContextMenu(cell.room.roomNo, event);
+            }
+          : undefined
+      }
     >
       <span className="roomio-nr-cell-top">
         <span className="roomio-nr-cell-no">{cell.room.roomNo}</span>
@@ -158,6 +182,9 @@ export function RoomRackGrid({
   hkMap: hkMapProp,
   elektra = false,
   onRefresh,
+  hkInteractive = false,
+  savingRoom = null,
+  onRoomContextMenu,
 }: Props) {
   const reservations = reservationsProp ?? DEMO_RESERVATIONS;
   const businessDate = businessDateProp ?? PROPERTY.businessDate;
@@ -273,7 +300,14 @@ export function RoomRackGrid({
                 } as React.CSSProperties}
               >
                 {section.cells.map((cell) => (
-                  <RackPreviewCell key={cell.room.roomNo} cell={cell} ctx={displayCtx} />
+                  <RackPreviewCell
+                    key={cell.room.roomNo}
+                    cell={cell}
+                    ctx={displayCtx}
+                    hkInteractive={hkInteractive}
+                    savingRoom={savingRoom}
+                    onRoomContextMenu={onRoomContextMenu}
+                  />
                 ))}
               </div>
             </section>

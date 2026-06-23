@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Render.com Node runtime başlatıcı (Docker gerekmez). */
 import { execSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { isPostgresUrl, prismaSchemaPath } from './prisma-schema.mjs';
 
@@ -24,6 +24,7 @@ if (existsSync(standalone)) {
     mkdirSync(join(standalone, '.next'), { recursive: true });
     cpSync(staticDir, join(standalone, '.next', 'static'), { recursive: true });
   }
+  writeFileSync(join(standalone, '.env'), `DATABASE_URL="${dbUrl}"\n`, 'utf8');
 }
 
 const schema = prismaSchemaPath(dbUrl);
@@ -37,8 +38,12 @@ if (existsSync(join(standalone, 'server.js'))) {
   execSync('node server.js', {
     stdio: 'inherit',
     cwd: standalone,
-    env: { ...process.env, PORT: port, HOSTNAME: '0.0.0.0' },
+    env: { ...process.env, DATABASE_URL: dbUrl, PORT: port, HOSTNAME: '0.0.0.0' },
   });
 } else {
-  execSync('npx next start -p ' + port + ' -H 0.0.0.0', { stdio: 'inherit', cwd: ROOT, env: process.env });
+  execSync('npx next start -p ' + port + ' -H 0.0.0.0', {
+    stdio: 'inherit',
+    cwd: ROOT,
+    env: { ...process.env, DATABASE_URL: dbUrl },
+  });
 }
