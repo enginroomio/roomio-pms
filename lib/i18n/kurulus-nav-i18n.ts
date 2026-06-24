@@ -62,3 +62,17 @@ export function translateSidebarNavItems(items: SidebarNavItem[], t: TFn): Sideb
     children: item.children?.length ? translateSidebarNavItems(item.children, t) : undefined,
   }));
 }
+
+export function translateFlatSidebarLink(
+  link: { label: string; href: string; i18nKey?: string; prefixKey?: string },
+  t: TFn,
+): { label: string; href: string } {
+  const parts = link.label.split(' › ');
+  const itemLabel = parts[parts.length - 1] ?? link.label;
+  const itemTranslated = link.i18nKey ? t(link.i18nKey, undefined, itemLabel) : itemLabel;
+  if (parts.length <= 1) return { label: itemTranslated, href: link.href };
+  const prefix = link.prefixKey ? t(link.prefixKey, undefined, parts[0]) : parts[0];
+  const middle = parts.slice(1, -1).join(' › ');
+  const label = middle ? `${prefix} › ${middle} › ${itemTranslated}` : `${prefix} › ${itemTranslated}`;
+  return { label, href: link.href };
+}

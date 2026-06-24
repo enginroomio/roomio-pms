@@ -124,12 +124,12 @@ const RAW_GROUPS: RawGroup[] = [
     defaultIcon: 'calendar',
     items: [
       { label: 'Grafikler (F1)', href: '/reservations/calendar' },
-      { label: 'Yeni Rezervasyon Kaydı', href: '/reservations/new' },
-      { label: 'Rezervasyon Listesi', href: '/reservations' },
+      { label: 'Yeni Rezervasyon Kaydı', href: '/reservations/new', i18nKey: 'sidebar.item.newReservation' },
+      { label: 'Rezervasyon Listesi', href: '/reservations', i18nKey: 'sidebar.item.reservationList' },
       { label: 'Toplu Rezervasyon', href: '/reservations?tab=group' },
       { label: 'Rez. Durum Takip Listesi', href: '/reservations?track=1' },
       { label: '', href: '#', separator: true },
-      { label: 'Konaklayanlar Listesi', href: '/reception/inhouse' },
+      { label: 'Konaklayanlar Listesi', href: '/reception/inhouse', i18nKey: 'sidebar.item.inhouseList' },
       { label: 'Ayrılanlar Listesi', href: '/reservations?status=CHECKED_OUT' },
       { label: 'Bekleme Listesi', href: '/reservations?status=OPTION' },
       { label: 'İptal Listesi', href: '/reservations?status=CANCELLED' },
@@ -140,8 +140,8 @@ const RAW_GROUPS: RawGroup[] = [
       { label: 'Mailden Rezervasyon Oku', href: '/reservations?tab=email' },
       { label: '', href: '#', separator: true },
       { label: 'Hızlı Blokaj', href: '/rooms?tab=blocking' },
-      { label: 'Boş Oda Listesi', href: '/reception/vacant' },
-      { label: 'Takip Listesi (Traces)', href: '/guest-relations/traces' },
+      { label: 'Boş Oda Listesi', href: '/reception/vacant', i18nKey: 'sidebar.item.vacantList' },
+      { label: 'Takip Listesi (Traces)', href: '/guest-relations/traces', i18nKey: 'sidebar.item.traces' },
       { label: 'Transfer Bilgileri', href: '/reports?report=transfer' },
       { label: 'Grup Kod Listesi', href: '/reservations?tab=group-codes' },
       { label: '', href: '#', separator: true },
@@ -153,13 +153,13 @@ const RAW_GROUPS: RawGroup[] = [
     title: 'RESEPSİYON',
     defaultIcon: 'wallet',
     items: [
-      { label: 'Konaklayanlar Listesi', href: '/reception/inhouse' },
-      { label: 'Boş Oda Listesi', href: '/reception/vacant' },
+      { label: 'Konaklayanlar Listesi', href: '/reception/inhouse', i18nKey: 'sidebar.item.inhouseList' },
+      { label: 'Boş Oda Listesi', href: '/reception/vacant', i18nKey: 'sidebar.item.vacantList' },
       { label: 'Share Oda Oluşturma', href: '/reception/inhouse?action=share' },
       { label: 'Günlük Oda Durumu', href: '/' },
       { label: 'Oda Müsaitlik Durumu', href: '/reservations?tab=availability' },
       { label: 'Oda Müsaitlik Durumu (Fiyatlı)', href: '/reservations?tab=availability&prices=1' },
-      { label: 'Planlanan Oda Değişimleri', href: '/reception/inhouse?tab=room-changes' },
+      { label: 'Planlanan Oda Değişimleri', href: '/reception/inhouse?tab=room-changes', i18nKey: 'sidebar.item.plannedRoomChanges' },
       { label: 'Oda Değişim Listesi', href: '/reports?report=room-changes' },
       { label: 'Ayrılış Tarihi Değişim Tablosu', href: '/reports?report=departure-change' },
       { label: 'Geliş Tarihi Değişim Tablosu', href: '/reports?report=arrival-change' },
@@ -170,8 +170,8 @@ const RAW_GROUPS: RawGroup[] = [
       { label: 'Günlük Kart Ver', href: '/reception/inhouse?tab=daily-card' },
       { label: '', href: '#', separator: true },
       { label: 'Online CRM Mesajları', href: '/guest-relations?tab=messages' },
-      { label: 'Takip Listesi (Traces)', href: '/guest-relations/traces' },
-      { label: 'Kayıp ve Bulunan Listesi', href: '/guest-relations/lost-found' },
+      { label: 'Takip Listesi (Traces)', href: '/guest-relations/traces', i18nKey: 'sidebar.item.traces' },
+      { label: 'Kayıp ve Bulunan Listesi', href: '/guest-relations/lost-found', i18nKey: 'sidebar.item.lostFound' },
       { label: 'Arıza ve Şikayet Takip Listesi', href: '/guest-relations/complaints' },
       { label: 'Yeni Arıza ve Şikayet Kaydı', href: '/guest-relations/complaints?new=1' },
       { label: 'Reklamasyon', href: '/guest-relations/reclamations' },
@@ -187,7 +187,7 @@ const RAW_GROUPS: RawGroup[] = [
     title: 'ÖN KASA',
     defaultIcon: 'banknote',
     items: [
-      { label: 'Kasa Defterleri', href: '/reception' },
+      { label: 'Kasa Defterleri', href: '/reception', i18nKey: 'sidebar.item.cashLedgers' },
       { label: 'Kasa Kapatma Listesi', href: '/reception?tab=kasa-close' },
       { label: 'Günlük Oda Tahsilat Listesi', href: '/reception/arrivals?tab=collections' },
       { label: 'Döviz Bozdurma Listesi', href: '/reception/departures?tab=fx' },
@@ -207,25 +207,25 @@ const RAW_GROUPS: RawGroup[] = [
     title: 'KAT HİZMETLERİ',
     defaultIcon: 'bed-double',
     items: [
-      { label: 'Oda Listesi', href: '/housekeeping/rooms' },
+      { label: 'Oda Listesi', href: '/housekeeping/rooms', i18nKey: 'sidebar.item.roomList' },
       { label: 'Blokaj Tablosu', href: '/rooms?tab=blocking' },
-      { label: 'Boş Oda Listesi', href: '/reception/vacant' },
-      { label: 'Room Rack', href: '/rooms' },
+      { label: 'Boş Oda Listesi', href: '/reception/vacant', i18nKey: 'sidebar.item.vacantList' },
+      { label: 'Room Rack', href: '/rooms', i18nKey: 'sidebar.item.roomRack' },
       { label: 'Yeni Room Rack', href: '/rooms?view=new-rack' },
       { label: 'Günlük Oda Durumu', href: '/' },
       { label: 'KAPALI Oda Listesi', href: '/rooms?filter=closed' },
-      { label: 'Takip Listesi (Traces)', href: '/guest-relations/traces' },
-      { label: 'Kayıp ve Bulunan Listesi', href: '/guest-relations/lost-found' },
+      { label: 'Takip Listesi (Traces)', href: '/guest-relations/traces', i18nKey: 'sidebar.item.traces' },
+      { label: 'Kayıp ve Bulunan Listesi', href: '/guest-relations/lost-found', i18nKey: 'sidebar.item.lostFound' },
       { label: '', href: '#', separator: true },
-      { label: 'House Keeping Oda İşlemleri', href: '/housekeeping?tab=operations' },
-      { label: 'House Keeping Oda Kontrolü', href: '/housekeeping/rooms?tab=control' },
+      { label: 'House Keeping Oda İşlemleri', href: '/housekeeping?tab=operations', i18nKey: 'sidebar.item.hkOperations' },
+      { label: 'House Keeping Oda Kontrolü', href: '/housekeeping/rooms?tab=control', i18nKey: 'sidebar.item.hkRoomControl' },
       { label: 'House Keeping Raporu', href: '/reports?category=kathizmetleri' },
       { label: 'Housekeeper Kontrol Listesi', href: '/housekeeping/tasks?tab=checklist' },
       { label: 'Oda Kontrol Arşiv Listesi', href: '/housekeeping/tasks?tab=archive' },
       { label: '', href: '#', separator: true },
       { label: 'Enerji Tüketim Tablosu', href: '/reports?report=enerji' },
       { label: 'Oda Demirbaş Listesi', href: '/reports?report=demirbas' },
-      { label: 'Arıza ve Şikayet Listesi', href: '/guest-relations/complaints' },
+      { label: 'Arıza ve Şikayet Listesi', href: '/guest-relations/complaints', i18nKey: 'sidebar.item.complaints' },
     ],
   },
   {
@@ -233,9 +233,9 @@ const RAW_GROUPS: RawGroup[] = [
     title: 'MİSAFİR İLİŞKİLERİ',
     defaultIcon: 'heart',
     items: [
-      { label: 'Takip Listesi (Traces)', href: '/guest-relations/traces' },
-      { label: 'In House List', href: '/guest-relations/inhouse' },
-      { label: 'Info Rack (İsim Listesi)', href: '/guest-relations/info-rack' },
+      { label: 'Takip Listesi (Traces)', href: '/guest-relations/traces', i18nKey: 'sidebar.item.traces' },
+      { label: 'In House List', href: '/guest-relations/inhouse', i18nKey: 'sidebar.item.inhouseList' },
+      { label: 'Info Rack (İsim Listesi)', href: '/guest-relations/info-rack', i18nKey: 'sidebar.item.infoRack' },
       { label: 'Restoran Rezervasyon', href: '/guest-relations/restaurant' },
       { label: 'Tenis Kort Rezervasyon', href: '/guest-relations/tennis' },
       { label: 'Günlük Aktivite Listesi', href: '/guest-relations/daily-activities' },
@@ -243,8 +243,8 @@ const RAW_GROUPS: RawGroup[] = [
       { label: 'Günlük Hava Durumu', href: '/guest-relations/weather' },
       { label: '5 Günlük Hava Tahmini', href: '/guest-relations/weather-forecast' },
       { label: '', href: '#', separator: true },
-      { label: 'Arıza ve Şikayet Listesi', href: '/guest-relations/complaints' },
-      { label: 'Kayıp ve Bulunan Listesi', href: '/guest-relations/lost-found' },
+      { label: 'Arıza ve Şikayet Listesi', href: '/guest-relations/complaints', i18nKey: 'sidebar.item.complaints' },
+      { label: 'Kayıp ve Bulunan Listesi', href: '/guest-relations/lost-found', i18nKey: 'sidebar.item.lostFound' },
       { label: 'Misafir Yorum Listesi', href: '/guest-relations/reviews' },
       { label: 'Misafir Yorum Girişi', href: '/guest-relations/reviews/new' },
       { label: 'Reklamasyon', href: '/guest-relations/reclamations' },
@@ -255,7 +255,7 @@ const RAW_GROUPS: RawGroup[] = [
     title: 'BANKET',
     defaultIcon: 'utensils',
     items: [
-      { label: 'Banket Rezervasyon', href: '/fnb' },
+      { label: 'Banket Rezervasyon', href: '/fnb', i18nKey: 'sidebar.item.banquetReservation' },
       { label: 'Banket Anlaşmaları', href: '/fnb?tab=agreements' },
       { label: 'Banket Ajanda', href: '/fnb?tab=calendar' },
       { label: 'Banket İlk Tanımlar', href: '/fnb?tab=definitions' },
@@ -267,19 +267,19 @@ const RAW_GROUPS: RawGroup[] = [
     title: 'ARKA BÜRO',
     defaultIcon: 'building',
     items: [
-      { label: 'Yeni Fatura', href: '/accounting?tab=invoice&new=1' },
-      { label: 'Fatura Listesi', href: '/accounting?tab=invoice' },
+      { label: 'Yeni Fatura', href: '/accounting?tab=invoice&new=1', i18nKey: 'sidebar.item.newInvoice' },
+      { label: 'Fatura Listesi', href: '/accounting?tab=invoice', i18nKey: 'sidebar.item.invoiceList' },
       { label: 'Proforma Fatura Listesi', href: '/accounting?tab=proforma' },
       { label: 'Acenta', href: '/settings?section=agencies' },
       { label: 'Fiyat Kodları (Rate Code)', href: '/settings?section=rate-plans' },
       { label: 'Misafir', href: '/guest-relations/repeat-guests' },
-      { label: 'Cari Kartlar', href: '/accounting?tab=cari' },
+      { label: 'Cari Kartlar', href: '/accounting?tab=cari', i18nKey: 'sidebar.item.ledgerCards' },
       { label: 'Kasa - Banka Kartları', href: '/accounting?tab=bank-cards' },
       { label: 'Cari Ödemeler', href: '/accounting?tab=cari-payments' },
       { label: 'Ek Modüller', href: '/settings/integrations/tesa?tab=modules' },
       { label: 'İndirim Tanımları (POS)', href: '/fnb?tab=discounts' },
       { label: 'Ürün Kartları', href: '/settings?section=inventory' },
-      { label: 'Yönetim Raporları', href: '/reports?tab=management' },
+      { label: 'Yönetim Raporları', href: '/reports?tab=management', i18nKey: 'sidebar.item.managementReports' },
       { label: 'Yönetim Raporu Hazırlama', href: '/reports?tab=prepare' },
       { label: 'Bütçe Girişleri', href: '/accounting?tab=budget' },
       { label: 'Eski Tarihli Departman Gelirleri', href: '/reports?report=dept-revenue-old' },
@@ -297,8 +297,8 @@ const RAW_GROUPS: RawGroup[] = [
     title: 'GÜN SONU',
     defaultIcon: 'clock',
     items: [
-      { label: 'Gün Sonu Raporlarını Al', href: '/reports?tab=eod&action=fetch' },
-      { label: 'Günü Kapat', href: '/reports?tab=eod&action=close' },
+      { label: 'Gün Sonu Raporlarını Al', href: '/reports?tab=eod&action=fetch', i18nKey: 'sidebar.item.eodFetch' },
+      { label: 'Günü Kapat', href: '/reports?tab=eod&action=close', i18nKey: 'sidebar.item.eodClose' },
       { label: 'Eski Gün Sonu Raporları', href: '/reports?tab=eod&action=archive' },
       { label: '', href: '#', separator: true },
       { label: 'Yedek Al', href: '/reports?tab=eod&action=backup' },
@@ -316,14 +316,14 @@ const RAW_GROUPS: RawGroup[] = [
     title: 'RAPORLAR',
     defaultIcon: 'bar-chart',
     items: [
-      { label: 'Raporlama Programı', href: '/reports' },
+      { label: 'Raporlama Programı', href: '/reports', i18nKey: 'sidebar.sistem.reports' },
       { label: 'Kullanıcı Tanımlı Raporlar', href: '/reports?tab=user' },
       { label: 'Özel Raporlar', href: '/reports?tab=special' },
       { label: 'Uzak Otelden Raporlama', href: '/reports?tab=remote' },
       { label: 'FC-Forecast Raporları', href: '/reports?category=forecast' },
-      { label: 'FO-Önbüro Raporları', href: '/reports?category=rezervasyon' },
+      { label: 'FO-Önbüro Raporları', href: '/reports?category=rezervasyon', i18nKey: 'sidebar.item.foReports' },
       { label: 'DL-Günlük Raporlar (InHouse Lists)', href: '/reports?category=gunluk' },
-      { label: 'HK-HouseKeeping Raporları', href: '/reports?category=kathizmetleri' },
+      { label: 'HK-HouseKeeping Raporları', href: '/reports?category=kathizmetleri', i18nKey: 'sidebar.item.hkReports' },
       { label: 'DR-Günlük Gelir Raporları', href: '/reports?category=gelir' },
       { label: 'CS-Kasa Raporları', href: '/reports?category=kontrol' },
       { label: 'IN-Fatura Raporları', href: '/reports?category=muhasebe' },
@@ -346,7 +346,7 @@ const RAW_GROUPS: RawGroup[] = [
     title: 'AYARLAR',
     defaultIcon: 'settings',
     items: [
-      { label: 'Sisteme Giriş', href: '/settings' },
+      { label: 'Sisteme Giriş', href: '/settings', i18nKey: 'sidebar.item.login' },
       { label: 'Sistemden Çıkış', href: '/settings?action=logout' },
       { label: 'Şifre Değiştir', href: '/settings?tab=password' },
       { label: 'Tema Seç', href: '/settings?tab=theme' },
@@ -361,9 +361,9 @@ const RAW_GROUPS: RawGroup[] = [
       { label: 'Santral', href: '/settings/integrations/pbx' },
       { label: 'Adres ve Tel Rehberi', href: '/guest-relations?tab=directory' },
       { label: 'Log (Kayıt İzleme)', href: '/settings/privacy' },
-      { label: 'KVKK & Gizlilik', href: '/settings/privacy' },
-      { label: 'Lisanslama', href: '/settings/licensing' },
-      { label: 'Kapı Entegrasyonu', href: '/settings/integrations/tesa' },
+      { label: 'KVKK & Gizlilik', href: '/settings/privacy', i18nKey: 'sidebar.item.privacy' },
+      { label: 'Lisanslama', href: '/settings/licensing', i18nKey: 'sidebar.item.licensing' },
+      { label: 'Kapı Entegrasyonu', href: '/settings/integrations/tesa', i18nKey: 'sidebar.item.doorIntegration' },
       { label: 'Çıkış', href: '/settings?action=exit' },
     ],
   },
@@ -372,17 +372,20 @@ const RAW_GROUPS: RawGroup[] = [
 /** Mockup uyumlu menü — tüm modüller ve ▶ alt menüler */
 export const SIDEBAR_NAV: SidebarNavSection[] = RAW_GROUPS.map(buildSection);
 
-export function flattenSidebarLinks(sections = SIDEBAR_NAV): { label: string; href: string }[] {
-  const out: { label: string; href: string }[] = [];
-  function walk(items: SidebarNavItem[], prefix = '') {
+export function flattenSidebarLinks(sections = SIDEBAR_NAV): { label: string; href: string; i18nKey?: string; prefixKey?: string }[] {
+  const out: { label: string; href: string; i18nKey?: string; prefixKey?: string }[] = [];
+  function walk(items: SidebarNavItem[], prefix = '', prefixKey?: string) {
     for (const item of items) {
       if (item.separator) continue;
       const label = prefix ? `${prefix} › ${item.label}` : item.label;
-      if (item.href) out.push({ label, href: item.href });
-      if (item.children) walk(item.children, label);
+      if (item.href) out.push({ label, href: item.href, i18nKey: item.i18nKey, prefixKey });
+      if (item.children) walk(item.children, label, prefixKey);
     }
   }
-  for (const section of sections) walk(section.items, section.title);
+  for (const section of sections) {
+    const sectionKey = `sidebar.section.${section.id}`;
+    walk(section.items, section.title, sectionKey);
+  }
   return out;
 }
 

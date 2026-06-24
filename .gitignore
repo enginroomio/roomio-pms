@@ -11,5 +11,5 @@ out/
 .DS_Store
 Thumbs.db
 keys/license-private.pem
-.roomio-data/
-.roomio/
+test-results/
+.roomio-active-port

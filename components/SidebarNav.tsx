@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '@/components/i18n/I18nProvider';
-import { translateSidebarNavItems } from '@/lib/i18n/kurulus-nav-i18n';
+import { translateSidebarNavItems, translateFlatSidebarLink } from '@/lib/i18n/kurulus-nav-i18n';
 import {
   Banknote,
   BarChart3,
@@ -116,8 +116,10 @@ export function SidebarNav() {
   const filteredLinks = useMemo(() => {
     const q = query.trim().toLocaleLowerCase('tr-TR');
     if (!q) return [];
-    return flattenSidebarLinks().filter((link) => link.label.toLocaleLowerCase('tr-TR').includes(q));
-  }, [query]);
+    return flattenSidebarLinks()
+      .map((link) => translateFlatSidebarLink(link, t))
+      .filter((link) => link.label.toLocaleLowerCase('tr-TR').includes(q));
+  }, [query, t]);
 
   useEffect(() => {
     setModuleId(routeModuleId);

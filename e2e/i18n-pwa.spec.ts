@@ -174,6 +174,13 @@ test.describe('i18n', () => {
     await expect(page.getByRole('link', { name: 'Setup' }).first()).toBeVisible();
     await expect(page.getByRole('button', { name: 'New res.' })).toBeVisible();
   });
+
+  test('sidebar arama İngilizce', async ({ page }) => {
+    await page.goto('/');
+    await page.getByLabel(/Dil|Language/i).selectOption('en');
+    await page.getByPlaceholder('Search menu…').fill('reservation');
+    await expect(page.getByRole('link', { name: /RESERVATIONS › New reservation/i })).toBeVisible({ timeout: 8000 });
+  });
 });
 
 test.describe('PWA offline', () => {
