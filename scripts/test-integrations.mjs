@@ -7,6 +7,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const BASE = process.env.ROOMIO_URL ?? readActivePort() ?? 'http://127.0.0.1:3100';
+const ADMIN_EMAIL = process.env.ROOMIO_ADMIN_EMAIL ?? 'admin@roomio.local';
+const ADMIN_PASSWORD = process.env.ROOMIO_CHECKLIST_PASSWORD ?? 'roomio123';
 
 function readActivePort() {
   try {
@@ -17,14 +19,31 @@ function readActivePort() {
   }
 }
 
-async function json(method, path, body) {
+async function json(method, path, body, token) {
+  const headers = body ? { 'Content-Type': 'application/json' } : {};
+  if (token) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    headers: Object.keys(headers).length ? headers : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok, status: res.status, data };
+}
+
+let adminToken;
+async function adminJson(method, path, body) {
+  if (!adminToken) {
+    const login = await json('POST', '/api/auth/login', {
+      email: ADMIN_EMAIL,
+      password: ADMIN_PASSWORD,
+    });
+    if (!login.ok || !login.data.token) {
+      throw new Error(`admin login failed (${login.status})`);
+    }
+    adminToken = login.data.token;
+  }
+  return json(method, path, body, adminToken);
 }
 
 const tests = [
@@ -54,14 +73,14 @@ const tests = [
   {
     name: '5651 device test (all)',
     run: async () => {
-      const r = await json('POST', '/api/compliance/5651/devices', { action: 'test' });
+      const r = await adminJson('POST', '/api/compliance/5651/devices', { action: 'test' });
       return r.ok && Array.isArray(r.data.results) && r.data.results.length > 0;
     },
   },
   {
     name: '5651 bridge dry-run (mikrotik)',
     run: async () => {
-      const r = await json('POST', '/api/compliance/5651/bridge/test', {
+      const r = await adminJson('POST', '/api/compliance/5651/bridge/test', {
         provider: 'mikrotik',
         sample: 'mikrotik_login',
         dryRun: true,
@@ -72,7 +91,7 @@ const tests = [
   {
     name: '5651 bridge dry-run (unifi)',
     run: async () => {
-      const r = await json('POST', '/api/compliance/5651/bridge/test', {
+      const r = await adminJson('POST', '/api/compliance/5651/bridge/test', {
         provider: 'unifi',
         sample: 'unifi_connect',
         dryRun: true,
@@ -90,6 +109,8 @@ const tests = [
         checkIn: '2026-06-21',
         checkOut: '2026-06-23',
         reservationRef: 'REF-3',
+        tesa: false,
+        pbx: true,
       });
       return (
         r.ok
