@@ -19,7 +19,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - name: Install dependencies
@@ -67,6 +67,8 @@ jobs:
         env:
           CI: true
           ROOMIO_URL: http://127.0.0.1:3100
+          PLAYWRIGHT_REUSE_SERVER: '1'
+          ROOMIO_AUTH_REQUIRED: '0'
 
   docker:
     runs-on: ubuntu-latest
