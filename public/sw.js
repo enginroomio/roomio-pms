@@ -1,31 +1,58 @@
-const CACHE = 'roomio-hk-v9';
+const CACHE = 'roomio-pms-v11';
+const OFFLINE_URL = '/offline';
+
 const SHELL = [
   '/',
+  '/login',
+  OFFLINE_URL,
   '/manifest.json',
+  '/icons/icon-192.svg',
   '/housekeeping',
   '/housekeeping/mobile',
   '/housekeeping/rooms',
   '/housekeeping/tasks',
-  '/api/housekeeping/rooms',
+  '/rooms',
+  '/reception',
+  '/accounting',
+  '/reports',
 ];
 
 function cacheableGet(url) {
   if (url.pathname.startsWith('/_next/static/')) return true;
   if (url.pathname.endsWith('.css')) return true;
+  if (url.pathname.endsWith('.js') && url.pathname.startsWith('/_next/')) return true;
   return SHELL.includes(url.pathname);
+}
+
+async function offlineFallback(request) {
+  const cache = await caches.open(CACHE);
+  const path = new URL(request.url).pathname;
+  const cached =
+    (await cache.match(request)) ??
+    (await cache.match(path)) ??
+    (await cache.match(OFFLINE_URL)) ??
+    (await cache.match('/housekeeping/mobile')) ??
+    (await cache.match('/'));
+  return cached;
 }
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(SHELL.filter((p) => !p.startsWith('/api/')))).then(() => self.skipWaiting()),
+    caches
+      .open(CACHE)
+      .then((cache) =>
+        cache.addAll(SHELL.filter((p) => !p.startsWith('/api/'))),
+      )
+      .then(() => self.skipWaiting()),
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))),
-    ).then(() => self.clients.claim()),
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim()),
   );
 });
 
@@ -43,7 +70,7 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         })
-        .catch(() => caches.match(event.request).then((r) => r ?? caches.match('/housekeeping/mobile'))),
+        .catch(() => offlineFallback(event.request)),
     );
     return;
   }

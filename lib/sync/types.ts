@@ -1,4 +1,4 @@
-export type SyncEntity = 'reservation' | 'housekeeping' | 'audit' | 'consent' | 'review';
+export type SyncEntity = 'reservation' | 'housekeeping' | 'audit' | 'consent' | 'review' | 'guest_request' | 'guest_trace';
 
 export type SyncOperation = 'create' | 'update' | 'delete';
 

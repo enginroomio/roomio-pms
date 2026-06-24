@@ -1,11 +1,11 @@
 {
-  "name": "Roomio Kat HK",
-  "short_name": "Roomio HK",
-  "description": "Kat hizmetleri mobil pano — çevrimdışı oda durumu",
-  "start_url": "/housekeeping/mobile",
+  "name": "Roomio PMS",
+  "short_name": "Roomio",
+  "description": "Otel yönetim sistemi — çevrimdışı HK ve ön büro",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#0f1419",
   "theme_color": "#1a6b4a",
   "lang": "tr",
@@ -26,19 +26,19 @@
   ],
   "shortcuts": [
     {
-      "name": "Oda panosu",
-      "url": "/housekeeping",
-      "description": "HK oda grid"
+      "name": "Ana sayfa",
+      "url": "/",
+      "description": "Ön büro dashboard"
     },
     {
-      "name": "Oda listesi",
-      "url": "/housekeeping/rooms",
-      "description": "Tablo görünümü"
+      "name": "Kat HK mobil",
+      "url": "/housekeeping/mobile",
+      "description": "Çevrimdışı oda panosu"
     },
     {
-      "name": "Görevler",
-      "url": "/housekeeping/tasks",
-      "description": "Temizlik görevleri"
+      "name": "Room Rack",
+      "url": "/rooms",
+      "description": "Oda rack F12"
     }
   ]
 }

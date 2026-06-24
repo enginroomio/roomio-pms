@@ -6,6 +6,7 @@ import type { Reservation } from '@/lib/types/reservation';
 import { checksum, encryptPayload } from '@/lib/sync/crypto-client';
 import * as db from '@/lib/sync/local-db';
 import type { SyncMeta, SyncQueueItem } from '@/lib/sync/types';
+import { roomioFetch } from '@/lib/client/api';
 
 const DEVICE_KEY = 'roomio_device_id';
 const LAST_SYNC_KEY = 'lastSyncAt';
@@ -90,7 +91,7 @@ export async function runSync(): Promise<{ ok: boolean; pushed: number; pulled: 
           payload: await encryptPayload(item.payload),
         })),
       );
-      const res = await fetch('/api/sync/push', {
+      const res = await roomioFetch('/api/sync/push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, items: encItems }),
@@ -102,7 +103,7 @@ export async function runSync(): Promise<{ ok: boolean; pushed: number; pulled: 
     }
 
     const since = (await db.getMeta<string>(LAST_SYNC_KEY)) ?? '1970-01-01T00:00:00.000Z';
-    const pullRes = await fetch(`/api/sync/pull?deviceId=${encodeURIComponent(deviceId)}&since=${encodeURIComponent(since)}`);
+    const pullRes = await roomioFetch(`/api/sync/pull?deviceId=${encodeURIComponent(deviceId)}&since=${encodeURIComponent(since)}`);
     if (!pullRes.ok) throw new Error(`pull ${pullRes.status}`);
     const pullBody = (await pullRes.json()) as { items: SyncQueueItem[]; serverTime: string };
     pulled = pullBody.items.length;
