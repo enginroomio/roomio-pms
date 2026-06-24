@@ -1,6 +1,7 @@
 import { KURULUS_NAV, type KurulusNavEntry } from '@/lib/navigation/kurulus-nav';
 import type { ModuleNavItem } from '@/lib/navigation/module-menus';
 import type { SidebarNavItem } from '@/lib/navigation/sidebar-nav';
+import { sidebarHrefI18nKey } from '@/lib/i18n/sidebar-href-i18n';
 
 type TFn = (key: string, params?: Record<string, string | number>, fallback?: string) => string;
 
@@ -55,12 +56,26 @@ export function findKurulusScreenTitle(t: TFn, key: string): string {
   return t(`nav.kurulus.${key}`, undefined, key);
 }
 
+function sidebarItemLabel(t: TFn, item: { label: string; i18nKey?: string; href?: string }): string {
+  const key = item.i18nKey ?? (item.href ? sidebarHrefI18nKey(item.href) : undefined);
+  return key ? t(key, undefined, item.label) : item.label;
+}
+
 export function translateSidebarNavItems(items: SidebarNavItem[], t: TFn): SidebarNavItem[] {
   return items.map((item) => ({
     ...item,
-    label: item.separator ? '' : item.i18nKey ? t(item.i18nKey, undefined, item.label) : item.label,
+    label: item.separator ? '' : sidebarItemLabel(t, item),
     children: item.children?.length ? translateSidebarNavItems(item.children, t) : undefined,
   }));
+}
+
+function resolveFlatItemLabel(
+  itemLabel: string,
+  link: { i18nKey?: string; href: string },
+  t: TFn,
+): string {
+  const key = link.i18nKey ?? sidebarHrefI18nKey(link.href);
+  return key ? t(key, undefined, itemLabel) : itemLabel;
 }
 
 export function translateFlatSidebarLink(
@@ -69,7 +84,7 @@ export function translateFlatSidebarLink(
 ): { label: string; href: string } {
   const parts = link.label.split(' › ');
   const itemLabel = parts[parts.length - 1] ?? link.label;
-  const itemTranslated = link.i18nKey ? t(link.i18nKey, undefined, itemLabel) : itemLabel;
+  const itemTranslated = resolveFlatItemLabel(itemLabel, link, t);
   if (parts.length <= 1) return { label: itemTranslated, href: link.href };
   const prefix = link.prefixKey ? t(link.prefixKey, undefined, parts[0]) : parts[0];
   const middle = parts.slice(1, -1).join(' › ');

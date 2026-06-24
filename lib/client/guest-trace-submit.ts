@@ -16,7 +16,7 @@ export type GuestTracePayload = {
   id?: string;
 };
 
-export type GuestTraceSubmitResult = {
+export type GuestTraceMutationResult = {
   ok: boolean;
   queued: boolean;
   trace?: GuestTrace;
@@ -36,7 +36,16 @@ function pendingTrace(payload: GuestTracePayload, id: string): GuestTrace {
   };
 }
 
-export async function submitGuestTrace(payload: GuestTracePayload): Promise<GuestTraceSubmitResult> {
+async function queueTraceMutation(
+  operation: 'create' | 'update' | 'delete',
+  entityId: string,
+  payload: unknown,
+): Promise<GuestTraceMutationResult> {
+  await enqueueSync({ entity: 'guest_trace', operation, entityId, payload });
+  return { ok: true, queued: true };
+}
+
+export async function submitGuestTrace(payload: GuestTracePayload): Promise<GuestTraceMutationResult> {
   const body = {
     ...payload,
     date: payload.date ?? new Date().toISOString().slice(0, 10),
@@ -73,4 +82,39 @@ export async function submitGuestTrace(payload: GuestTracePayload): Promise<Gues
     payload: { ...body, id },
   });
   return { ok: true, queued: true, trace: pendingTrace(body, id) };
+}
+
+export async function completeGuestTrace(id: string): Promise<GuestTraceMutationResult> {
+  const payload = { action: 'complete', id };
+
+  if (!isOnline()) {
+    return queueTraceMutation('update', id, payload);
+  }
+
+  const res = await roomioFetch('/api/guest-traces', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (res.ok) {
+    const data = (await res.json()) as { trace: GuestTrace };
+    return { ok: true, queued: false, trace: data.trace };
+  }
+
+  return queueTraceMutation('update', id, payload);
+}
+
+export async function deleteGuestTrace(id: string): Promise<GuestTraceMutationResult> {
+  if (!isOnline()) {
+    return queueTraceMutation('delete', id, { id });
+  }
+
+  const res = await roomioFetch(`/api/guest-traces?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+
+  if (res.ok) {
+    return { ok: true, queued: false };
+  }
+
+  return queueTraceMutation('delete', id, { id });
 }

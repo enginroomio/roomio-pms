@@ -3,6 +3,7 @@
  */
 
 import { KONTRAT_TABS, KURULUS_NAV, type KurulusNavEntry } from './kurulus-nav';
+import { sidebarHrefI18nKey } from '@/lib/i18n/sidebar-href-i18n';
 
 export type SidebarSubItem = {
   label: string;
@@ -12,7 +13,10 @@ export type SidebarSubItem = {
   children?: SidebarSubItem[];
 };
 function sub(label: string, href: string, children?: SidebarSubItem[]): SidebarSubItem {
-  return children?.length ? { label, href, children } : { label, href };
+  const i18nKey = sidebarHrefI18nKey(href);
+  return children?.length
+    ? { label, href, children, i18nKey }
+    : { label, href, ...(i18nKey ? { i18nKey } : {}) };
 }
 
 function fromKurulus(entries: KurulusNavEntry[]): SidebarSubItem[] {

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui';
 import { TableFooter } from '@/components/ReportToolbar';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { roomioFetch } from '@/lib/client/api';
-import { submitGuestTrace } from '@/lib/client/guest-trace-submit';
+import { submitGuestTrace, completeGuestTrace, deleteGuestTrace } from '@/lib/client/guest-trace-submit';
 import type { TraceItem } from '@/lib/data/guest-relations';
 
 type Trace = TraceItem & { id: string; notes?: string };
@@ -86,17 +86,15 @@ export function GuestTracesPanel() {
   }
 
   async function complete(id: string) {
-    await roomioFetch('/api/guest-traces', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'complete', id }),
-    });
+    const result = await completeGuestTrace(id);
+    if (result.queued) setMsg(t('gr.traces.completeQueued'));
     await load();
   }
 
   async function remove(id: string) {
     if (!window.confirm(t('gr.traces.deleteConfirm'))) return;
-    await roomioFetch(`/api/guest-traces?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const result = await deleteGuestTrace(id);
+    if (result.queued) setMsg(t('gr.traces.deleteQueued'));
     await load();
   }
 

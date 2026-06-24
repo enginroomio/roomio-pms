@@ -378,7 +378,14 @@ export function flattenSidebarLinks(sections = SIDEBAR_NAV): { label: string; hr
     for (const item of items) {
       if (item.separator) continue;
       const label = prefix ? `${prefix} › ${item.label}` : item.label;
-      if (item.href) out.push({ label, href: item.href, i18nKey: item.i18nKey, prefixKey });
+      if (item.href) {
+        out.push({
+          label,
+          href: item.href,
+          i18nKey: item.i18nKey,
+          prefixKey,
+        });
+      }
       if (item.children) walk(item.children, label, prefixKey);
     }
   }

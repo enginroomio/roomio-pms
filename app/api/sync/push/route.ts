@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireApiAnyPermission } from '@/lib/auth/require-permission';
 import { appendSyncItems } from '@/lib/server/local-store';
 import { createGuestRequest } from '@/lib/server/guest-request-service';
-import { saveGuestTraceServer } from '@/lib/server/guest-traces';
+import { saveGuestTraceServer, completeGuestTraceServer, deleteGuestTraceServer } from '@/lib/server/guest-traces';
 import { updateHkRoom } from '@/lib/server/housekeeping-service';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 import type { SyncPushRequest } from '@/lib/sync/types';
@@ -69,6 +69,15 @@ export async function POST(req: Request) {
             notes: payload.notes,
           }, propertyId);
         }
+      }
+      if (item.entity === 'guest_trace' && item.operation === 'update') {
+        const payload = item.payload as { action?: string; id?: string };
+        if (payload.action === 'complete' && payload.id) {
+          await completeGuestTraceServer(payload.id, propertyId);
+        }
+      }
+      if (item.entity === 'guest_trace' && item.operation === 'delete') {
+        await deleteGuestTraceServer(item.entityId, propertyId);
       }
     }
 

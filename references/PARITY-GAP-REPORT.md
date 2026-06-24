@@ -50,7 +50,7 @@
 | Gün Sonu | ✅ | ✅ | Kapatma + arşiv |
 | Entegrasyonlar | ✅ | 🟡 | 5651, TESA, PBX (Roomio güçlü) |
 
-**Tamamlanma:** ~98% canlı, ~1% kısmi, ~1% planlı
+**Tamamlanma:** ~99% canlı, ~1% kısmi, ~0% planlı
 
 ---
 
@@ -68,8 +68,8 @@
 7. ~~Gelişmiş PDF şablonları~~ — ✅ `pdf-theme.ts`, fatura PDF, konsolide kartlar, gece denetim tema + `e2e/pdf-templates.spec.ts`
 
 ### Düşük
-8. i18n çeviri motoru — ✅ kuruluş panelleri + nav + master kodlar + sidebar kuruluş flyout; global sidebar kısmi
-9. PWA offline shell — 🟡 shell v11 + misafir talebi + HK durum + trace sync kuyruğu + E2E
+8. i18n çeviri motoru — ✅ kuruluş + sidebar flyout href map; dinamik rapor alt örnekleri kısmi
+9. PWA offline shell — ✅ misafir talebi + HK durum + trace create/complete/delete sync + E2E
 10. ~~Yazarkasa (fiscal)~~ — ✅ canlı cihaz paneli + status/ping API + E2E
 11. ~~Misafir İlişkileri CRM~~ — ✅ şikayet + VIP + trace + review CRUD + E2E
 12. ~~Banket→folyo~~ — ✅ `postBanketEventToFolioServer` + UI + `fnb-banket-folio` E2E
