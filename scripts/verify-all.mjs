@@ -38,17 +38,18 @@ function run(label, cmd, args, opts = {}) {
 }
 
 function killPort() {
-  spawnSync(
-    `lsof -ti :${PORT} 2>/dev/null | xargs kill -9 2>/dev/null; true`,
-    { shell: true, stdio: 'ignore' },
-  );
+  spawnSync('node', [join(ROOT, 'scripts/roomio-kill-ports.mjs')], {
+    cwd: ROOT,
+    stdio: 'ignore',
+    env: { ...process.env, ROOMIO_PORT_START: PORT, ROOMIO_PORT_END: PORT },
+  });
 }
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function waitPortFree(maxMs = 20_000) {
+async function waitPortFree(maxMs = 30_000) {
   const deadline = Date.now() + maxMs;
   while (Date.now() < deadline) {
     if (!(await readHealth())) return true;
@@ -58,7 +59,7 @@ async function waitPortFree(maxMs = 20_000) {
   return !(await readHealth());
 }
 
-async function waitHealth(maxMs = 120_000) {
+async function waitHealth(maxMs = 300_000) {
   const start = Date.now();
   while (Date.now() - start < maxMs) {
     try {
