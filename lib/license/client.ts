@@ -1,5 +1,6 @@
 import type { LicensePayload, LicenseValidation } from '@/lib/license/types';
 import { LICENSE_PREFIX } from '@/lib/license/types';
+import { roomioFetch } from '@/lib/client/api';
 
 const STORAGE_KEY = 'roomio_license_key';
 
@@ -18,7 +19,7 @@ export function clearLicense(): void {
 }
 
 export async function validateLicenseRemote(token: string): Promise<LicenseValidation> {
-  const res = await fetch('/api/license/verify', {
+  const res = await roomioFetch('/api/license/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token }),

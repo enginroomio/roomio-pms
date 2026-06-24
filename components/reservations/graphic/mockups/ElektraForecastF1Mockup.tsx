@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { BarChart3, RefreshCw } from 'lucide-react';
+import { BarChart3, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { DEMO_USER, PROPERTY } from '@/lib/navigation';
 import {
   buildForecastBars,
@@ -86,6 +86,7 @@ export type ElektraForecastF1MockupProps = {
   onRefresh?: () => void;
   onShiftFrom?: (deltaDays: number) => void;
   onResetFrom?: () => void;
+  onOpenFilterWizard?: () => void;
 };
 
 /** Elektra v5 Forecast ekranı — F1 mockup (canlı API verisi veya demo) */
@@ -97,6 +98,7 @@ export function ElektraForecastF1Mockup({
   onRefresh,
   onShiftFrom,
   onResetFrom,
+  onOpenFilterWizard,
 }: ElektraForecastF1MockupProps = {}) {
   const [mainTab, setMainTab] = useState<(typeof MAIN_TABS)[number]>('Grafik');
   const [metricTab, setMetricTab] = useState<(typeof METRIC_TABS)[number]>('Doluluk');
@@ -183,6 +185,14 @@ export function ElektraForecastF1Mockup({
           </div>
 
           <div className="roomio-ef1__toolbar-row roomio-ef1__toolbar-row--actions">
+            <button
+              type="button"
+              className="roomio-ef1__btn roomio-ef1__btn--accent"
+              onClick={() => onOpenFilterWizard?.()}
+              disabled={!onOpenFilterWizard}
+            >
+              <SlidersHorizontal size={14} aria-hidden /> Filtre Sihirbazı
+            </button>
             <button type="button" className="roomio-ef1__btn roomio-ef1__btn--primary" onClick={() => onRefresh?.()} disabled={!onRefresh}>
               Raporu Hazırla
             </button>

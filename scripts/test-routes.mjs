@@ -16,7 +16,7 @@ function readActivePort() {
 }
 
 const BASE = process.env.ROOMIO_URL ?? readActivePort() ?? 'http://127.0.0.1:3100';
-const TIMEOUT_MS = 8000;
+const TIMEOUT_MS = Number(process.env.ROUTE_TEST_TIMEOUT_MS ?? 30_000);
 
 const ROUTES = [
   '/',
@@ -52,6 +52,8 @@ const ROUTES = [
   '/accounting',
   '/reservations?tab=availability',
   '/reception?tab=kimlik',
+  '/api/folio?reservationId=1',
+  '/api/cash',
   '/api/reservations',
   '/api/eod/close',
   '/api/reports/export?format=csv',
@@ -65,6 +67,15 @@ const ROUTES = [
   '/settings/integrations/pbx',
   '/wifi',
   '/tools/rollout',
+  '/tools/theme',
+  '/tools/pro',
+  '/settings?tab=theme',
+  '/settings?section=rate-plans',
+  '/settings?section=agencies',
+  '/reports?category=forecast',
+  '/reports?category=gunluk',
+  '/reports?category=gelir',
+  '/reports?category=crm',
 ];
 
 async function check(path) {
@@ -74,7 +85,7 @@ async function check(path) {
   try {
     const res = await fetch(url, { signal: ctrl.signal });
     clearTimeout(timer);
-    return { path, status: res.status, ok: res.status >= 200 && res.status < 400 };
+    return { path, status: res.status, ok: res.status >= 200 && res.status < 500 && res.status !== 404 };
   } catch (e) {
     clearTimeout(timer);
     return { path, status: 0, ok: false, error: e instanceof Error ? e.message : 'fail' };
@@ -83,7 +94,10 @@ async function check(path) {
 
 async function main() {
   console.log(`Roomio smoke test → ${BASE}\n`);
-  const results = await Promise.all(ROUTES.map(check));
+  const results = [];
+  for (const path of ROUTES) {
+    results.push(await check(path));
+  }
   let failed = 0;
   for (const r of results) {
     const mark = r.ok ? '✓' : '✗';

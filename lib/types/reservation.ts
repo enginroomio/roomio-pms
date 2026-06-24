@@ -28,6 +28,7 @@ export type Reservation = {
   status: ReservationStatus;
   createdAt: string;
   notes?: string;
+  groupId?: string;
   extraData?: Record<string, string>;
 };
 

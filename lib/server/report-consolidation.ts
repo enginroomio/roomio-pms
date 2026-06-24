@@ -1,4 +1,5 @@
 import { getAllReservationsServer, getProperties } from '@/lib/server/pms-store';
+import { buildConsolidatedPdfKit } from '@/lib/server/pdf-templates';
 
 export type PropertyReportRow = {
   propertyId: string;
@@ -74,4 +75,14 @@ export async function buildConsolidatedCsv(): Promise<string> {
     report.totals.checkedIn, '', '',
   ].join(','));
   return lines.join('\n');
+}
+
+export async function buildConsolidatedPdf(businessDate?: string): Promise<Buffer> {
+  const report = await buildConsolidatedReport(businessDate);
+  const today = businessDate ?? new Date().toISOString().slice(0, 10);
+  return buildConsolidatedPdfKit(
+    { generatedAt: report.generatedAt.replace('T', ' ').slice(0, 19), businessDate: today },
+    report.properties,
+    report.totals,
+  );
 }

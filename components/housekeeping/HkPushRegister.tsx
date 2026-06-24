@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { useSession } from '@/components/auth/SessionProvider';
+import { roomioFetch } from '@/lib/client/api';
 import { browserHasPushSubscription, showHkBrowserNotification } from '@/lib/client/show-hk-notification';
 import { emitHkPushAlert } from '@/lib/client/hk-push-alert';
 import { notifyHkOnlineRefresh } from '@/lib/client/hk-online-refresh';
@@ -51,7 +52,7 @@ async function getBrowserSubscription(): Promise<PushSubscription | null> {
 }
 
 async function syncSubscriptionToServer(sub: PushSubscription, deviceLabel: string) {
-  const saveRes = await fetch('/api/push/subscribe', {
+  const saveRes = await roomioFetch('/api/push/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -70,7 +71,7 @@ async function syncSubscriptionToServer(sub: PushSubscription, deviceLabel: stri
 async function sendPresenceHeartbeat(): Promise<void> {
   const sub = await getBrowserSubscription();
   if (!sub) return;
-  await fetch('/api/push/presence', {
+  await roomioFetch('/api/push/presence', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ endpoint: sub.endpoint }),
@@ -143,7 +144,7 @@ export function HkPushRegister() {
 
   const refreshServerCount = useCallback(async () => {
     try {
-      const res = await fetch('/api/push/subscribe?role=hk', { cache: 'no-store' });
+      const res = await roomioFetch('/api/push/subscribe?role=hk', { cache: 'no-store' });
       const body = (await res.json()) as { ok?: boolean; count?: number };
       if (body.ok && typeof body.count === 'number') setServerCount(body.count);
     } catch {
@@ -274,7 +275,7 @@ export function HkPushRegister() {
       await refresh(true, true);
 
       const local = await showHkBrowserNotification(body, title);
-      const res = await fetch('/api/push/send', {
+      const res = await roomioFetch('/api/push/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, body }),

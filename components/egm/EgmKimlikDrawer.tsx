@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { roomioFetch } from '@/lib/client/api';
+import { parseApiError } from '@/lib/client/api-errors';
 import {
   EGM_GENDER_LABELS,
   EGM_ID_TYPE_LABELS,
@@ -60,36 +61,35 @@ export function EgmKimlikDrawer({ open, seed, record, onClose, onSaved }: Props)
   async function save(andSend = false) {
     setBusy(true);
     setMsg(null);
-    const res = await roomioFetch('/api/egm/identity', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ form }),
-    });
-    const j = (await res.json()) as { record?: EgmIdentityRecord; error?: string };
-    if (!res.ok || !j.record) {
-      setBusy(false);
-      setMsg(j.error ?? 'Kayıt başarısız');
-      return;
-    }
-    onSaved(j.record);
-    if (andSend) {
-      const sendRes = await roomioFetch('/api/egm/identity', {
+    try {
+      const res = await roomioFetch('/api/egm/identity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send', id: j.record.id }),
+        body: JSON.stringify({ form }),
       });
-      const sj = (await sendRes.json()) as { record?: EgmIdentityRecord; error?: string };
-      setBusy(false);
-      if (sendRes.ok && sj.record) {
+      if (!res.ok) throw new Error(await parseApiError(res, 'Kayıt başarısız'));
+      const j = (await res.json()) as { record?: EgmIdentityRecord; error?: string };
+      if (!j.record) throw new Error(j.error ?? 'Kayıt başarısız');
+      onSaved(j.record);
+      if (andSend) {
+        const sendRes = await roomioFetch('/api/egm/identity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'send', id: j.record.id }),
+        });
+        if (!sendRes.ok) throw new Error(await parseApiError(sendRes, 'EGM gönderimi başarısız'));
+        const sj = (await sendRes.json()) as { record?: EgmIdentityRecord; error?: string };
+        if (!sj.record) throw new Error(sj.error ?? 'EGM gönderimi başarısız');
         setMsg(`EGM bildirimi gönderildi · Ref: ${sj.record.egmRef}`);
         onSaved(sj.record);
-      } else {
-        setMsg(sj.error ?? 'EGM gönderimi başarısız');
+        return;
       }
-      return;
+      setMsg('Kimlik kaydı güncellendi.');
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : 'İşlem başarısız');
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
-    setMsg('Kimlik kaydı güncellendi.');
   }
 
   async function sendEgm() {
@@ -103,18 +103,21 @@ export function EgmKimlikDrawer({ open, seed, record, onClose, onSaved }: Props)
     }
     setBusy(true);
     setMsg(null);
-    const res = await roomioFetch('/api/egm/identity', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'send', id: record.id }),
-    });
-    const j = (await res.json()) as { record?: EgmIdentityRecord; error?: string };
-    setBusy(false);
-    if (res.ok && j.record) {
+    try {
+      const res = await roomioFetch('/api/egm/identity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send', id: record.id }),
+      });
+      if (!res.ok) throw new Error(await parseApiError(res, 'EGM gönderimi başarısız'));
+      const j = (await res.json()) as { record?: EgmIdentityRecord; error?: string };
+      if (!j.record) throw new Error(j.error ?? 'EGM gönderimi başarısız');
       setMsg(`EGM bildirimi gönderildi · Ref: ${j.record.egmRef}`);
       onSaved(j.record);
-    } else {
-      setMsg(j.error ?? 'EGM gönderimi başarısız');
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : 'EGM gönderimi başarısız');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -132,7 +135,14 @@ export function EgmKimlikDrawer({ open, seed, record, onClose, onSaved }: Props)
           <button type="button" className="roomio-egm-drawer__close" onClick={onClose} aria-label="Kapat">×</button>
         </header>
 
-        {msg ? <p className="roomio-page-desc roomio-egm-drawer__msg">{msg}</p> : null}
+        {msg ? (
+          <p
+            className={`roomio-page-desc roomio-egm-drawer__msg${/başarısız|Yetkisiz|Oturum/i.test(msg) ? ' roomio-text-warn' : ''}`}
+            role="status"
+          >
+            {msg}
+          </p>
+        ) : null}
 
         {missing.length > 0 && record?.status !== 'sent' ? (
           <div className="roomio-alert roomio-alert--warn roomio-egm-drawer__warn">

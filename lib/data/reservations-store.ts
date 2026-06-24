@@ -23,6 +23,16 @@ export function addReservation(reservation: Reservation): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 
+export function updateLocalReservation(id: string, patch: Partial<Reservation>): void {
+  if (typeof window === 'undefined') return;
+  const extras = getExtraReservations();
+  const idx = extras.findIndex((r) => r.id === id);
+  if (idx >= 0) {
+    extras[idx] = { ...extras[idx], ...patch };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(extras));
+  }
+}
+
 export function nextRefNo(): string {
   const all = getAllReservations();
   const n = all.length + 1;

@@ -79,6 +79,20 @@ export const ROOM_TYPES: Record<RoomTypeCode, RoomTypeDef> = {
   },
 };
 
+let typesOverride: Record<string, RoomTypeDef> | null = null;
+
+export function setRoomTypesOverride(types: Record<string, RoomTypeDef>) {
+  typesOverride = Object.keys(types).length > 0 ? types : null;
+}
+
+export function getRoomTypeDef(code: string): RoomTypeDef | undefined {
+  return typesOverride?.[code] ?? ROOM_TYPES[code as RoomTypeCode];
+}
+
+export function getActiveRoomTypes(): RoomTypeDef[] {
+  return typesOverride ? Object.values(typesOverride) : Object.values(ROOM_TYPES);
+}
+
 export function typeCodeForSuffix(suffix: number): RoomTypeCode {
   if (suffix % 15 === 0) return 'SUI';
   if (suffix % 7 === 0) return 'TPL';

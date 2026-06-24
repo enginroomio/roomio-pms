@@ -1,61 +1,87 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, StatusBadge } from '@/components/ui';
+import { ReceptionLoading } from '@/components/reception/ReceptionLoading';
+import { useReservations } from '@/lib/client/use-reservations';
+import { roomioFetch } from '@/lib/client/api';
+import { parseApiError } from '@/lib/client/api-errors';
+import { RoomSuggestPanel } from '@/components/reception/RoomSuggestPanel';
+import { ExtraChargesCheckInPicker } from '@/components/reception/ExtraChargesPanel';
 import {
+  findReservation,
   formatDate,
   formatMoney,
-  getReservationForReception,
-  VACANT_ROOMS,
+  getVacantRooms,
 } from '@/lib/data/reception';
 
 export default function CheckInPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const r = getReservationForReception(id);
+  const { reservations, loading, error } = useReservations();
+  const r = useMemo(() => findReservation(reservations, id), [reservations, id]);
+  const vacantRooms = useMemo(() => getVacantRooms(reservations), [reservations]);
   const [roomNo, setRoomNo] = useState('');
+  const [extraCharges, setExtraCharges] = useState<string[]>([]);
   const [done, setDone] = useState(false);
   const [messages, setMessages] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  if (loading) {
+    return (
+      <PageHeader breadcrumb="Resepsiyon" title="Check-in">
+        <ReceptionLoading loading />
+      </PageHeader>
+    );
+  }
 
   if (!r) {
     return (
       <PageHeader breadcrumb="Resepsiyon" title="Rezervasyon bulunamadı">
+        {error ? <ReceptionLoading error={error} /> : null}
         <Button href="/reception/arrivals">← Giriş listesi</Button>
       </PageHeader>
     );
   }
 
-  const cleanRooms = VACANT_ROOMS.filter((room) => room.type === r.roomType && room.status === 'CLEAN');
+  const cleanRooms = vacantRooms.filter((room) => room.type === r.roomType && room.status === 'CLEAN');
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!roomNo || !r) return;
-    setLoading(true);
+    setSubmitting(true);
     setMessages([]);
 
-    const res = await fetch('/api/reception/check-in', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        reservationId: r.id,
-        roomNo,
-        guestName: r.guestName,
-        checkIn: r.checkIn,
-        checkOut: r.checkOut,
-        reservationRef: r.refNo,
-      }),
-    });
-    const j = (await res.json()) as { ok: boolean; messages?: string[]; message?: string };
-    setMessages(j.messages ?? (j.message ? [j.message] : []));
-    setLoading(false);
-
-    if (!j.ok) return;
-
-    setDone(true);
-    setTimeout(() => router.push('/reception/inhouse'), 1500);
+    try {
+      const res = await roomioFetch('/api/reception/check-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reservationId: r.id,
+          roomNo,
+          guestName: r.guestName,
+          checkIn: r.checkIn,
+          checkOut: r.checkOut,
+          reservationRef: r.refNo,
+          extraChargeCodes: extraCharges,
+        }),
+      });
+      if (!res.ok) throw new Error(await parseApiError(res, 'Check-in başarısız'));
+      const j = (await res.json()) as { ok: boolean; messages?: string[]; message?: string };
+      if (!j.ok) {
+        setMessages(j.messages ?? (j.message ? [j.message] : ['Check-in başarısız']));
+        return;
+      }
+      setMessages(j.messages ?? (j.message ? [j.message] : []));
+      setDone(true);
+      setTimeout(() => router.push('/reception/inhouse'), 1500);
+    } catch (err) {
+      setMessages([err instanceof Error ? err.message : 'Check-in başarısız']);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -84,6 +110,18 @@ export default function CheckInPage() {
           </dl>
         </div>
 
+        <RoomSuggestPanel
+          reservationId={r.id}
+          roomType={r.roomType}
+          selectedRoom={roomNo}
+          onSelect={setRoomNo}
+        />
+        <ExtraChargesCheckInPicker
+          checkIn={r.checkIn}
+          checkOut={r.checkOut}
+          selected={extraCharges}
+          onChange={setExtraCharges}
+        />
         <form className="roomio-card roomio-form" onSubmit={(e) => void submit(e)}>
           <h2 className="roomio-card-title">Oda Ata — Otomatik Check-in</h2>
           <p className="roomio-page-desc">
@@ -106,14 +144,21 @@ export default function CheckInPage() {
             </select>
           </label>
           {messages.length && !done ? (
-            <p className={messages.some((m) => m.includes('hata')) ? 'roomio-text-warn' : 'roomio-page-desc'}>
+            <p
+              className={
+                messages.some((m) => /hata|başarısız|yetkiniz|Oturum/i.test(m))
+                  ? 'roomio-text-warn'
+                  : 'roomio-page-desc'
+              }
+              role="alert"
+            >
               {messages.join(' · ')}
             </p>
           ) : null}
           <div className="roomio-form-actions">
             <Button variant="secondary" href="/reception/arrivals">Vazgeç</Button>
-            <button type="submit" className="roomio-btn roomio-btn--primary" disabled={loading}>
-              {loading ? 'İşleniyor…' : 'Check-in Tamamla'}
+            <button type="submit" className="roomio-btn roomio-btn--primary" disabled={submitting}>
+              {submitting ? 'İşleniyor…' : 'Check-in Tamamla'}
             </button>
           </div>
           <p className="roomio-page-desc" style={{ marginTop: 8 }}>

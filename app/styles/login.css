@@ -1,0 +1,131 @@
+/* Giriş ekranı */
+
+.roomio-login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(26, 107, 74, 0.12), transparent),
+    linear-gradient(180deg, #eef2f7 0%, #dfe8f2 100%);
+}
+
+.roomio-login-card {
+  width: min(100%, 400px);
+  padding: 28px 28px 22px;
+  background: var(--roomio-card, #fff);
+  border: 1px solid var(--roomio-border, #c5d0dc);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.1);
+}
+
+.roomio-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.roomio-login-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: #fff;
+  background: linear-gradient(135deg, #1a6b4a, #0d4f38);
+}
+
+.roomio-login-brand h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.roomio-login-brand p {
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.roomio-login-submit {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.roomio-login-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #b42318;
+}
+
+.roomio-login-hint {
+  margin: 18px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-login-hint code {
+  font-size: 0.7rem;
+}
+
+/* Header kullanıcı menüsü */
+
+.roomio-header-user-wrap {
+  position: relative;
+}
+
+.roomio-header-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+  color: inherit;
+  text-align: left;
+}
+
+.roomio-header-user:hover {
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.roomio-header-user-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  min-width: 160px;
+  padding: 4px 0;
+  background: var(--roomio-card);
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.roomio-header-user-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--roomio-text);
+}
+
+.roomio-header-user-menu__item:hover {
+  background: var(--roomio-accent-soft, #dbeafe);
+}

@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { getSyncMeta, isOnline, runSync } from '@/lib/sync/engine';
 import type { SyncMeta } from '@/lib/sync/types';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 export function SyncStatusBar() {
+  const { t, locale } = useI18n();
   const [meta, setMeta] = useState<SyncMeta | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [online, setOnline] = useState(true);
@@ -39,19 +41,25 @@ export function SyncStatusBar() {
   const statusClass = online ? (meta.pendingCount > 0 ? 'warn' : 'ok') : 'offline';
   const label = online
     ? meta.pendingCount > 0
-      ? `Senkron bekliyor (${meta.pendingCount})`
-      : 'Çevrimiçi'
-    : 'Çevrimdışı — yerel kayıt';
+      ? t('sync.pending', { count: meta.pendingCount })
+      : t('sync.online')
+    : t('sync.offline');
+
+  const localeTag = locale === 'en' ? 'en-US' : 'tr-TR';
 
   return (
     <div className={`roomio-sync-bar roomio-sync-bar--${statusClass}`}>
       <span className="roomio-sync-dot" aria-hidden />
       <span className="roomio-sync-label">{label}</span>
       {meta.lastSyncAt ? (
-        <span className="roomio-sync-meta">Son: {new Date(meta.lastSyncAt).toLocaleTimeString('tr-TR')}</span>
+        <span className="roomio-sync-meta">
+          {t('sync.last', {
+            time: new Date(meta.lastSyncAt).toLocaleTimeString(localeTag),
+          })}
+        </span>
       ) : null}
       <button type="button" className="roomio-sync-btn" onClick={() => void handleSync()} disabled={syncing || !online}>
-        {syncing ? 'Senkron…' : 'Senkron'}
+        {syncing ? t('sync.syncing') : t('sync.button')}
       </button>
     </div>
   );

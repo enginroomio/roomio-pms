@@ -4,10 +4,15 @@ import Link from 'next/link';
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
+import { roomioFetch } from '@/lib/client/api';
 import { RoomRackGrid } from '@/components/RoomRackGrid';
+import { useRoomRackContextMenu } from '@/components/reception/useRoomRackContextMenu';
 import { Button } from '@/components/ui';
 import { useLiveHkMap } from '@/lib/client/use-live-hk-map';
+import { useDashboardSnapshot } from '@/lib/client/use-dashboard-snapshot';
+import { useProperty } from '@/components/property/PropertyProvider';
 import { PROPERTY } from '@/lib/navigation';
+import { useInventoryVersion } from '@/lib/client/use-inventory-version';
 import { getAllRooms } from '@/lib/rooms/inventory';
 import {
   addRoomBlock,
@@ -20,16 +25,15 @@ import type { Reservation } from '@/lib/types/reservation';
 
 type Tab = 'rack' | 'blocking';
 
-type Props = {
-  reservations: Reservation[];
-  businessDate: string;
-  hkMap: Record<string, HkRoomRecord>;
-};
-
-export function RoomsPageClient({ reservations, businessDate, hkMap: initialHkMap }: Props) {
+export function RoomsPageClient({ initial }: { initial: import('@/lib/server/dashboard-data').DashboardSnapshot }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { hkMap, pullFromServer } = useLiveHkMap(initialHkMap);
+  const { propertyId } = useProperty();
+  const { snapshot, loading: snapshotLoading } = useDashboardSnapshot(initial);
+  const reservations = snapshot.reservations;
+  const businessDate = snapshot.businessDate;
+  const { hkMap, pullFromServer } = useLiveHkMap(snapshot.hkMap);
+  const inventoryVersion = useInventoryVersion();
   const tab: Tab = searchParams.get('tab') === 'blocking' ? 'blocking' : 'rack';
   const [refreshKey, setRefreshKey] = useState(0);
   const [blocks, setBlocks] = useState<RoomBlock[]>(() => getRoomBlocks());
@@ -37,9 +41,23 @@ export function RoomsPageClient({ reservations, businessDate, hkMap: initialHkMa
   const [from, setFrom] = useState(businessDate);
   const [to, setTo] = useState(businessDate);
   const [reason, setReason] = useState('');
+  const [focusRoom, setFocusRoom] = useState<string | null>(null);
+
+  const refreshRack = () => {
+    setRefreshKey((k) => k + 1);
+    void pullFromServer();
+    router.refresh();
+  };
+
+  const { openMenu: openPmsMenu, menuNode: pmsMenuNode } = useRoomRackContextMenu({
+    reservations,
+    businessDate,
+    onRefresh: refreshRack,
+    onSelectCell: (cell) => setFocusRoom(cell.room.roomNo),
+  });
 
   useEffect(() => {
-    void fetch('/api/room-blocks')
+    void roomioFetch('/api/room-blocks')
       .then((r) => r.json())
       .then((j: { blocks?: RoomBlock[] }) => {
         if (j.blocks?.length) setBlocks(j.blocks);
@@ -48,8 +66,10 @@ export function RoomsPageClient({ reservations, businessDate, hkMap: initialHkMa
 
   const activeBlocks = useMemo(() => blocks.filter((b) => b.status === 'active'), [blocks]);
 
+  const allRooms = useMemo(() => getAllRooms(hkMap), [hkMap, inventoryVersion]);
+
   function refreshBlocks() {
-    void fetch('/api/room-blocks')
+    void roomioFetch('/api/room-blocks')
       .then((r) => r.json())
       .then((j: { blocks?: RoomBlock[] }) => {
         if (j.blocks) setBlocks(j.blocks);
@@ -68,7 +88,7 @@ export function RoomsPageClient({ reservations, businessDate, hkMap: initialHkMa
       blockedBy: 'Arda Y.',
       status: 'active' as const,
     };
-    void fetch('/api/room-blocks', {
+    void roomioFetch('/api/room-blocks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(entry),
@@ -112,19 +132,18 @@ export function RoomsPageClient({ reservations, businessDate, hkMap: initialHkMa
       </nav>
 
       {tab === 'rack' ? (
-        <div className="roomio-rack-page">
+        <div className={`roomio-rack-page${snapshotLoading ? ' roomio-dashboard--loading' : ''}`}>
           <RoomRackGrid
-            key={refreshKey}
+            key={`${propertyId}-${refreshKey}-${inventoryVersion}`}
             elektra
             reservations={reservations}
             businessDate={businessDate}
             hkMap={hkMap}
-            onRefresh={() => {
-              setRefreshKey((k) => k + 1);
-              void pullFromServer();
-              router.refresh();
-            }}
+            focusRoomNo={focusRoom}
+            onRoomPmsContextMenu={openPmsMenu}
+            onRefresh={refreshRack}
           />
+          {pmsMenuNode}
         </div>
       ) : (
         <div className="roomio-detail-grid">
@@ -136,7 +155,7 @@ export function RoomsPageClient({ reservations, businessDate, hkMap: initialHkMa
                   <span>Oda no</span>
                   <select className="roomio-select" value={roomNo} onChange={(e) => setRoomNo(e.target.value)} required>
                     <option value="">Seçin…</option>
-                    {getAllRooms(hkMap).map((r) => (
+                    {allRooms.map((r) => (
                       <option key={r.roomNo} value={r.roomNo}>{r.roomNo} — {r.typeShort}</option>
                     ))}
                   </select>

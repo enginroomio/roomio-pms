@@ -2,7 +2,7 @@
 
 import { useOneScreenFit } from '@/lib/client/use-one-screen-fit';
 
-export type OneScreenVariant = 'default' | 'dashboard' | 'hk' | 'hk-scroll';
+export type OneScreenVariant = 'default' | 'dashboard' | 'hk' | 'theme';
 
 type Props = {
   children: React.ReactNode;
@@ -13,15 +13,14 @@ const BODY_CLASS: Record<OneScreenVariant, string> = {
   default: 'roomio-one-screen-fit__body--page',
   dashboard: 'roomio-dashboard roomio-dashboard--one-screen',
   hk: 'roomio-hk-mobile roomio-hk-mobile--one-screen roomio-dashboard roomio-dashboard--one-screen',
-  'hk-scroll':
-    'roomio-hk-mobile roomio-hk-mobile--scroll roomio-hk-mobile--one-screen roomio-dashboard roomio-dashboard--one-screen',
+  theme: 'roomio-one-screen-fit__body--page roomio-one-screen-fit__body--theme',
 };
 
 const FIT_OPTIONS: Record<OneScreenVariant, { minScale?: number; uniformScale?: boolean; allowScroll?: boolean }> = {
-  default: { minScale: 0.55, uniformScale: true },
-  dashboard: { minScale: 0.55, uniformScale: true },
-  hk: { minScale: 0.55, uniformScale: true },
-  'hk-scroll': { allowScroll: true },
+  default: { minScale: 0.48, uniformScale: true },
+  dashboard: { minScale: 0.48, uniformScale: true },
+  hk: { minScale: 0.48, uniformScale: true },
+  theme: { minScale: 0.72, uniformScale: true },
 };
 
 /** Sayfa içeriğini kaydırmasız tek ekrana orantılı sığdırır (tüm rotalar). */

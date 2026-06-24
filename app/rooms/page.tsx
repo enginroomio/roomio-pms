@@ -7,11 +7,7 @@ export default async function RoomsRackPage() {
 
   return (
     <Suspense fallback={<div className="roomio-page-desc" style={{ padding: 24 }}>Oda rack yükleniyor…</div>}>
-      <RoomsPageClient
-        reservations={snapshot.reservations}
-        businessDate={snapshot.businessDate}
-        hkMap={snapshot.hkMap}
-      />
+      <RoomsPageClient initial={snapshot} />
     </Suspense>
   );
 }

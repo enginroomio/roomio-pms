@@ -7,6 +7,18 @@ export const FLOORS = [
   { floor: 5, start: 501, end: 510 },
 ] as const;
 
+export type FloorRange = { floor: number; start: number; end: number };
+
+let floorsOverride: FloorRange[] | null = null;
+
+export function setFloorsOverride(floors: FloorRange[]) {
+  floorsOverride = floors.length > 0 ? floors : null;
+}
+
+export function getActiveFloors(): readonly FloorRange[] {
+  return floorsOverride ?? FLOORS;
+}
+
 /** Panoda gösterilmeyen odalar (×06) */
 export const EXCLUDED_SUFFIXES = [6];
 
@@ -16,7 +28,7 @@ export function isRoomExcluded(num: number | string): boolean {
 }
 
 export function countTotalRooms(): number {
-  return FLOORS.reduce((sum, f) => {
+  return getActiveFloors().reduce((sum, f) => {
     let count = 0;
     for (let num = f.start; num <= f.end; num++) {
       if (!isRoomExcluded(num)) count++;
@@ -31,7 +43,7 @@ export function floorFromRoomNo(roomNo: string): number {
 
 export function allRoomNumbers(): string[] {
   const out: string[] = [];
-  for (const { start, end } of FLOORS) {
+  for (const { start, end } of getActiveFloors()) {
     for (let num = start; num <= end; num++) {
       if (!isRoomExcluded(num)) out.push(String(num));
     }

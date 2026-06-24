@@ -1,9 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Clock, Hand, User, Wrench } from 'lucide-react';
-import { FLOORS, countTotalRooms } from '@/lib/rooms/room-config';
+import { getActiveFloors, countTotalRooms } from '@/lib/rooms/room-config';
 import { buildRackCells, countRackByState, getRoomTypesList } from '@/lib/rooms/inventory';
+import { useInventoryVersion } from '@/lib/client/use-inventory-version';
+import { useProperty } from '@/components/property/PropertyProvider';
 import {
   getRackDisplay,
   getElektraStatusLabel,
@@ -19,6 +21,8 @@ import { DEFAULT_HK_ROOMS } from '@/lib/data/hk-defaults';
 import { DEMO_RESERVATIONS } from '@/lib/data/reservations';
 import { PROPERTY } from '@/lib/navigation';
 import { HK_STATUS_LABELS } from '@/lib/types/room';
+import { useHomeScreenMenu } from '@/components/HomeScreenMenuContext';
+import { handleRackCellContextMenu, rackContextMenuHint } from '@/lib/client/rack-context-menu';
 import { RackElektraToolbar, RackStatsFooter } from '@/components/rack/RackElektraToolbar';
 
 type Props = {
@@ -35,6 +39,8 @@ type Props = {
   hkInteractive?: boolean;
   savingRoom?: string | null;
   onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
+  onRoomPmsContextMenu?: (cell: RackCell, event: React.MouseEvent) => void;
+  focusRoomNo?: string | null;
 };
 
 function applyFilters(
@@ -78,15 +84,19 @@ function RackPreviewCell({
   hkInteractive,
   savingRoom,
   onRoomContextMenu,
+  onRoomPmsContextMenu,
 }: {
   cell: RackCell;
   ctx: RackDisplayContext;
   hkInteractive?: boolean;
   savingRoom?: string | null;
   onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
+  onRoomPmsContextMenu?: (cell: RackCell, event: React.MouseEvent) => void;
 }) {
+  const homeMenu = useHomeScreenMenu();
   const display = getRackDisplay(cell, ctx);
   const saving = savingRoom === cell.room.roomNo;
+  const hint = rackContextMenuHint(Boolean(homeMenu), hkInteractive);
 
   return (
     <button
@@ -97,14 +107,14 @@ function RackPreviewCell({
         color: display.text,
         borderColor: display.border,
       }}
-      title={`${cell.room.roomNo} · ${display.label}${display.sub ? ` · ${display.sub}` : ''}${hkInteractive ? ' · Sağ tık: durum' : ''}`}
-      onContextMenu={
-        hkInteractive && onRoomContextMenu
-          ? (event) => {
-              event.preventDefault();
-              onRoomContextMenu(cell.room.roomNo, event);
-            }
-          : undefined
+      title={`${cell.room.roomNo} · ${display.label}${display.sub ? ` · ${display.sub}` : ''}${hint}`}
+      onContextMenu={(event) =>
+        handleRackCellContextMenu(event, cell, {
+          homeMenu,
+          hkInteractive,
+          onRoomContextMenu,
+          onRoomPmsContextMenu,
+        })
       }
     >
       <span className="roomio-nr-cell-top">
@@ -128,14 +138,23 @@ function RackCellButton({
   onSelect,
   ctx,
   elektra = false,
+  hkInteractive,
+  onRoomContextMenu,
+  onRoomPmsContextMenu,
 }: {
   cell: RackCell;
   selected: boolean;
   onSelect: (cell: RackCell) => void;
   ctx: RackDisplayContext;
   elektra?: boolean;
+  hkInteractive?: boolean;
+  onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
+  onRoomPmsContextMenu?: (cell: RackCell, event: React.MouseEvent) => void;
 }) {
+  const homeMenu = useHomeScreenMenu();
   const display = getRackDisplay(cell, ctx);
+  const hint = rackContextMenuHint(Boolean(homeMenu), hkInteractive);
+
   return (
     <button
       type="button"
@@ -146,7 +165,15 @@ function RackCellButton({
         borderColor: display.border,
       }}
       onClick={() => onSelect(cell)}
-      title={`${cell.room.roomNo} · ${display.label}${display.sub ? ` · ${display.sub}` : ''}`}
+      title={`${cell.room.roomNo} · ${display.label}${display.sub ? ` · ${display.sub}` : ''}${hint}`}
+      onContextMenu={(event) =>
+        handleRackCellContextMenu(event, cell, {
+          homeMenu,
+          hkInteractive,
+          onRoomContextMenu,
+          onRoomPmsContextMenu,
+        })
+      }
     >
       <span className="roomio-nr-cell-top">
         <span className="roomio-nr-cell-no">{cell.room.roomNo}</span>
@@ -185,8 +212,13 @@ export function RoomRackGrid({
   hkInteractive = false,
   savingRoom = null,
   onRoomContextMenu,
+  onRoomPmsContextMenu,
+  focusRoomNo,
 }: Props) {
-  const reservations = reservationsProp ?? DEMO_RESERVATIONS;
+  const inventoryVersion = useInventoryVersion();
+  const { activeProperty } = useProperty();
+  const totalRooms = activeProperty?.totalRooms ?? countTotalRooms();
+  const reservations = reservationsProp ?? (preview ? DEMO_RESERVATIONS : []);
   const businessDate = businessDateProp ?? PROPERTY.businessDate;
   const hkMap = hkMapProp ?? DEFAULT_HK_ROOMS;
   const displayCtx: RackDisplayContext = { businessDate, reservations };
@@ -206,26 +238,34 @@ export function RoomRackGrid({
   const [columns, setColumns] = useState(17);
   const [autoFit, setAutoFit] = useState(true);
 
+  useEffect(() => {
+    if (!focusRoomNo) return;
+    const cell = buildRackCells(undefined, reservations, businessDate, hkMap).find(
+      (c) => c.room.roomNo === focusRoomNo,
+    );
+    if (cell) setSelected(cell);
+  }, [focusRoomNo, reservations, businessDate, hkMap, inventoryVersion]);
+
   const filterState = { stateFilter, typeFilter, locationFilter, occupiedOnly, cleanOnly, showMaintenance };
   const separateFloors = floor === 'all';
 
   const floorSections = useMemo(() => {
     if (!separateFloors) return null;
-    return FLOORS.map(({ floor: f }) => ({
+    return getActiveFloors().map(({ floor: f }) => ({
       floor: f,
       cells: applyFilters(buildCells(f), filterState),
     }));
-  }, [separateFloors, stateFilter, typeFilter, locationFilter, occupiedOnly, cleanOnly, showMaintenance, reservations, businessDate, hkMap]);
+  }, [separateFloors, stateFilter, typeFilter, locationFilter, occupiedOnly, cleanOnly, showMaintenance, reservations, businessDate, hkMap, inventoryVersion]);
 
   const singleCells = useMemo(() => {
     const base = buildCells(typeof floor === 'number' ? floor : undefined);
     const filtered = applyFilters(base, filterState);
     return maxCells ? filtered.slice(0, maxCells) : filtered;
-  }, [floor, stateFilter, typeFilter, locationFilter, occupiedOnly, cleanOnly, showMaintenance, maxCells, reservations, businessDate, hkMap]);
+  }, [floor, stateFilter, typeFilter, locationFilter, occupiedOnly, cleanOnly, showMaintenance, maxCells, reservations, businessDate, hkMap, inventoryVersion]);
 
   const counts = useMemo(
     () => countRackByState(buildCells(floor === 'all' ? undefined : floor)),
-    [floor, reservations, businessDate, hkMap],
+    [floor, reservations, businessDate, hkMap, inventoryVersion],
   );
 
   const totalVisible = separateFloors
@@ -238,8 +278,8 @@ export function RoomRackGrid({
   } as React.CSSProperties;
 
   const stats = useMemo(
-    () => rackStatsFromCounts(counts as Record<string, number>, countTotalRooms()),
-    [counts],
+    () => rackStatsFromCounts(counts as Record<string, number>, totalRooms),
+    [counts, totalRooms],
   );
 
   const renderGrid = (sectionCells: RackCell[], keyPrefix = '') => (
@@ -255,13 +295,16 @@ export function RoomRackGrid({
           onSelect={setSelected}
           ctx={displayCtx}
           elektra={elektra}
+          hkInteractive={hkInteractive}
+          onRoomContextMenu={onRoomContextMenu}
+          onRoomPmsContextMenu={onRoomPmsContextMenu}
         />
       ))}
     </div>
   );
 
   if (preview) {
-    const sections = FLOORS.map(({ floor: f }) => ({
+    const sections = getActiveFloors().map(({ floor: f }) => ({
       floor: f,
       cells: buildCells(f),
     }));
@@ -307,6 +350,7 @@ export function RoomRackGrid({
                     hkInteractive={hkInteractive}
                     savingRoom={savingRoom}
                     onRoomContextMenu={onRoomContextMenu}
+                    onRoomPmsContextMenu={onRoomPmsContextMenu}
                   />
                 ))}
               </div>
@@ -357,7 +401,7 @@ export function RoomRackGrid({
           >
             Tümü
           </button>
-          {FLOORS.map(({ floor: f }) => (
+          {getActiveFloors().map(({ floor: f }) => (
             <button
               key={f}
               type="button"
@@ -389,7 +433,7 @@ export function RoomRackGrid({
       <div className="roomio-nr-board">
         <div className="roomio-nr-summary">
           {floor === 'all'
-            ? `Tüm katlar — ${totalVisible} / ${countTotalRooms()} oda görünüyor · 5 kat bölümü`
+            ? `Tüm katlar — ${totalVisible} / ${totalRooms} oda görünüyor · 5 kat bölümü`
             : `${floor}. Kat — ${totalVisible} oda`}
         </div>
 
@@ -449,7 +493,7 @@ export function RoomRackGrid({
           <button type="button" className={`roomio-filter-chip${locationFilter === 'sol' ? ' active' : ''}`} onClick={() => setLocationFilter('sol')}>Sol koridor</button>
           <button type="button" className={`roomio-filter-chip${locationFilter === 'sag' ? ' active' : ''}`} onClick={() => setLocationFilter('sag')}>Sağ koridor</button>
           <button type="button" className={`roomio-filter-chip${occupiedOnly ? ' active' : ''}`} onClick={() => setOccupiedOnly((v) => !v)}>Dolu odalar</button>
-          <span className="roomio-nr-status">Rack Hazır · {countTotalRooms()} oda · dolu {counts['dolu-temiz'] + counts['dolu-kirli'] + counts.checkout}</span>
+          <span className="roomio-nr-status">Rack Hazır · {totalRooms} oda · dolu {counts['dolu-temiz'] + counts['dolu-kirli'] + counts.checkout}</span>
         </div>
       </div>
       ) : null}

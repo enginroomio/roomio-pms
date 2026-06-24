@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { buildTemplateCsv, buildTemplatePdf } from '@/lib/server/template-export';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
-import { getDemoSession, hasPermission } from '@/lib/auth/roles';
+import { hasPermission } from '@/lib/auth/roles';
+import { resolveApiUser } from '@/lib/auth/require-api-user';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,8 @@ function safeFilename(name: string): string {
 
 export async function GET(req: Request) {
   const propertyId = propertyIdFromRequest(req);
-  const user = getDemoSession();
+  const user = await resolveApiUser(req);
+  if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 });
   if (!hasPermission(user, 'reports.export')) {
     return NextResponse.json({ error: 'Yetkisiz — reports.export gerekli' }, { status: 403 });
   }

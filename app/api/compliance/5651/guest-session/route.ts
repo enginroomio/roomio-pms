@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
+import { requireIntegrationAdminRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
 import { handleGuestHotspotSession } from '@/lib/integrations/hotspot5651/guest-session';
 import type { GuestSessionRequest } from '@/lib/integrations/hotspot5651/guest-session';
 
 export async function POST(req: Request) {
+    const auth = await requireIntegrationAdminWrite(req);
+  if (auth instanceof NextResponse) return auth;
+
   const body = (await req.json()) as GuestSessionRequest;
   if (!body.roomNo || !body.guestName) {
     return NextResponse.json({ ok: false, message: 'roomNo ve guestName gerekli' }, { status: 400 });

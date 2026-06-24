@@ -1,10 +1,9 @@
-import { DEFAULT_HK_ROOMS } from '@/lib/data/hk-defaults';
 import { guestRequestLabel } from '@/lib/housekeeping/guest-request-types';
 import { sendRolePush } from '@/lib/push/send';
 import { getHousekeepingBoardServer } from '@/lib/server/housekeeping-service';
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
-import { getAllRooms } from '@/lib/rooms/inventory';
+import { getAllRoomsServer } from '@/lib/server/room-inventory-bridge';
 
 export type GuestRequestStatus = 'pending' | 'done';
 
@@ -27,8 +26,9 @@ function pid(propertyId?: string) {
   return propertyId ?? DEFAULT_PROPERTY_ID;
 }
 
-function floorForRoom(roomNo: string) {
-  return (getAllRooms(DEFAULT_HK_ROOMS).find((r) => r.roomNo === roomNo)?.floor ?? Math.floor(Number(roomNo) / 100)) || 1;
+async function floorForRoom(roomNo: string, propertyId?: string) {
+  const rooms = await getAllRoomsServer(propertyId);
+  return (rooms.find((r) => r.roomNo === roomNo)?.floor ?? Math.floor(Number(roomNo) / 100)) || 1;
 }
 
 function toRecord(row: {
@@ -119,7 +119,7 @@ export async function createGuestRequest(input: {
       id: `greq-${prop}-${input.roomNo}-${Date.now()}`,
       propertyId: prop,
       roomNo: input.roomNo,
-      floor: floorForRoom(input.roomNo),
+      floor: await floorForRoom(input.roomNo, prop),
       requestType: input.requestType,
       description: input.description ?? null,
       status: 'pending',
@@ -161,7 +161,7 @@ export async function ensureDemoGuestRequestsSeeded(propertyId?: string): Promis
         id: `greq-seed-${prop}-${d.roomNo}-${d.requestType}`,
         propertyId: prop,
         roomNo: d.roomNo,
-        floor: floorForRoom(d.roomNo),
+        floor: await floorForRoom(d.roomNo, prop),
         requestType: d.requestType,
         description: d.description,
         status: 'pending',

@@ -15,15 +15,8 @@ export function useViewport() {
   return useContext(ViewportContext);
 }
 
-function resolveViewportMode(pathname: string): ViewportMode {
-  return pathname.startsWith('/housekeeping/mobile') ||
-    pathname.startsWith('/housekeeping/rooms') ||
-    pathname.startsWith('/housekeeping/assign') ||
-    pathname.startsWith('/housekeeping/tasks') ||
-    pathname.startsWith('/housekeeping/faults') ||
-    pathname.startsWith('/housekeeping/reports')
-    ? 'hk-mobile'
-    : 'app';
+function resolveViewportMode(_pathname: string): ViewportMode {
+  return 'app';
 }
 
 export function ViewportProvider({ children }: { children: React.ReactNode }) {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireKurulusApiWrite } from '@/lib/auth/require-permission';
 import { getReportTemplates, saveReportTemplate } from '@/lib/server/pms-store';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 
@@ -6,6 +7,9 @@ export const dynamic = 'force-dynamic';
 
 /** Şablonu mevcut otelden diğer otellere kopyalar. */
 export async function POST(req: Request) {
+  const auth = await requireKurulusApiWrite(req);
+  if (auth instanceof NextResponse) return auth;
+
   const sourcePropertyId = propertyIdFromRequest(req);
   const body = (await req.json()) as {
     templateId?: string;

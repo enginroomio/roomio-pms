@@ -15,5 +15,9 @@ export async function roomioFetch(input: string, init?: RequestInit): Promise<Re
   if (!headers.has('x-roomio-property')) {
     headers.set('x-roomio-property', getActivePropertyId());
   }
-  return fetch(input, { ...init, headers });
+  if (typeof window !== 'undefined' && !headers.has('Authorization')) {
+    const token = localStorage.getItem('roomio-token');
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+  }
+  return fetch(input, { ...init, headers, credentials: init?.credentials ?? 'include' });
 }

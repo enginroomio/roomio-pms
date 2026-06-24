@@ -11,11 +11,11 @@ export type GraphicDesignMode = 'live' | 'monthly-pro' | 'filter-wizard' | 'elek
 
 const MODES: { id: GraphicDesignMode; label: string; hint: string }[] = [
   { id: 'monthly-pro', label: 'Elektra Forecast F1', hint: 'Forecast · canlı API' },
-  { id: 'filter-wizard', label: 'Mockup #3 · Sihirbaz', hint: 'Detaylı filtre UI' },
+  { id: 'filter-wizard', label: 'Filtre Sihirbazı', hint: 'Canlı filtre + API' },
   { id: 'live', label: 'Canlı', hint: 'Gerçek veri' },
-  { id: 'elektra', label: 'Alt 1 · Elektra v5', hint: 'Detaylı doluluk grafiği' },
-  { id: 'calendar', label: 'Alt 2 · Takvim F1', hint: 'Aylık doluluk + gelir' },
-  { id: 'forecast', label: 'Alt 3 · Forecast', hint: 'Analiz sekmeleri + tablo' },
+  { id: 'elektra', label: 'Alt 1 · Elektra v5', hint: 'Canlı doluluk grafikleri' },
+  { id: 'calendar', label: 'Alt 2 · Takvim F1', hint: 'Canlı doluluk + gelir' },
+  { id: 'forecast', label: 'Alt 3 · Forecast', hint: 'Canlı analiz + tablo' },
 ];
 
 type Props = {

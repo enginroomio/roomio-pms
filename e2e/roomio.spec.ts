@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { authedGet, authedPost, loginApiToken, authHeaders } from './helpers/api-auth';
 
 test('ana sayfa yüklenir', async ({ page }) => {
   await page.goto('/');
@@ -20,15 +21,22 @@ test('oda rack tek kat filtresi', async ({ page }) => {
 });
 
 test('rack API', async ({ request }) => {
-  const res = await request.get('/api/rack');
+  const res = await authedGet(request, '/api/rack');
   expect(res.ok()).toBeTruthy();
   const j = await res.json() as { totalRooms: number; cells: unknown[] };
   expect(j.totalRooms).toBeGreaterThan(0);
   expect(j.cells.length).toBeGreaterThan(0);
 });
 
+test('dashboard API', async ({ request }) => {
+  const res = await authedGet(request, '/api/dashboard');
+  expect(res.ok()).toBeTruthy();
+  const j = await res.json() as { ok?: boolean; totalRooms?: number; occupancy?: number };
+  expect(j.ok ?? j.totalRooms != null).toBeTruthy();
+});
+
 test('rezervasyon listesi API', async ({ request }) => {
-  const res = await request.get('/api/reservations');
+  const res = await authedGet(request, '/api/reservations');
   expect(res.ok()).toBeTruthy();
   const j = await res.json() as { count: number };
   expect(j.count).toBeGreaterThan(0);
@@ -91,10 +99,8 @@ test('rezervasyon grafikler F1', async ({ page }) => {
 });
 
 test('JWT login', async ({ request }) => {
-  const res = await request.post('/api/auth/login', {
-    data: { email: 'arda@hotelsapphire.com', password: 'roomio123' },
-  });
+  const token = await loginApiToken(request);
+  expect(token).toBeTruthy();
+  const res = await request.get('/api/dashboard', { headers: authHeaders(token) });
   expect(res.ok()).toBeTruthy();
-  const j = await res.json() as { token?: string };
-  expect(j.token).toBeTruthy();
 });

@@ -27,24 +27,81 @@ export const DEMO_EOD_ARCHIVE: EodArchive[] = [
 ];
 
 export const CATEGORY_REPORTS: Record<string, { id: string; name: string; format: string }[]> = {
+  forecast: [
+    { id: 'fc-7d', name: '7 Günlük Forecast', format: 'PDF / Excel' },
+    { id: 'fc-30d', name: '30 Günlük Forecast', format: 'Excel' },
+    { id: 'fc-occ', name: 'Doluluk Projeksiyonu', format: 'PDF' },
+    { id: 'fc-rev', name: 'Gelir Projeksiyonu', format: 'PDF / Excel' },
+  ],
   rezervasyon: [
     { id: 'rez-summary', name: 'Rezervasyon Özet', format: 'PDF / Excel' },
     { id: 'rez-arrival', name: 'Günlük Geliş Listesi', format: 'PDF' },
     { id: 'rez-departure', name: 'Günlük Ayrılış Listesi', format: 'PDF' },
     { id: 'rez-forecast', name: '7 Günlük Forecast', format: 'Excel' },
+    { id: 'rez-agency', name: 'Acenta Bazlı Liste', format: 'PDF / Excel' },
+    { id: 'rez-cancel', name: 'İptal / No-Show', format: 'PDF' },
+  ],
+  gunluk: [
+    { id: 'dl-inhouse', name: 'In-House Listesi', format: 'PDF' },
+    { id: 'dl-arrival', name: 'Günlük Geliş', format: 'PDF' },
+    { id: 'dl-departure', name: 'Günlük Ayrılış', format: 'PDF' },
+    { id: 'dl-room-move', name: 'Oda Değişim Listesi', format: 'PDF' },
+    { id: 'dl-vip', name: 'VIP Listesi', format: 'PDF' },
   ],
   kathizmetleri: [
     { id: 'hk-status', name: 'Oda Durum Raporu', format: 'PDF' },
     { id: 'hk-productivity', name: 'HK Verimlilik', format: 'Excel' },
     { id: 'hk-dnd', name: 'DND / OOO Listesi', format: 'PDF' },
+    { id: 'hk-checkout', name: 'Çıkış Odaları', format: 'PDF' },
+    { id: 'hk-assign', name: 'Katkıcı Atama', format: 'Excel' },
+  ],
+  gelir: [
+    { id: 'dr-daily', name: 'Günlük Gelir Özeti', format: 'PDF' },
+    { id: 'dr-dept', name: 'Departman Gelirleri', format: 'PDF / Excel' },
+    { id: 'dr-room', name: 'Oda Geliri Detay', format: 'PDF' },
+    { id: 'dr-fnb', name: 'F&B Gelir', format: 'PDF / Excel' },
+    { id: 'mg-rev', name: 'Muhasebe Gelir Özeti', format: 'PDF' },
+  ],
+  kontrol: [
+    { id: 'cs-cash', name: 'Kasa Defteri Özet', format: 'PDF' },
+    { id: 'cs-variance', name: 'Kasa Fark Raporu', format: 'PDF' },
+    { id: 'cs-fx', name: 'Döviz İşlemleri', format: 'PDF / Excel' },
+    { id: 'cs-deposit', name: 'Depozit Listesi', format: 'PDF' },
+  ],
+  muhasebe: [
+    { id: 'in-invoice', name: 'Fatura Listesi', format: 'PDF / Excel' },
+    { id: 'in-proforma', name: 'Proforma Faturalar', format: 'PDF' },
+    { id: 'ac-ledger', name: 'Hesap Ekstresi', format: 'PDF' },
+    { id: 'ac-aging', name: 'Cari Yaşlandırma', format: 'Excel' },
   ],
   yonetim: [
     { id: 'mgmt-rev', name: 'Gelir Özeti', format: 'PDF / Excel' },
     { id: 'mgmt-occ', name: 'Doluluk Analizi', format: 'PDF' },
     { id: 'mgmt-adr', name: 'ADR / RevPAR', format: 'Excel' },
+    { id: 'bo-budget', name: 'Bütçe Karşılaştırma', format: 'PDF / Excel' },
+    { id: 'mr-daily', name: 'Günlük Yönetim Raporu', format: 'PDF' },
   ],
-  kontrol: [
-    { id: 'cs-cash', name: 'Kasa Defteri Özet', format: 'PDF' },
-    { id: 'cs-variance', name: 'Kasa Fark Raporu', format: 'PDF' },
+  acenta: [
+    { id: 'ag-contract', name: 'Kontrat Performansı', format: 'PDF / Excel' },
+    { id: 'ag-production', name: 'Acenta Üretim', format: 'PDF' },
+    { id: 'ag-commission', name: 'Komisyon Raporu', format: 'Excel' },
+    { id: 'ag-analysis', name: 'Acenta Analiz (Gün/Ay/Yıl)', format: 'PDF' },
+  ],
+  crm: [
+    { id: 'gs-profile', name: 'Misafir Profil Listesi', format: 'PDF / Excel' },
+    { id: 'gs-repeater', name: 'Sürekli Misafir (Repeater)', format: 'PDF' },
+    { id: 'gs-vip', name: 'VIP Listesi', format: 'PDF' },
+    { id: 'gs-review', name: 'Misafir Yorumları', format: 'PDF' },
+  ],
+  gr: [
+    { id: 'gr-trace', name: 'Takip Listesi', format: 'PDF' },
+    { id: 'gr-complaint', name: 'Şikayet Özeti', format: 'PDF' },
+    { id: 'gr-lost', name: 'Kayıp & Bulunan', format: 'PDF' },
+    { id: 'gr-activity', name: 'Aktivite Listesi', format: 'PDF' },
+  ],
+  banket: [
+    { id: 'bnk-events', name: 'Etkinlik Listesi', format: 'PDF' },
+    { id: 'bnk-revenue', name: 'Banket Gelir', format: 'PDF / Excel' },
+    { id: 'bnk-forecast', name: 'Banket Forecast', format: 'Excel' },
   ],
 };

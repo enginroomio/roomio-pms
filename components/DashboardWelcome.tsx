@@ -1,3 +1,5 @@
+'use client';
+
 import type { ReactNode } from 'react';
 import {
   ArrowDownRight,
@@ -8,6 +10,7 @@ import {
   LogOut,
   Sparkles,
 } from 'lucide-react';
+import { useI18n } from '@/components/i18n/I18nProvider';
 import { DEMO_USER, PROPERTY } from '@/lib/navigation';
 
 type Insight = {
@@ -26,11 +29,14 @@ type Props = {
   occupancy: number;
   cleanVacant: number;
   dirtyVacant: number;
+  propertyName?: string;
+  totalRooms?: number;
+  businessDate?: string;
 };
 
-function formatBusinessDate(iso: string) {
+function formatBusinessDate(iso: string, locale: string) {
   const d = new Date(`${iso}T12:00:00`);
-  return d.toLocaleDateString('tr-TR', {
+  return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'tr-TR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -45,40 +51,44 @@ export function DashboardWelcome({
   occupancy,
   cleanVacant,
   dirtyVacant,
+  propertyName = PROPERTY.name,
+  totalRooms = PROPERTY.totalRooms,
+  businessDate: businessDateIso = PROPERTY.businessDate,
 }: Props) {
+  const { t, locale } = useI18n();
   const firstName = DEMO_USER.name.split(/[\s.]/)[0] ?? DEMO_USER.name;
-  const businessDate = formatBusinessDate(PROPERTY.businessDate);
+  const businessDate = formatBusinessDate(businessDateIso, locale);
 
   const insights: Insight[] = [
     {
       id: 'arrivals',
-      label: 'Bugün giriş',
+      label: t('dashboard.arrivals'),
       value: String(arrivals),
-      hint: 'Bekleyen check-in',
+      hint: t('dashboard.arrivalsHint'),
       tone: 'teal',
       icon: <LogIn size={16} />,
     },
     {
       id: 'departures',
-      label: 'Bugün çıkış',
+      label: t('dashboard.departures'),
       value: String(departures),
-      hint: 'Check-out planı',
+      hint: t('dashboard.departuresHint'),
       tone: 'amber',
       icon: <LogOut size={16} />,
     },
     {
       id: 'inhouse',
-      label: 'Konaklayan',
+      label: t('dashboard.inhouse'),
       value: String(inHouse),
-      hint: `%${occupancy} doluluk`,
+      hint: t('dashboard.inhouseHint', { occupancy }),
       tone: 'blue',
       icon: <BedDouble size={16} />,
     },
     {
       id: 'hk',
-      label: 'Temiz / kirli',
+      label: t('dashboard.hk'),
       value: `${cleanVacant} / ${dirtyVacant}`,
-      hint: 'Müsait oda durumu',
+      hint: t('dashboard.hkHint'),
       tone: 'rose',
       icon: <Sparkles size={16} />,
     },
@@ -91,10 +101,10 @@ export function DashboardWelcome({
           <CalendarDays size={14} aria-hidden />
           {businessDate}
         </p>
-        <h1 className="roomio-welcome-bar__title">Merhaba, {firstName}</h1>
+        <h1 className="roomio-welcome-bar__title">{t('dashboard.greeting', { name: firstName })}</h1>
         <p className="roomio-welcome-bar__meta">
-          {PROPERTY.name} · {PROPERTY.totalRooms} oda · İş günü{' '}
-          {PROPERTY.businessDate.split('-').reverse().join('.')}
+          {propertyName} · {t('dashboard.rooms', { count: totalRooms })} · {t('dashboard.businessDay')}{' '}
+          {businessDateIso.split('-').reverse().join('.')}
         </p>
       </div>
 
@@ -119,15 +129,15 @@ export function DashboardWelcome({
 
       <div className="roomio-welcome-bar__status">
         <div className="roomio-welcome-status-card">
-          <span className="roomio-welcome-status-card__label">Doluluk</span>
+          <span className="roomio-welcome-status-card__label">{t('dashboard.occupancy')}</span>
           <strong className="roomio-welcome-status-card__value">%{occupancy}</strong>
           <span className="roomio-welcome-status-card__trend roomio-welcome-status-card__trend--up">
             <ArrowUpRight size={14} aria-hidden />
-            Operasyon aktif
+            {t('dashboard.active')}
           </span>
         </div>
         <div className="roomio-welcome-status-card roomio-welcome-status-card--muted">
-          <span className="roomio-welcome-status-card__label">Vardiya</span>
+          <span className="roomio-welcome-status-card__label">{t('dashboard.shift')}</span>
           <strong className="roomio-welcome-status-card__value">{DEMO_USER.role}</strong>
           <span className="roomio-welcome-status-card__trend">
             <ArrowDownRight size={14} aria-hidden />

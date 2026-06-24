@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { ReceptionTabs } from '@/components/ReceptionTabs';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
+import { submitGuestRequest } from '@/lib/client/guest-request-submit';
 import { emitHkGuestRequestUpdate } from '@/lib/client/guest-request-sync';
 import { GUEST_REQUEST_TYPES, type GuestRequestTypeId } from '@/lib/housekeeping/guest-request-types';
 import type { HkGuestRequestRecord } from '@/lib/server/guest-request-service';
@@ -43,23 +44,18 @@ export function ReceptionGuestRequestsClient() {
     setSaving(true);
     setError(null);
     try {
-      const res = await roomioFetch('/api/housekeeping/requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomNo: roomNo.trim(),
-          requestType,
-          description: description.trim() || undefined,
-          requestedBy: 'Resepsiyon',
-        }),
+      const result = await submitGuestRequest({
+        roomNo: roomNo.trim(),
+        requestType,
+        description: description.trim() || undefined,
+        requestedBy: 'Resepsiyon',
       });
-      if (!res.ok) throw new Error('Kaydedilemedi');
-      const data = (await res.json()) as { request: HkGuestRequestRecord };
-      setRequests((prev) => [data.request, ...prev]);
+      if (!result.ok || !result.request) throw new Error('Kaydedilemedi');
+      setRequests((prev) => [result.request!, ...prev]);
       emitHkGuestRequestUpdate({
         action: 'created',
-        roomNo: data.request.roomNo,
-        requestId: data.request.id,
+        roomNo: result.request.roomNo,
+        requestId: result.request.id,
       });
       setRoomNo('');
       setDescription('');

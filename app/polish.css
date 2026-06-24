@@ -491,3 +491,124 @@ html[data-theme='dark'] .roomio-nr-legend {
   background: #0f172a;
   border-bottom-color: var(--roomio-border);
 }
+
+/* ── Roomio Klasik (Elektra mavi-gri) ── */
+html[data-theme='classic'] {
+  --roomio-sidebar: #1e3a5f;
+  --roomio-sidebar-active: #2563eb;
+  --roomio-accent: #2563eb;
+  --roomio-accent-soft: #dbeafe;
+  --roomio-accent-dark: #1d4ed8;
+  --roomio-surface: #e8edf3;
+  --roomio-surface-alt: #dfe6ee;
+  --roomio-card: #ffffff;
+  --roomio-border: #c5d0dc;
+  --roomio-text: #1e293b;
+  --roomio-text-muted: #5b6b7c;
+}
+
+html[data-theme='classic'] .roomio-icon-rail {
+  background: linear-gradient(180deg, #1e3a5f 0%, #1a3354 100%);
+}
+
+html[data-theme='classic'] .roomio-header--app {
+  background: #f0f4f8;
+  border-bottom: 1px solid #c5d0dc;
+}
+
+html[data-theme='classic'] .roomio-viewport-host {
+  background:
+    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(37, 99, 235, 0.08), transparent 50%),
+    var(--roomio-surface);
+}
+
+/* ── Profesyonel PMS Merkezi ── */
+.roomio-pro-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.roomio-pro-kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.roomio-pro-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.roomio-pro-toolbar .roomio-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.roomio-pro-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.roomio-pro-group .roomio-card-title {
+  margin-bottom: 8px;
+}
+
+.roomio-pro-module-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.roomio-pro-module-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--roomio-text);
+  border: 1px solid transparent;
+}
+
+.roomio-pro-module-link:hover {
+  background: var(--roomio-surface-alt);
+  border-color: var(--roomio-border);
+}
+
+.roomio-pro-module-label {
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+.roomio-pro-shortcut {
+  font-size: 0.75rem;
+  color: var(--roomio-text-muted);
+  font-family: ui-monospace, monospace;
+}
+
+.roomio-badge--ok {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.roomio-badge--warn {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.roomio-badge--muted {
+  background: var(--roomio-surface-alt);
+  color: var(--roomio-text-muted);
+  border: 1px solid var(--roomio-border);
+}
+
+.roomio-reception-status {
+  margin-bottom: 8px;
+}

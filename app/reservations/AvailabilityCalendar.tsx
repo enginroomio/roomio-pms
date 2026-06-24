@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui';
+import { roomioFetch } from '@/lib/client/api';
+import { parseApiError } from '@/lib/client/api-errors';
 
 type AvailDay = {
   date: string;
@@ -13,24 +15,48 @@ type AvailDay = {
 export function AvailabilityCalendar() {
   const [matrix, setMatrix] = useState<AvailDay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void fetch('/api/reservations/availability?days=7')
-      .then((r) => r.json())
-      .then((j: { matrix?: AvailDay[] }) => {
-        setMatrix(j.matrix ?? []);
-        setLoading(false);
-      });
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await roomioFetch('/api/reservations/availability?days=7', { cache: 'no-store' });
+      if (!res.ok) throw new Error(await parseApiError(res, 'Müsaitlik yüklenemedi'));
+      const j = (await res.json()) as { matrix?: AvailDay[] };
+      setMatrix(j.matrix ?? []);
+    } catch (err) {
+      setMatrix([]);
+      setError(err instanceof Error ? err.message : 'Müsaitlik yüklenemedi');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  if (loading) return <p className="roomio-page-desc">Müsaitlik yükleniyor…</p>;
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  if (loading && matrix.length === 0) {
+    return <p className="roomio-page-desc">Müsaitlik yükleniyor…</p>;
+  }
 
   return (
     <div className="roomio-card" style={{ marginTop: 16 }}>
       <div className="roomio-kurulus-toolbar">
         <h2 className="roomio-card-title">7 günlük müsaitlik</h2>
-        <Button variant="secondary" href="/reservations/new">+ Rezervasyon</Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button variant="secondary" disabled={loading} onClick={() => void load()}>
+            {loading ? 'Yükleniyor…' : 'Yenile'}
+          </Button>
+          <Button variant="secondary" href="/reservations/new">+ Rezervasyon</Button>
+        </div>
       </div>
+      {error ? (
+        <p className="roomio-page-desc roomio-text-warn" role="alert" style={{ marginTop: 12 }}>
+          {error}
+        </p>
+      ) : null}
       <div className="roomio-table-wrap" style={{ marginTop: 12 }}>
         <table className="roomio-table roomio-table--compact">
           <thead>
@@ -45,24 +71,28 @@ export function AvailabilityCalendar() {
             </tr>
           </thead>
           <tbody>
-            {matrix.map((day) => (
-              <tr key={day.date}>
-                <td><strong>{day.date}</strong></td>
-                {day.cells.map((c) => (
-                  <td key={c.type} className={c.available === 0 ? 'roomio-text-warn' : ''}>
-                    {c.available}/{c.total}
-                  </td>
-                ))}
-                <td><strong>{day.totalAvail}</strong></td>
-              </tr>
-            ))}
+            {matrix.length === 0 ? (
+              <tr><td colSpan={7} className="roomio-table-empty">Müsaitlik verisi yok.</td></tr>
+            ) : (
+              matrix.map((day) => (
+                <tr key={day.date}>
+                  <td><strong>{day.date}</strong></td>
+                  {day.cells.map((c) => (
+                    <td key={c.type} className={c.available === 0 ? 'roomio-text-warn' : ''}>
+                      {c.available}/{c.total}
+                    </td>
+                  ))}
+                  <td><strong>{day.totalAvail}</strong></td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
       <p className="roomio-page-desc" style={{ marginTop: 12 }}>
         <Link href="/rooms?tab=blocking">Blokaj tablosu</Link>
         {' · '}
-        Veri kaynağı: sunucu DB + demo rezervasyonlar
+        Veri kaynağı: sunucu DB + canlı rezervasyonlar
       </p>
     </div>
   );

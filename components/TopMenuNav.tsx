@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { TOP_MENU_GROUPS, topMenuItems } from '@/lib/navigation/top-menu-nav';
 import { navItemActive, type SidebarNavItem } from '@/lib/navigation/sidebar-nav';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 function FlyoutTree({ items, onNavigate }: { items: SidebarNavItem[]; onNavigate: () => void }) {
   return (
@@ -42,6 +43,7 @@ function FlyoutTree({ items, onNavigate }: { items: SidebarNavItem[]; onNavigate
 
 export function TopMenuNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
   const [openId, setOpenId] = useState<string | null>(null);
 
   function groupActive(groupId: string) {
@@ -61,7 +63,7 @@ export function TopMenuNav() {
             onMouseLeave={() => setOpenId((id) => (id === group.id ? null : id))}
           >
             <button type="button" className="roomio-top-menu__trigger" aria-expanded={open}>
-              {group.label}
+              {t(`menu.${group.id}`, undefined, group.label)}
             </button>
             {open ? (
               <div className="roomio-top-menu__panel">

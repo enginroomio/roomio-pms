@@ -7,6 +7,7 @@ import {
   HkRoomContextMenu,
   type HkRoomMenuState,
 } from '@/components/housekeeping/HkRoomContextMenu';
+import { useRoomRackContextMenu } from '@/components/reception/useRoomRackContextMenu';
 import { patchHkRoom } from '@/lib/client/hk-update';
 import { useLiveHkMap } from '@/lib/client/use-live-hk-map';
 import { usePointerFine } from '@/lib/client/use-pointer-fine';
@@ -36,6 +37,11 @@ export function DashboardBoard({
   const { hkMap, applyUpdate } = useLiveHkMap(initialHkMap);
   const [savingRoom, setSavingRoom] = useState<string | null>(null);
   const [roomMenu, setRoomMenu] = useState<HkRoomMenuState>(null);
+
+  const { openMenu: openPmsMenu, menuNode: pmsMenuNode } = useRoomRackContextMenu({
+    reservations,
+    businessDate,
+  });
 
   const alerts = useMemo(
     () => buildHkMobileAlerts(hkMap, departures.length),
@@ -74,6 +80,7 @@ export function DashboardBoard({
             hkInteractive={pointerFine}
             savingRoom={savingRoom}
             onRoomContextMenu={openRoomMenu}
+            onRoomPmsContextMenu={openPmsMenu}
           />
         </div>
         <DailyMovements arrivals={arrivals} departures={departures} alerts={alerts} />
@@ -85,6 +92,7 @@ export function DashboardBoard({
         onSelect={(roomNo, status) => void updateStatus(roomNo, status)}
         onClose={() => setRoomMenu(null)}
       />
+      {pmsMenuNode}
     </>
   );
 }

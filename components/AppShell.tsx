@@ -2,13 +2,14 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   Bell,
   CalendarDays,
   HelpCircle,
 } from 'lucide-react';
 import { SyncStatusBar } from '@/components/SyncStatusBar';
+import { RouteAccessGuard } from '@/components/auth/RouteAccessGuard';
 import { LicenseBadge } from '@/components/LicenseBadge';
 import { CommandPalette } from '@/components/CommandPalette';
 import { IconRail } from '@/components/IconRail';
@@ -19,6 +20,7 @@ import { RoleSwitcher } from '@/components/auth/RoleSwitcher';
 import { HeaderUser } from '@/components/auth/HeaderUser';
 import { PropertySwitcher } from '@/components/property/PropertySwitcher';
 import { LocaleSwitcher } from '@/components/i18n/LocaleSwitcher';
+import { PwaOfflineBanner } from '@/components/pwa/PwaOfflineBanner';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { ContentOneScreen, type OneScreenVariant } from '@/components/ContentOneScreen';
 import { useRoomioShortcuts } from '@/lib/shortcuts';
@@ -38,24 +40,42 @@ function isHkMobileRoute(pathname: string): boolean {
   );
 }
 
-function oneScreenVariant(pathname: string): OneScreenVariant {
+function isThemeRoute(pathname: string, tab: string | null): boolean {
+  return pathname === '/tools/theme' || (pathname === '/settings' && tab === 'theme');
+}
+
+function oneScreenVariant(pathname: string, tab: string | null): OneScreenVariant {
+  if (isThemeRoute(pathname, tab)) return 'theme';
   if (pathname === '/') return 'dashboard';
-  if (pathname.startsWith('/housekeeping/mobile')) return 'hk';
-  if (isHkMobileRoute(pathname)) return 'hk-scroll';
+  if (isHkMobileRoute(pathname)) return 'hk';
   return 'default';
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+function AppShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get('tab');
   useRoomioShortcuts();
-  const screenVariant = oneScreenVariant(pathname);
+  const screenVariant = oneScreenVariant(pathname, tab);
 
   if (pathname.startsWith('/wifi')) {
     return <div className="roomio-wifi-shell">{children}</div>;
   }
 
+  if (pathname === '/login' || pathname === '/offline') {
+    return <>{children}</>;
+  }
+
   if (isMockupRoute(pathname)) {
-    return <div className="roomio-mockup-shell">{children}</div>;
+    return (
+      <div className="roomio-viewport-host">
+        <div className="roomio-viewport-canvas">
+          <div className="roomio-mockup-shell">
+            <ContentOneScreen variant="default">{children}</ContentOneScreen>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (isHkMobileRoute(pathname)) {
@@ -63,7 +83,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="roomio-viewport-host">
         <div className="roomio-viewport-canvas">
           <div className="roomio-hk-mobile-shell">
-            <ContentOneScreen variant={screenVariant}>{children}</ContentOneScreen>
+            <ContentOneScreen variant={screenVariant}>
+              <RouteAccessGuard>{children}</RouteAccessGuard>
+            </ContentOneScreen>
           </div>
         </div>
       </div>
@@ -77,6 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <IconRail />
 
           <div className="roomio-main">
+            <PwaOfflineBanner />
             <header className="roomio-header roomio-header--app">
               <div className="roomio-header-top">
                 <div className="roomio-header-left">
@@ -112,12 +135,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Suspense fallback={null}>
                 <ReleaseNotice />
               </Suspense>
-              <ContentOneScreen variant={screenVariant}>{children}</ContentOneScreen>
+              <ContentOneScreen variant={screenVariant}>
+                <RouteAccessGuard>{children}</RouteAccessGuard>
+              </ContentOneScreen>
             </main>
             <ShortcutBar />
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <AppShellInner>{children}</AppShellInner>
+    </Suspense>
   );
 }

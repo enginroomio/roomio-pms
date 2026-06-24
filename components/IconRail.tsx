@@ -11,6 +11,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { ICON_RAIL } from '@/lib/navigation/top-menu-nav';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 const icons = {
   home: Home,
@@ -28,6 +29,7 @@ function isActive(pathname: string, href: string) {
 
 export function IconRail() {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
     <aside className="roomio-icon-rail" aria-label="Hızlı modüller">
@@ -43,10 +45,10 @@ export function IconRail() {
               key={item.id}
               href={item.href}
               className={`roomio-icon-rail__btn${active ? ' is-active' : ''}`}
-              title={`${item.label} (Alt+${index + 1})`}
+              title={`${t(`rail.${item.id}`, undefined, item.label)} (Alt+${index + 1})`}
             >
               <Icon size={18} />
-              <span>{item.label}</span>
+              <span>{t(`rail.${item.id}`, undefined, item.label)}</span>
             </Link>
           );
         })}

@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   productionBrowserSourceMaps: false,
   eslint: { ignoreDuringBuilds: true },
+  serverExternalPackages: ['@sentry/node', '@sentry/node-core', 'pdfkit', 'fontkit'],
   async headers() {
     return [
       {
@@ -18,8 +19,24 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     webpackMemoryOptimizations: true,
+    optimizePackageImports: ['lucide-react'],
   },
-  webpack: (config, { dev }) => {
+  webpack: (config, { dev, isServer }) => {
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@sentry/node': false,
+        '@sentry/node-core': false,
+      };
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        net: false,
+        tls: false,
+        fs: false,
+        child_process: false,
+        module: false,
+      };
+    }
     if (dev) {
       config.watchOptions = {
         poll: process.env.WATCHPACK_POLLING ? Number(process.env.WATCHPACK_POLLING_INTERVAL ?? 1000) : undefined,

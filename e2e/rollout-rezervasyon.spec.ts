@@ -15,6 +15,8 @@ test.describe('Rezervasyon rollout — adım adım', () => {
     await page.goto('/reservations/new');
     await expect(page.getByRole('heading', { name: /Yeni Rezervasyon/i })).toBeVisible();
     await expect(page.getByText(/Misafir|Konaklama|Fiyat/i).first()).toBeVisible();
+    await page.getByRole('button', { name: /Konaklama/i }).click();
+    await expect(page.getByText(/müsait|Müsaitlik/i).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('Adım 3 — Rezervasyon Listesi', async ({ page }) => {

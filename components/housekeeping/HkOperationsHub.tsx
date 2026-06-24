@@ -23,6 +23,7 @@ import { HK_STAFF, type HkStaffMember } from '@/lib/housekeeping/staff';
 import { FLOORS } from '@/lib/rooms/room-config';
 import type { HousekeepingBoardRow } from '@/lib/rooms/inventory';
 import type { HkGuestRequestRecord } from '@/lib/server/guest-request-service';
+import { HkRoutingPanel } from '@/components/housekeeping/HkRoutingPanel';
 import type { RoomFault } from '@/lib/server/fault-service';
 
 const STAFF_CAPACITY = 15;
@@ -200,7 +201,9 @@ export function HkOperationsHubClient() {
   }
 
   return (
-    <div className="roomio-hk-hub-mock roomio-hk-hub-mock--live" style={{ marginTop: 16 }}>
+    <>
+      <HkRoutingPanel />
+      <div className="roomio-hk-hub-mock roomio-hk-hub-mock--live" style={{ marginTop: 16 }}>
       {error ? <p className="roomio-hk-hub-mock__error">{error}</p> : null}
 
       <div className="roomio-hk-hub-mock__toolbar">
@@ -448,5 +451,6 @@ export function HkOperationsHubClient() {
         </section>
       </div>
     </div>
+    </>
   );
 }

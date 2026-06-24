@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
+import { requireApiAuth, requireApiPermission, requireKurulusApiWrite } from '@/lib/auth/require-permission';
 import { deleteReportTemplate, getReportTemplates, saveReportTemplate } from '@/lib/server/pms-store';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const auth = await requireApiAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const propertyId = propertyIdFromRequest(req);
   const url = new URL(req.url);
   const kind = url.searchParams.get('kind') as 'report' | 'form' | null;
@@ -19,6 +23,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireApiPermission(req, 'reports.export');
+  if (auth instanceof NextResponse) return auth;
+
   const propertyId = propertyIdFromRequest(req);
   try {
     const body = (await req.json()) as {
@@ -39,6 +46,9 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const auth = await requireApiPermission(req, 'reports.export');
+  if (auth instanceof NextResponse) return auth;
+
   const propertyId = propertyIdFromRequest(req);
   const url = new URL(req.url);
   const id = url.searchParams.get('id');

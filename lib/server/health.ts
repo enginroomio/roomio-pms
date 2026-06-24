@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { isAuthRequired } from '@/lib/auth/config';
 import { isIntegrationLiveMode } from '@/lib/integrations/live-mode';
+import { cacheStats } from '@/lib/server/perf-cache';
 import { pingRedis } from '@/lib/server/redis';
 import { pushConfigured, countPushSubscriptions } from '@/lib/server/push-store';
 import { prisma } from '@/lib/server/prisma';
@@ -55,7 +57,24 @@ export async function collectHealthStatus() {
   };
 
   const release = await readReleaseManifest();
-  const ok = checks.database.ok && checks.redis.ok;
+  const perf = cacheStats();
+  const jwtSecret = process.env.ROOMIO_JWT_SECRET ?? '';
+  const authRequired = isAuthRequired();
+  const authOk = !authRequired || (jwtSecret.length >= 32 && !jwtSecret.includes('replace-with'));
+
+  checks.auth = {
+    ok: authOk,
+    detail: authRequired
+      ? authOk ? 'jwt:configured' : 'jwt:missing-or-weak'
+      : 'optional (dev)',
+  };
+
+  checks.performance = {
+    ok: true,
+    detail: `cache:${perf.size} keys, heap:${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`,
+  };
+
+  const ok = checks.database.ok && checks.redis.ok && checks.auth.ok;
 
   return {
     ok,

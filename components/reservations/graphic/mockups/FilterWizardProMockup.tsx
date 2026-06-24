@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Bookmark,
   Calendar,
@@ -17,8 +17,27 @@ import {
   FILTER_CATEGORIES,
   type WizardFilter,
 } from './GraphicFilterWizard';
+import {
+  buildForecastBars,
+  formatForecastDate,
+  forecastSummary,
+  type GraphicCalendarDay,
+} from '@/lib/reservations/graphic-calendar';
+import {
+  graphicFilterImpact,
+  queueItemToRule,
+  type GraphicFilterRule,
+} from '@/lib/reservations/graphic-filters';
+import { PROPERTY } from '@/lib/navigation';
+import { roomioFetch } from '@/lib/client/api';
+import { parseApiError } from '@/lib/client/api-errors';
 
-type QueueItem = WizardFilter & { logic: 'VE' | 'VEYA' };
+type QueueItem = WizardFilter & {
+  logic: 'VE' | 'VEYA';
+  categoryId: string;
+  operator: string;
+  value: string;
+};
 
 type WizardStep = 1 | 2 | 3;
 
@@ -75,12 +94,44 @@ const SAVED_PRESETS = [
 ];
 
 const INITIAL_QUEUE: QueueItem[] = [
-  { id: 'q1', category: 'Pansiyon Tipi', label: 'Eşittir: HB (Half Board)', tone: 'amber', logic: 'VE' },
-  { id: 'q2', category: 'Ülke / Uyruk', label: 'İçinde: Almanya, Hollanda', tone: 'blue', logic: 'VE' },
+  {
+    id: 'q1',
+    category: 'Pansiyon Tipi',
+    categoryId: 'board',
+    operator: 'Eşittir',
+    value: 'HB (Half Board)',
+    label: 'Eşittir: HB (Half Board)',
+    tone: 'amber',
+    logic: 'VE',
+  },
+  {
+    id: 'q2',
+    category: 'Acenta',
+    categoryId: 'agency',
+    operator: 'İçinde',
+    value: 'Booking.com',
+    label: 'İçinde: Booking.com',
+    tone: 'indigo',
+    logic: 'VE',
+  },
 ];
 
-/** Mockup #3 — Elektra v5 Pro Geniş Filtre Sihirbazı (detaylı) */
-export function FilterWizardProMockup() {
+/** Elektra v5 Pro — Geniş Filtre Sihirbazı (canlı API veya demo) */
+export type FilterWizardProMockupProps = {
+  from?: string;
+  days?: number;
+  live?: boolean;
+  onApply?: (rules: GraphicFilterRule[]) => void;
+  onOpenForecast?: () => void;
+};
+
+export function FilterWizardProMockup({
+  from = PROPERTY.businessDate,
+  days = 31,
+  live = false,
+  onApply,
+  onOpenForecast,
+}: FilterWizardProMockupProps = {}) {
   const [step, setStep] = useState<WizardStep>(1);
   const [categoryId, setCategoryId] = useState('board');
   const [operator, setOperator] = useState('Eşittir');
@@ -91,6 +142,51 @@ export function FilterWizardProMockup() {
   const [presetName, setPresetName] = useState('HB + DACH — aylık oda+kişi grafik');
   const [shareScope, setShareScope] = useState<'me' | 'team' | 'all'>('team');
   const [applyTargets, setApplyTargets] = useState({ grafik: true, kpi: true, takvim: true, export: false });
+  const [previewMatrix, setPreviewMatrix] = useState<GraphicCalendarDay[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [impact, setImpact] = useState(() => graphicFilterImpact([]));
+
+  const rules = useMemo(() => queue.map((item, index) => queueItemToRule({
+    ...item,
+    logic: index === 0 ? 'VE' : item.logic,
+  })), [queue]);
+
+  const loadPreview = useCallback(async () => {
+    if (!live) return;
+    setPreviewLoading(true);
+    setPreviewError(null);
+    try {
+      const filters = rules.length > 0 ? `&filters=${encodeURIComponent(JSON.stringify(rules))}` : '';
+      const res = await roomioFetch(
+        `/api/reservations/availability?from=${from}&days=${days}${filters}`,
+        { cache: 'no-store' },
+      );
+      if (!res.ok) throw new Error(await parseApiError(res, 'Önizleme yüklenemedi'));
+      const j = (await res.json()) as {
+        matrix?: GraphicCalendarDay[];
+        impact?: ReturnType<typeof graphicFilterImpact>;
+      };
+      setPreviewMatrix(j.matrix ?? []);
+      if (j.impact) setImpact(j.impact);
+      else setImpact(graphicFilterImpact(j.matrix ?? []));
+    } catch (err) {
+      setPreviewMatrix([]);
+      setImpact(graphicFilterImpact([]));
+      setPreviewError(err instanceof Error ? err.message : 'Önizleme yüklenemedi');
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, [days, from, live, rules]);
+
+  useEffect(() => {
+    if (!live) return;
+    const timer = window.setTimeout(() => void loadPreview(), 200);
+    return () => window.clearTimeout(timer);
+  }, [live, loadPreview]);
+
+  const previewBars = useMemo(() => buildForecastBars(previewMatrix), [previewMatrix]);
+  const previewSummary = useMemo(() => forecastSummary(previewMatrix), [previewMatrix]);
 
   const category = FILTER_CATEGORIES.find((c) => c.id === categoryId);
   const valueOptions = VALUE_PRESETS[categoryId] ?? [];
@@ -119,6 +215,9 @@ export function FilterWizardProMockup() {
       {
         id: `q-${Date.now()}`,
         category: category.label,
+        categoryId,
+        operator,
+        value,
         label: `${operator}: ${value}`,
         tone: category.tone,
         logic,
@@ -127,13 +226,23 @@ export function FilterWizardProMockup() {
     setStep(1);
   };
 
+  const handleApply = () => {
+    onApply?.(rules);
+  };
+
   const removeFromQueue = (id: string) => {
     setQueue((prev) => prev.filter((f) => f.id !== id));
   };
 
   return (
     <div className="roomio-grafik-mockup roomio-grafik-mockup--wizard-pro">
-      <div className="roomio-grafik-mockup__badge">Mockup #3 · Elektra v5 Pro — Geniş Filtre Sihirbazı (Detaylı)</div>
+      {!live ? (
+        <div className="roomio-grafik-mockup__badge">Mockup #3 · Elektra v5 Pro — Geniş Filtre Sihirbazı (Detaylı)</div>
+      ) : (
+        <div className="roomio-grafik-mockup__badge roomio-grafik-mockup__badge--live">
+          Canlı API · {formatForecastDate(from)} · {days} gün · {queue.length} filtre
+        </div>
+      )}
 
       <header className="roomio-wizard-pro__intro">
         <div>
@@ -145,17 +254,44 @@ export function FilterWizardProMockup() {
         </div>
         <div className="roomio-wizard-pro__intro-actions">
           <span className="roomio-wizard-pro__pill"><SlidersHorizontal size={14} /> 16 kategori</span>
-          <span className="roomio-wizard-pro__pill"><Bookmark size={14} /> 3 kayıtlı set</span>
+          <span className="roomio-wizard-pro__pill"><Bookmark size={14} /> {SAVED_PRESETS.length} kayıtlı set</span>
+          {onOpenForecast ? (
+            <button type="button" className="roomio-wizard-pro__pill roomio-wizard-pro__pill--btn" onClick={onOpenForecast}>
+              Forecast F1
+            </button>
+          ) : null}
         </div>
       </header>
 
       <div className="roomio-wizard-pro__layout">
         {/* Sol: arka plan grafik ekranı (context) */}
         <div className="roomio-wizard-pro__backdrop" aria-hidden>
-          <div className="roomio-wizard-pro__backdrop-bar" />
-          <div className="roomio-wizard-pro__backdrop-kpis" />
-          <div className="roomio-wizard-pro__backdrop-chart" />
-          <p>Grafikler F1 — Haziran 2026 · Oda + Kişi doluluğu</p>
+          {live && previewBars.length > 0 ? (
+            <div className="roomio-wizard-pro__backdrop-live">
+              {previewBars.slice(0, 14).map((bar) => {
+                const pct = bar.totalRooms > 0 ? Math.round((bar.occupied / bar.totalRooms) * 100) : 0;
+                return (
+                  <div key={bar.date} className="roomio-wizard-pro__backdrop-col" style={{ height: `${Math.max(8, pct)}%` }} />
+                );
+              })}
+            </div>
+          ) : (
+            <>
+              <div className="roomio-wizard-pro__backdrop-bar" />
+              <div className="roomio-wizard-pro__backdrop-kpis" />
+              <div className="roomio-wizard-pro__backdrop-chart" />
+            </>
+          )}
+          <p>
+            {live
+              ? `Grafikler F1 — ${formatForecastDate(from)} · %${previewSummary.occupancyPct} doluluk · ${previewLoading ? 'güncelleniyor…' : `${impact.days}/${impact.totalDays} aktif gün`}`
+              : 'Grafikler F1 — Haziran 2026 · Oda + Kişi doluluğu'}
+          </p>
+          {previewError ? (
+            <p className="roomio-text-warn" role="alert" style={{ marginTop: 8, fontSize: '0.85rem' }}>
+              {previewError}
+            </p>
+          ) : null}
         </div>
 
         {/* Orta: sihirbaz */}
@@ -335,7 +471,9 @@ export function FilterWizardProMockup() {
                 İleri
               </button>
             ) : (
-              <button type="button" className="roomio-grafik-wizard__primary">Uygula & Kaydet ({queue.length} filtre)</button>
+              <button type="button" className="roomio-grafik-wizard__primary" onClick={handleApply}>
+                Uygula & Kaydet ({queue.length} filtre)
+              </button>
             )}
           </footer>
         </div>
@@ -365,9 +503,9 @@ export function FilterWizardProMockup() {
             <h4>Sorgu önizleme</h4>
             <pre className="roomio-wizard-pro__expr">{previewExpr}</pre>
             <dl className="roomio-wizard-pro__impact">
-              <div><dt>Tahmini gün</dt><dd>24 / 30</dd></div>
-              <div><dt>Ort. oda dol.</dt><dd>%71,2</dd></div>
-              <div><dt>Ort. kişi dol.</dt><dd>%78,8</dd></div>
+              <div><dt>Tahmini gün</dt><dd>{impact.days} / {impact.totalDays || days}</dd></div>
+              <div><dt>Ort. oda dol.</dt><dd>%{impact.avgRoomOcc.toLocaleString('tr-TR')}</dd></div>
+              <div><dt>Ort. kişi dol.</dt><dd>%{impact.avgPersonOcc.toLocaleString('tr-TR')}</dd></div>
             </dl>
           </section>
 

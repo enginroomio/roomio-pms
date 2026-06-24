@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
+import { requireIntegrationAdminRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
 import { loadPbxConfig, savePbxConfig } from '@/lib/integrations/pbx/client';
 import type { PbxConfig } from '@/lib/integrations/pbx/types';
 
-export async function GET() {
+export async function GET(req: Request) {
+    const auth = await requireIntegrationAdminRead(req);
+  if (auth instanceof NextResponse) return auth;
+
   const config = await loadPbxConfig();
   return NextResponse.json({
     ...config,
@@ -12,6 +16,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+    const auth = await requireIntegrationAdminWrite(req);
+  if (auth instanceof NextResponse) return auth;
+
   const body = (await req.json()) as Partial<PbxConfig>;
   const current = await loadPbxConfig();
   const next: PbxConfig = {

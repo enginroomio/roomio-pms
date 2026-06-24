@@ -8,9 +8,11 @@ type SessionContextValue = {
   user: SessionUser;
   setRole: (role: Role) => void;
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
   authenticated: boolean;
+  authRequired: boolean;
+  demoAuth: boolean;
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -30,23 +32,44 @@ function toSessionUser(u: ApiUser): SessionUser {
   return { id: u.id, name: u.name, role: u.role, roleLabel: u.roleLabel, permissions: u.permissions };
 }
 
+function authHeaders(): HeadersInit {
+  const token = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_STORAGE) : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser>(getDemoSession('fo_manager'));
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+  const [authRequired, setAuthRequired] = useState(false);
+  const [demoAuth, setDemoAuth] = useState(false);
 
   const refresh = useCallback(async () => {
-    const token = localStorage.getItem(TOKEN_STORAGE);
-    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-    const role = localStorage.getItem(ROLE_STORAGE) as Role | null;
-    const url = role && !token ? `/api/auth/session?role=${role}` : '/api/auth/session';
-    const r = await fetch(url, { headers });
-    const j = (await r.json()) as { user?: ApiUser; authenticated?: boolean };
-    if (j.user) {
-      setUser(toSessionUser(j.user));
-      setAuthenticated(Boolean(j.authenticated));
+    try {
+      const cfgRes = await fetch('/api/auth/config');
+      const cfg = (await cfgRes.json()) as { authRequired?: boolean; demoAuth?: boolean };
+      setAuthRequired(Boolean(cfg.authRequired));
+      setDemoAuth(Boolean(cfg.demoAuth));
+
+      const role = localStorage.getItem(ROLE_STORAGE) as Role | null;
+      const token = localStorage.getItem(TOKEN_STORAGE);
+      const useDemoRole = cfg.demoAuth && role && !token;
+      const url = useDemoRole ? `/api/auth/session?role=${role}` : '/api/auth/session';
+
+      const r = await fetch(url, { headers: authHeaders(), credentials: 'include' });
+      if (r.status === 401 && cfg.authRequired) {
+        setAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+      const j = (await r.json()) as { user?: ApiUser; authenticated?: boolean };
+      if (j.user) {
+        setUser(toSessionUser(j.user));
+        setAuthenticated(Boolean(j.authenticated));
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -54,6 +77,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   function setRole(r: Role) {
+    if (!demoAuth) return;
     localStorage.removeItem(TOKEN_STORAGE);
     localStorage.setItem(ROLE_STORAGE, r);
     setUser(getDemoSession(r));
@@ -64,25 +88,41 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   async function login(email: string, password: string) {
     const r = await fetch('/api/auth/login', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
     const j = (await r.json()) as { ok?: boolean; token?: string; user?: ApiUser; error?: string };
-    if (!r.ok || !j.token || !j.user) return { ok: false, error: j.error ?? 'Giriş başarısız' };
-    localStorage.setItem(TOKEN_STORAGE, j.token);
+    if (!r.ok || !j.user) return { ok: false, error: j.error ?? 'Giriş başarısız' };
+    if (j.token) localStorage.setItem(TOKEN_STORAGE, j.token);
     localStorage.removeItem(ROLE_STORAGE);
     setUser(toSessionUser(j.user));
     setAuthenticated(true);
     return { ok: true };
   }
 
-  function logout() {
+  async function logout() {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: authHeaders(),
+    }).catch(() => undefined);
     localStorage.removeItem(TOKEN_STORAGE);
-    setRole('fo_manager');
+    if (demoAuth) {
+      localStorage.setItem(ROLE_STORAGE, 'fo_manager');
+      setUser(getDemoSession('fo_manager'));
+      setAuthenticated(false);
+      void refresh();
+      return;
+    }
+    setAuthenticated(false);
+    window.location.href = '/login';
   }
 
   return (
-    <SessionContext.Provider value={{ user, setRole, login, logout, loading, authenticated }}>
+    <SessionContext.Provider
+      value={{ user, setRole, login, logout, loading, authenticated, authRequired, demoAuth }}
+    >
       {children}
     </SessionContext.Provider>
   );

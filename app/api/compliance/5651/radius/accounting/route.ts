@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireIntegrationAdminRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
 import { ingestBridgeEvent } from '@/lib/integrations/hotspot5651/bridge';
 import { loadHotspot5651Config } from '@/lib/integrations/hotspot5651/server';
 import {
@@ -41,7 +42,10 @@ export async function POST(req: Request) {
   });
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+    const auth = await requireIntegrationAdminRead(req);
+  if (auth instanceof NextResponse) return auth;
+
   const config = await loadHotspot5651Config();
   return NextResponse.json({
     endpoint: '/api/compliance/5651/radius/accounting',

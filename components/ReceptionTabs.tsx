@@ -2,25 +2,27 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 const LINKS = [
-  { href: '/reception', label: 'Özet', exact: true },
-  { href: '/reception/inhouse', label: 'Konaklayanlar' },
-  { href: '/reception/arrivals', label: 'Bugün Giriş' },
-  { href: '/reception/departures', label: 'Bugün Çıkış' },
-  { href: '/reception/vacant', label: 'Boş Odalar' },
-  { href: '/reception/guest-requests', label: 'Misafir Talepleri' },
-];
+  { href: '/reception', key: 'reception.tab.summary', exact: true },
+  { href: '/reception/inhouse', key: 'reception.tab.inhouse' },
+  { href: '/reception/arrivals', key: 'reception.tab.arrivals' },
+  { href: '/reception/departures', key: 'reception.tab.departures' },
+  { href: '/reception/vacant', key: 'reception.tab.vacant' },
+  { href: '/reception/guest-requests', key: 'reception.tab.guestRequests' },
+] as const;
 
 export function ReceptionTabs() {
   const pathname = usePathname();
+  const { t } = useI18n();
   return (
     <nav className="roomio-tabs" aria-label="Resepsiyon alt menü">
       {LINKS.map((l) => {
-        const active = l.exact ? pathname === l.href : pathname.startsWith(l.href);
+        const active = 'exact' in l && l.exact ? pathname === l.href : pathname.startsWith(l.href);
         return (
           <Link key={l.href} href={l.href} className={`roomio-tab${active ? ' active' : ''}`}>
-            {l.label}
+            {t(l.key)}
           </Link>
         );
       })}

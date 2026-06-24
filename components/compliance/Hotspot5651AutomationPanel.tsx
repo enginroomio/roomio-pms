@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { roomioFetch } from '@/lib/client/api';
 import type { Hotspot5651Config } from '@/lib/integrations/hotspot5651/types';
 
 type AutomationStatus = {
@@ -38,7 +39,7 @@ export function Hotspot5651AutomationPanel({ config, onChange, onSave, saved }: 
   const [msg, setMsg] = useState<string | null>(null);
 
   async function refreshStatus() {
-    const res = await fetch('/api/compliance/5651/automation');
+    const res = await roomioFetch('/api/compliance/5651/automation');
     if (res.ok) setStatus((await res.json()) as AutomationStatus);
   }
 
@@ -50,7 +51,7 @@ export function Hotspot5651AutomationPanel({ config, onChange, onSave, saved }: 
     setBusy(true);
     setMsg(null);
     try {
-      const res = await fetch('/api/compliance/5651/automation', { method: 'POST' });
+      const res = await roomioFetch('/api/compliance/5651/automation', { method: 'POST' });
       const j = (await res.json()) as { result?: RunResult };
       if (j.result) {
         setLastResult(j.result);

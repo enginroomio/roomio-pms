@@ -9,6 +9,8 @@ type Options = {
   uniformScale?: boolean;
   /** true: taşan içerikte küçültme yerine kaydırma */
   allowScroll?: boolean;
+  /** true: yalnızca kabuğun kendi flex alanını ölç (iç içe önizleme) */
+  local?: boolean;
 };
 
 const REFIT_DELAYS_MS = [0, 80, 240, 600, 1200, 2000];
@@ -25,6 +27,7 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
   const minScale = options.minScale ?? 0.48;
   const uniformScale = options.uniformScale ?? true;
   const allowScroll = options.allowScroll ?? false;
+  const local = options.local ?? false;
 
   useEffect(() => {
     const shell = shellRef.current;
@@ -37,6 +40,14 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
     const timers: number[] = [];
 
     function measureAvailable(shellEl: HTMLElement): number {
+      if (local) {
+        const parent = shellEl.parentElement;
+        if (parent && parent.clientHeight > 0) {
+          return parent.clientHeight;
+        }
+        return shellEl.clientHeight;
+      }
+
       if (content) {
         const siblings = Array.from(content.children).filter((node) => node !== shellEl);
         const siblingsH = siblings.reduce(
@@ -111,24 +122,34 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
           const available = Math.floor(measureAvailable(shellEl2));
           if (available <= 0) return;
 
-          const width = shellEl2.offsetWidth || rootEl2.offsetWidth;
-          const needed = measureNeeded(rootEl2, width);
+      const width = shellEl2.offsetWidth || rootEl2.offsetWidth;
+      const needed = measureNeeded(rootEl2, width);
+      const neededW = rootEl2.scrollWidth;
 
-          shellEl2.style.overflow = allowScroll ? 'auto' : 'hidden';
-          shellEl2.style.maxHeight = `${available}px`;
-          shellEl2.style.height = `${available}px`;
-          rootEl2.style.transform = 'none';
-          rootEl2.style.width = '100%';
+      shellEl2.style.overflow = allowScroll ? 'auto' : 'hidden';
+      shellEl2.style.maxHeight = `${available}px`;
+      shellEl2.style.height = `${available}px`;
+      rootEl2.style.transform = 'none';
+      rootEl2.style.width = '100%';
 
-          if (allowScroll || needed <= available + 1) {
-            shellEl2.style.height = allowScroll ? `${available}px` : `${needed}px`;
-            return;
-          }
+      const heightFits = needed <= available + 1;
+      const widthFits = neededW <= width + 1;
 
-          let scale = Math.max(minScale, available / needed);
-          if (needed * scale > available + 1) {
-            scale = available / needed;
-          }
+      if (allowScroll || (heightFits && widthFits)) {
+        shellEl2.style.height = allowScroll ? `${available}px` : `${needed}px`;
+        return;
+      }
+
+      let scale = uniformScale
+        ? Math.min(available / needed, width / neededW)
+        : available / needed;
+      scale = Math.max(minScale, scale);
+      if (uniformScale) {
+        if (needed * scale > available + 1) scale = available / needed;
+        if (neededW * scale > width + 1) scale = Math.min(scale, width / neededW);
+      } else if (needed * scale > available + 1) {
+        scale = available / needed;
+      }
           if (uniformScale) {
             rootEl2.style.transform = `scale(${scale})`;
             rootEl2.style.transformOrigin = 'top center';
@@ -174,7 +195,7 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
       fitModeObserver.disconnect();
       window.removeEventListener('resize', fit);
     };
-  }, [minScale, uniformScale, allowScroll]);
+  }, [minScale, uniformScale, allowScroll, local]);
 
   return { shellRef, rootRef };
 }

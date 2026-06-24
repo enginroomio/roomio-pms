@@ -22,12 +22,20 @@ console.log('5. Create Database\n');
 
 console.log('📋 Adım 2 — Web servisine bağla\n');
 console.log(`1. Dashboard → ${SERVICE} → Environment`);
-console.log('2. DATABASE_URL → Postgres → Connect → Internal Database URL');
-console.log('   (Internal URL kullanın — aynı Render ağı, daha hızlı)');
-console.log('3. Eski DATABASE_URL=file:/tmp/roomio.db satırını silin veya override edin');
-console.log('4. İsteğe bağlı: PRISMA_SCHEMA=postgresql');
-console.log('5. ROOMIO_PUSH_STORE artık gerekmez (push DB\'de) — silebilirsiniz');
-console.log('6. Save Changes → Manual Deploy\n');
+console.log('2. Add Environment Variable → Key: DATABASE_URL');
+console.log('3. Value: roomio-db → Connect → **Internal Database URL** kopyala');
+console.log('   (postgresql://… — External değil, Internal kullanın)');
+console.log('4. **Silin** (artık gerekmez):');
+console.log('   - DATABASE_URL=file:/tmp/roomio.db (eski satır)');
+console.log('   - ROOMIO_PUSH_STORE');
+console.log('   - ROOMIO_DATA_DIR=/tmp');
+console.log('5. İsteğe bağlı: PRISMA_SCHEMA=postgresql (otomatik algılanır)');
+console.log('6. Save Changes → **Manual Deploy** (5–10 dk)\n');
+
+console.log('📋 Adım 3 — Deploy loglarında bekleyin\n');
+console.log('[render-build] DATABASE_URL=postgresql://…');
+console.log('→ prisma db push (postgresql şeması)');
+console.log('✅ render-build tamam\n');
 
 console.log('📋 Adım 3 — Doğrula\n');
 console.log(`npm run render:postgres:verify`);

@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { INVENTORY_HYDRATED_EVENT, dispatchPropertyChanged } from '@/lib/client/inventory-events';
 import { DEFAULT_PROPERTY_ID, type PropertyInfo } from '@/lib/server/property-context';
 import { getActivePropertyId, roomioFetch, setActivePropertyId } from '@/lib/client/api';
 
@@ -10,6 +11,7 @@ type PropertyContextValue = {
   propertyId: string;
   setPropertyId: (id: string) => void;
   loading: boolean;
+  refreshProperties: () => Promise<void>;
 };
 
 const PropertyContext = createContext<PropertyContextValue | null>(null);
@@ -28,20 +30,31 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
   const [propertyId, setPropertyIdState] = useState(DEFAULT_PROPERTY_ID);
   const [loading, setLoading] = useState(true);
 
+  const refreshProperties = useCallback(async () => {
+    const res = await roomioFetch('/api/properties');
+    const j = (await res.json()) as { properties?: PropertyInfo[] };
+    if (j.properties?.length) setProperties(j.properties);
+  }, []);
+
   useEffect(() => {
     const stored = getActivePropertyId();
     setPropertyIdState(stored);
-    void roomioFetch('/api/properties')
-      .then((r) => r.json())
-      .then((j: { properties?: PropertyInfo[] }) => {
-        if (j.properties?.length) setProperties(j.properties);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    setLoading(true);
+    void refreshProperties().finally(() => setLoading(false));
+  }, [propertyId, refreshProperties]);
+
+  useEffect(() => {
+    const onInventory = () => {
+      void refreshProperties();
+    };
+    window.addEventListener(INVENTORY_HYDRATED_EVENT, onInventory);
+    return () => window.removeEventListener(INVENTORY_HYDRATED_EVENT, onInventory);
+  }, [refreshProperties]);
 
   const setPropertyId = useCallback((id: string) => {
     setActivePropertyId(id);
     setPropertyIdState(id);
+    dispatchPropertyChanged(id);
   }, []);
 
   const activeProperty = useMemo(
@@ -50,8 +63,8 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ properties, activeProperty, propertyId, setPropertyId, loading }),
-    [properties, activeProperty, propertyId, setPropertyId, loading],
+    () => ({ properties, activeProperty, propertyId, setPropertyId, loading, refreshProperties }),
+    [properties, activeProperty, propertyId, setPropertyId, loading, refreshProperties],
   );
 
   return <PropertyContext.Provider value={value}>{children}</PropertyContext.Provider>;

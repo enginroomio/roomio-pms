@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Copy, RefreshCw, Router, Wifi } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { roomioFetch } from '@/lib/client/api';
 import { mikrotikRb5009SetupScript } from '@/lib/integrations/hotspot5651/mikrotik';
 import { unifiSyslogInstructions } from '@/lib/integrations/hotspot5651/unifi';
 import {
@@ -37,7 +38,7 @@ export function Hotspot5651DevicesPanel({ config, onChange, onSave, saved }: Pro
   const [busy, setBusy] = useState(false);
 
   const loadStatus = useCallback(() => {
-    void fetch('/api/compliance/5651/devices')
+    void roomioFetch('/api/compliance/5651/devices')
       .then((r) => r.json())
       .then((j: DeviceStatus) => setStatus(j))
       .catch(() => undefined);
@@ -49,7 +50,7 @@ export function Hotspot5651DevicesPanel({ config, onChange, onSave, saved }: Pro
 
   async function testDevice(device: 'mikrotik' | 'unifi') {
     setBusy(true);
-    const res = await fetch('/api/compliance/5651/devices', {
+    const res = await roomioFetch('/api/compliance/5651/devices', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'test', device }),
@@ -62,7 +63,7 @@ export function Hotspot5651DevicesPanel({ config, onChange, onSave, saved }: Pro
 
   async function syncSessions() {
     setBusy(true);
-    const res = await fetch('/api/compliance/5651/devices', {
+    const res = await roomioFetch('/api/compliance/5651/devices', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'sync' }),

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireApiPermission } from '@/lib/auth/require-permission';
 import {
   countPushSubscriptions,
   listPushSubscriberViews,
@@ -9,6 +10,9 @@ import {
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const auth = await requireApiPermission(req, 'hk.manage');
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const { searchParams } = new URL(req.url);
     const role = searchParams.get('role') ?? undefined;
@@ -41,6 +45,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireApiPermission(req, 'hk.manage');
+  if (auth instanceof NextResponse) return auth;
+
   if (!pushConfigured()) {
     return NextResponse.json({ ok: false, message: 'VAPID anahtarları tanımlı değil' }, { status: 503 });
   }

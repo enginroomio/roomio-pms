@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { roomioFetch } from '@/lib/client/api';
 import { HK_ONLINE_REFRESH_EVENT } from '@/lib/client/hk-online-refresh';
 
 type HkSubscriber = {
@@ -16,7 +17,7 @@ export function HkOnlinePanel({ compact = false }: { compact?: boolean }) {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch('/api/push/subscribe?role=hk&detail=1', { cache: 'no-store' });
+      const res = await roomioFetch('/api/push/subscribe?role=hk&detail=1', { cache: 'no-store' });
       const body = (await res.json()) as { ok?: boolean; subscribers?: HkSubscriber[] };
       if (body.ok && body.subscribers) {
         setSubscribers(body.subscribers);

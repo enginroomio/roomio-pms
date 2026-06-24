@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
+import { requireApiPermission } from '@/lib/auth/require-permission';
 import { sendHkPush } from '@/lib/push/send';
 import { listPushSubscriptions, pushConfigured } from '@/lib/server/push-store';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  const auth = await requireApiPermission(req, 'hk.manage');
+  if (auth instanceof NextResponse) return auth;
+
   if (!pushConfigured()) {
     return NextResponse.json({ ok: false, message: 'VAPID anahtarları tanımlı değil' }, { status: 503 });
   }

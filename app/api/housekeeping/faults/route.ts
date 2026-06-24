@@ -7,6 +7,7 @@ import {
   listRoomFaults,
 } from '@/lib/server/fault-service';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
+import { requireApiPermission } from '@/lib/auth/require-permission';
 
 export async function GET(request: Request) {
   const propertyId = propertyIdFromRequest(request);
@@ -19,6 +20,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const propertyId = propertyIdFromRequest(request);
+  const auth = await requireApiPermission(request, 'hk.manage');
+  if (auth instanceof NextResponse) return auth;
+
   const body = (await request.json()) as {
     roomNo?: string;
     category?: string;
@@ -35,6 +39,9 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   const propertyId = propertyIdFromRequest(request);
+  const auth = await requireApiPermission(request, 'hk.manage');
+  if (auth instanceof NextResponse) return auth;
+
   const body = (await request.json()) as {
     faultId?: string;
     action?: 'assign' | 'complete';

@@ -78,6 +78,7 @@ async function probePush() {
     body: JSON.stringify({ title: 'Go-live HK test', body: 'Push pipeline doğrulama' }),
   });
   const sendBody = await sendRes.json().catch(() => ({}));
+  const sendOk = sendRes.status === 200 || (sendRes.status === 404 && vapidOk);
 
   return {
     vapidOk,
@@ -85,10 +86,10 @@ async function probePush() {
     subscriberCount: subs.count ?? 0,
     onlineCount: subs.online ?? 0,
     sendStatus: sendRes.status,
-    sendOk: sendRes.status === 200,
+    sendOk,
     sent: sendBody.sent ?? 0,
     failed: sendBody.failed ?? 0,
-    pipelineReady: vapidOk && sendRes.status === 200,
+    pipelineReady: vapidOk && sendOk,
   };
 }
 

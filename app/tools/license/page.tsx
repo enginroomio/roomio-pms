@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui';
+import { roomioFetch } from '@/lib/client/api';
 import type { LicenseEdition, LicensePayload } from '@/lib/license/types';
 import { EDITION_DEFAULTS } from '@/lib/license/types';
 import { randomId } from '@/lib/utils/id';
@@ -52,7 +53,11 @@ export default function LicenseGeneratorPage() {
       notes: form.notes || undefined,
     };
 
-    const res = await fetch('/api/license/verify', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const res = await roomioFetch('/api/license/verify', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
     if (!res.ok) {
       const j = (await res.json()) as { error?: string };
       setError(j.error ?? 'Üretim başarısız');

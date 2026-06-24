@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Copy, Play, Wifi } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { roomioFetch } from '@/lib/client/api';
 import { SAMPLE_SYSLOG_LINES } from '@/lib/integrations/hotspot5651/parsers';
 import { SAMPLE_RADIUS_ACCOUNTING, freeradiusRestNotes } from '@/lib/integrations/hotspot5651/radius-webhook';
 import type { Hotspot5651Config } from '@/lib/integrations/hotspot5651/types';
@@ -26,7 +27,7 @@ export function Hotspot5651BridgePanel({ config, onChange, onSave, saved }: Prop
   const portalUrl = `${origin}${config.captivePortalUrl}`;
 
   async function testSyslog(dryRun: boolean) {
-    const res = await fetch('/api/compliance/5651/bridge/test', {
+    const res = await roomioFetch('/api/compliance/5651/bridge/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ provider: config.provider, line: testLine, dryRun }),
@@ -44,7 +45,7 @@ export function Hotspot5651BridgePanel({ config, onChange, onSave, saved }: Prop
       return;
     }
     if (dryRun) {
-      const res = await fetch('/api/compliance/5651/bridge/test', {
+      const res = await roomioFetch('/api/compliance/5651/bridge/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ radius: payload, dryRun: true }),

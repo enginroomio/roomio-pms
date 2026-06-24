@@ -91,6 +91,28 @@
   margin-top: 16px;
 }
 
+.roomio-card-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.roomio-form--inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--roomio-border);
+}
+
+.roomio-form--inline .roomio-field {
+  min-width: 140px;
+}
+
 /* Table */
 .roomio-table-wrap { overflow-x: auto; padding: 0; }
 

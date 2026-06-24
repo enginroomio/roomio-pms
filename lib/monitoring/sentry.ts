@@ -1,6 +1,17 @@
-import * as Sentry from '@sentry/node';
+import 'server-only';
+
+type SentryModule = typeof import('@sentry/node');
 
 let initialized = false;
+let sentryMod: SentryModule | null = null;
+
+function sentry(): SentryModule {
+  if (!sentryMod) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    sentryMod = require('@sentry/node') as SentryModule;
+  }
+  return sentryMod;
+}
 
 export function sentryConfigured(): boolean {
   return Boolean(process.env.SENTRY_DSN?.trim());
@@ -12,7 +23,7 @@ export function initSentry(): boolean {
   const dsn = process.env.SENTRY_DSN?.trim();
   if (!dsn) return false;
 
-  Sentry.init({
+  sentry().init({
     dsn,
     environment: process.env.SENTRY_ENVIRONMENT ?? process.env.NODE_ENV ?? 'development',
     release: process.env.ROOMIO_RELEASE ?? undefined,
@@ -23,19 +34,19 @@ export function initSentry(): boolean {
 
 export function captureException(error: unknown, context?: Record<string, unknown>): void {
   if (!initSentry()) return;
-  Sentry.withScope((scope) => {
+  sentry().withScope((scope) => {
     if (context) scope.setContext('roomio', context);
-    Sentry.captureException(error);
+    sentry().captureException(error);
   });
 }
 
-export function captureMessage(message: string, level: Sentry.SeverityLevel = 'info'): void {
+export function captureMessage(message: string, level: import('@sentry/node').SeverityLevel = 'info'): void {
   if (!initSentry()) return;
-  Sentry.captureMessage(message, level);
+  sentry().captureMessage(message, level);
 }
 
 export function flushSentry(timeoutMs = 2000): Promise<boolean> {
   if (!sentryConfigured()) return Promise.resolve(true);
   initSentry();
-  return Sentry.flush(timeoutMs);
+  return sentry().flush(timeoutMs);
 }

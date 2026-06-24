@@ -1,8 +1,9 @@
 import { DEFAULT_HK_ROOMS, type HkRoomRecord } from '@/lib/data/hk-defaults';
 import { DEMO_RESERVATIONS } from '@/lib/data/reservations';
 import { PROPERTY } from '@/lib/navigation';
-import { FLOORS, isRoomExcluded } from '@/lib/rooms/room-config';
-import { ROOM_TYPES, type RoomTypeCode, typeCodeForSuffix } from '@/lib/rooms/room-types';
+import { getActiveFloors, isRoomExcluded } from '@/lib/rooms/room-config';
+import { getHydratedRooms } from '@/lib/rooms/inventory-hydrate';
+import { getRoomTypeDef, getActiveRoomTypes, type RoomTypeCode, typeCodeForSuffix } from '@/lib/rooms/room-types';
 import type { Reservation } from '@/lib/types/reservation';
 import type { RackCell, RackCellState, RoomHkStatus, RoomRecord } from '@/lib/types/room';
 
@@ -16,7 +17,7 @@ function buildRoom(num: number, hkMap: Record<string, HkRoomRecord>): RoomRecord
   const floor = Math.floor(num / 100);
   const suffix = num % 100;
   const typeCode = typeCodeForSuffix(suffix);
-  const def = ROOM_TYPES[typeCode as RoomTypeCode];
+  const def = getRoomTypeDef(typeCode)!;
   const hk = hkMap[roomNo];
   return {
     id: `room-${roomNo}`,
@@ -39,9 +40,43 @@ function buildRoom(num: number, hkMap: Record<string, HkRoomRecord>): RoomRecord
   };
 }
 
+function buildRoomFromHydrated(
+  row: NonNullable<ReturnType<typeof getHydratedRooms>>[number],
+  hkMap: Record<string, HkRoomRecord>,
+): RoomRecord {
+  const num = parseInt(row.roomNo, 10);
+  const suffix = num % 100;
+  const def = getRoomTypeDef(row.typeCode);
+  const hk = hkMap[row.roomNo];
+  return {
+    id: `room-${row.roomNo}`,
+    roomNo: row.roomNo,
+    floor: row.floor,
+    suffix,
+    typeCode: row.typeCode,
+    typeShort: def?.short ?? row.typeCode,
+    typeName: def?.name ?? row.typeCode,
+    bedType: def?.bedType ?? '—',
+    maxPersons: def?.maxPersons ?? 2,
+    maxAdults: def?.maxAdults ?? 2,
+    maxChildren: def?.maxChildren ?? 0,
+    baseRate: def?.baseRate ?? 0,
+    location: row.location ?? `${row.floor}. kat`,
+    building: row.building,
+    specialInfo: def?.specialInfo,
+    hkStatus: hk?.hkStatus ?? 'CLEAN',
+    isActive: row.isActive,
+  };
+}
+
 function buildAllRooms(hkMap: Record<string, HkRoomRecord>): RoomRecord[] {
+  const hydrated = getHydratedRooms();
+  if (hydrated?.length) {
+    return hydrated.map((r) => buildRoomFromHydrated(r, hkMap));
+  }
+
   const rooms: RoomRecord[] = [];
-  for (const { start, end } of FLOORS) {
+  for (const { start, end } of getActiveFloors()) {
     for (let num = start; num <= end; num++) {
       if (isRoomExcluded(num)) continue;
       rooms.push(buildRoom(num, hkMap));
@@ -72,7 +107,7 @@ export function getRoomsByFloor(floor: number, hkMap?: Record<string, HkRoomReco
 }
 
 export function getRoomTypesList() {
-  return Object.values(ROOM_TYPES);
+  return getActiveRoomTypes();
 }
 
 const TODAY = PROPERTY.businessDate;
@@ -107,8 +142,9 @@ export function buildRackCells(
   reservations: Reservation[] = DEMO_RESERVATIONS,
   businessDate: string = TODAY,
   hkMap: Record<string, HkRoomRecord> = DEFAULT_HK_ROOMS,
+  roomsOverride?: RoomRecord[],
 ): RackCell[] {
-  const rooms = floor ? getRoomsByFloor(floor, hkMap) : getAllRooms(hkMap);
+  const rooms = roomsOverride ?? (floor ? getRoomsByFloor(floor, hkMap) : getAllRooms(hkMap));
   return rooms.map((room) => {
     const res = reservationForRoom(room.roomNo, reservations);
     const state = classifyRoom(room, businessDate, reservations);

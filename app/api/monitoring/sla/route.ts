@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireApiAuth } from '@/lib/auth/require-permission';
 import { testEgmConnection } from '@/lib/integrations/egm/client';
 import { collectHealthStatus } from '@/lib/server/health';
 import { getProperties } from '@/lib/server/pms-store';
@@ -7,7 +8,10 @@ import { isIntegrationLiveMode } from '@/lib/integrations/live-mode';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
+  const auth = await requireApiAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const [health, properties, egmTest] = await Promise.all([
     collectHealthStatus(),
     getProperties(),

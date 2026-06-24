@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireIntegrationAdminRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
 import { appendHotspotLog, closeHotspotSession, listHotspotLogs } from '@/lib/integrations/hotspot5651/server';
 import type { HotspotSessionLog } from '@/lib/integrations/hotspot5651/types';
 
@@ -13,6 +14,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+    const auth = await requireIntegrationAdminWrite(req);
+  if (auth instanceof NextResponse) return auth;
+
   const body = (await req.json()) as {
     action?: 'close';
     sessionId?: string;

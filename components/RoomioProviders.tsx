@@ -6,6 +6,7 @@ import { appendAudit } from '@/lib/kvkk';
 import { ViewportProvider } from '@/components/ViewportProvider';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { SessionProvider } from '@/components/auth/SessionProvider';
+import { PropertyInventoryHydrator } from '@/components/property/PropertyInventoryHydrator';
 import { PropertyProvider } from '@/components/property/PropertyProvider';
 import { I18nProvider } from '@/components/i18n/I18nProvider';
 import { PwaRegister } from '@/components/PwaRegister';
@@ -48,6 +49,7 @@ export function RoomioProviders({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <PropertyProvider>
+        <PropertyInventoryHydrator />
         <I18nProvider>
           <ThemeProvider>
             <PwaRegister />

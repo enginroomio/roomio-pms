@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
+import { parseApiError } from '@/lib/client/api-errors';
 import { formatTcmbRate, tcmbPublishedBuy, tcmbPublishedExchange } from '@/lib/exchange/tcmb-display';
 import type { ExchangeRateSnapshot } from '@/lib/exchange/types';
 
@@ -44,8 +45,9 @@ export function ExchangeRatesTable({
         ? `/api/exchange-rates?refresh=1${date ? `&date=${date}` : ''}`
         : `/api/exchange-rates${date ? `?date=${date}` : ''}`;
       const res = await roomioFetch(url);
+      if (!res.ok) throw new Error(await parseApiError(res, 'TCMB kurları alınamadı'));
       const j = (await res.json()) as ExchangeRateSnapshot & { ok?: boolean; stale?: boolean; error?: string; fetchError?: string };
-      if (!res.ok || !j.rates?.length) {
+      if (!j.rates?.length) {
         throw new Error(j.fetchError ?? j.error ?? 'TCMB kurları alınamadı');
       }
       setData(j);

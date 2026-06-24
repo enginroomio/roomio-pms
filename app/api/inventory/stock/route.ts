@@ -1,29 +1,24 @@
 import { NextResponse } from 'next/server';
+import { requireApiPermission } from '@/lib/auth/require-permission';
 import { addStockMovement, getStockItems } from '@/lib/server/pms-store';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
-import { getDemoSession, hasPermission } from '@/lib/auth/roles';
-import { tokenFromRequest, verifyToken } from '@/lib/auth/jwt';
 
 export const dynamic = 'force-dynamic';
 
-async function authUser(req: Request) {
-  const token = tokenFromRequest(req);
-  if (!token) return getDemoSession('fo_manager');
-  const payload = await verifyToken(token);
-  return payload ? getDemoSession(payload.role) : getDemoSession('fo_manager');
-}
-
 export async function GET(req: Request) {
+  const auth = await requireApiPermission(req, 'accounting.read');
+  if (auth instanceof NextResponse) return auth;
+
   const propertyId = propertyIdFromRequest(req);
   const items = await getStockItems(propertyId);
   return NextResponse.json({ ok: true, items });
 }
 
 export async function POST(req: Request) {
-  const user = await authUser(req);
-  if (!hasPermission(user, 'accounting.write')) {
-    return NextResponse.json({ error: 'Yetkisiz' }, { status: 403 });
-  }
+  const auth = await requireApiPermission(req, 'accounting.write');
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
+
   try {
     const body = (await req.json()) as { stockId: string; type: 'in' | 'out'; qty: number; note?: string };
     const updated = await addStockMovement(body.stockId, body.type, body.qty, body.note, user.id);

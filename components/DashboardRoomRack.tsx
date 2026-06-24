@@ -13,6 +13,7 @@ type Props = {
   hkInteractive?: boolean;
   savingRoom?: string | null;
   onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
+  onRoomPmsContextMenu?: (cell: import('@/lib/types/room').RackCell, event: React.MouseEvent) => void;
 };
 
 export function DashboardRoomRack({
@@ -22,6 +23,7 @@ export function DashboardRoomRack({
   hkInteractive,
   savingRoom,
   onRoomContextMenu,
+  onRoomPmsContextMenu,
 }: Props) {
   const [floor, setFloor] = useState<number | 'all'>('all');
 
@@ -45,6 +47,7 @@ export function DashboardRoomRack({
         hkInteractive={hkInteractive}
         savingRoom={savingRoom}
         onRoomContextMenu={onRoomContextMenu}
+        onRoomPmsContextMenu={onRoomPmsContextMenu}
       />
     </Card>
   );

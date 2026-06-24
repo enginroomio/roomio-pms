@@ -1,4 +1,4 @@
-import { DEMO_RESERVATIONS } from '@/lib/data/reservations';
+import { getAllReservationsServer } from '@/lib/server/pms-store';
 import { syncDeviceSessions } from '@/lib/integrations/hotspot5651/devices';
 import { handleGuestHotspotSession } from '@/lib/integrations/hotspot5651/guest-session';
 import {
@@ -61,7 +61,7 @@ async function runHotspotAutomationInner(): Promise<AutomationRunResult> {
   if (config.autoProvisionInHouse) {
     const credentials = await loadHotspot5651Credentials();
     const credByRoom = new Map(credentials.map((c) => [c.roomNo, c]));
-    const inHouse = DEMO_RESERVATIONS.filter((r) => r.status === 'CHECKED_IN' && r.roomNo);
+    const inHouse = (await getAllReservationsServer()).filter((r) => r.status === 'CHECKED_IN' && r.roomNo);
 
     for (const guest of inHouse) {
       const existing = credByRoom.get(guest.roomNo!);

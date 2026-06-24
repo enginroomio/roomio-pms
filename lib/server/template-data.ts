@@ -3,7 +3,7 @@
  */
 
 import { fieldSample } from '@/lib/reports/field-catalog';
-import { getAllRooms } from '@/lib/rooms/inventory';
+import { getAllRoomsServer } from '@/lib/server/room-inventory-bridge';
 import { STATUS_LABELS, type Reservation } from '@/lib/types/reservation';
 import type { RoomHkStatus } from '@/lib/types/room';
 import {
@@ -78,11 +78,12 @@ function reservationRow(r: Reservation): RowDict {
   };
 }
 
-function hkRows(reservations: Reservation[]): RowDict[] {
+async function hkRows(reservations: Reservation[], propertyId?: string): Promise<RowDict[]> {
   const inHouse = new Map(
     reservations.filter((r) => r.status === 'CHECKED_IN' && r.roomNo).map((r) => [r.roomNo!, r]),
   );
-  return getAllRooms().map((room) => {
+  const rooms = await getAllRoomsServer(propertyId);
+  return rooms.map((room) => {
     const res = inHouse.get(room.roomNo);
     const extra = HK_ASSIGN[room.roomNo];
     return {
@@ -190,7 +191,7 @@ export async function templateDataRows(tpl: ReportTemplate, propertyId?: string)
     }
     case 'Kat Hizmetleri': {
       const reservations = await getAllReservationsServer(propertyId);
-      return toMatrix(columns, hkRows(reservations));
+      return toMatrix(columns, await hkRows(reservations, propertyId));
     }
     case 'Stok & Envanter': {
       const items = await getStockItems(propertyId);

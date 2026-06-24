@@ -2,7 +2,7 @@
 
 import { type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { moduleMenuForPath } from '@/lib/navigation/module-menus';
+import { moduleMenuForPath, type ModuleNavItem } from '@/lib/navigation/module-menus';
 import { ModuleSideNav } from '@/components/ModuleSideNav';
 
 type Props = {
@@ -12,6 +12,7 @@ type Props = {
   actions?: ReactNode;
   sideTitle?: string;
   menuSearch?: string;
+  menuItems?: ModuleNavItem[] | null;
   children: ReactNode;
 };
 
@@ -22,10 +23,11 @@ export function ModuleLayout({
   actions,
   sideTitle,
   menuSearch = '',
+  menuItems,
   children,
 }: Props) {
   const pathname = usePathname();
-  const menu = moduleMenuForPath(pathname, menuSearch);
+  const menu = menuItems !== undefined ? menuItems : moduleMenuForPath(pathname, menuSearch);
 
   return (
     <div className="roomio-module-layout">

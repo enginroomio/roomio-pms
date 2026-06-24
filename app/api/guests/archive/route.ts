@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
+import { requireApiPermission } from '@/lib/auth/require-permission';
 import { getEgmIdentities } from '@/lib/server/pms-store';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 import { searchGuestArchive, type GuestArchiveEntry } from '@/lib/egm/guest-archive';
+import { searchGuestArchiveFromDb } from '@/lib/egm/guest-archive-db';
 import type { EgmGender, EgmIdType } from '@/lib/egm/types';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const auth = await requireApiPermission(req, 'identity.read');
+  if (auth instanceof NextResponse) return auth;
+
   const url = new URL(req.url);
   const guestName = url.searchParams.get('guestName') ?? undefined;
   const idNo = url.searchParams.get('idNo') ?? undefined;
@@ -15,6 +20,7 @@ export async function GET(req: Request) {
 
   const propertyId = propertyIdFromRequest(req);
   const archiveHits = searchGuestArchive({ guestName, idNo, phone, email });
+  const dbHits = await searchGuestArchiveFromDb(propertyId, { guestName, idNo, phone, email });
 
   const egmRecords = await getEgmIdentities(propertyId);
   const egmHits: GuestArchiveEntry[] = egmRecords
@@ -41,6 +47,10 @@ export async function GET(req: Request) {
       source: 'egm' as const,
     }));
 
-  const merged = [...egmHits, ...archiveHits.filter((a) => !egmHits.some((e) => e.idNo === a.idNo))];
-  return NextResponse.json({ ok: true, results: merged.slice(0, 5) });
+  const merged = [
+    ...egmHits,
+    ...dbHits.filter((a) => !egmHits.some((e) => e.guestName === a.guestName && e.idNo === a.idNo)),
+    ...archiveHits.filter((a) => !egmHits.some((e) => e.idNo === a.idNo) && !dbHits.some((d) => d.guestName === a.guestName)),
+  ];
+  return NextResponse.json({ ok: true, results: merged.slice(0, 8) });
 }

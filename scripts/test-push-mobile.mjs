@@ -8,8 +8,9 @@ import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { parseEnvFile } from './parse-env-file.mjs';
 import { pickPort, waitForHealth, baseUrlForPort } from './roomio-port.mjs';
+import { productionUrl } from './render-production.mjs';
 
-const PROD = process.env.ROOMIO_PRODUCTION_URL?.replace(/\/$/, '') ?? null;
+const PROD = (process.env.ROOMIO_PRODUCTION_URL ?? productionUrl())?.replace(/\/$/, '') ?? null;
 const preferProd =
   process.env.ROOMIO_PUSH_TEST_PRODUCTION === '1' || Boolean(PROD && !process.env.ROOMIO_URL);
 const BASE = preferProd
@@ -58,9 +59,13 @@ async function runAgainst(base) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title: 'HK Test', body: 'Mobil push pipeline' }),
   });
-  const sendExpected = vapidConfigured ? 200 : 503;
-  const sendOk = sendRes.status === sendExpected;
-  console.log(`${sendOk ? '✓' : '✗'} Push send [${sendRes.status}] (beklenen ${sendExpected})`);
+  const sendBody = await sendRes.json().catch(() => ({}));
+  const sendExpected = vapidConfigured ? [200, 404] : [503];
+  const sendOk = sendExpected.includes(sendRes.status);
+  console.log(
+    `${sendOk ? '✓' : '✗'} Push send [${sendRes.status}] (beklenen ${sendExpected.join('|')})` +
+      (sendRes.status === 404 ? ' — abone yok, pipeline hazır' : ''),
+  );
   ok = sendOk && ok;
 
   if (vapidConfigured) {

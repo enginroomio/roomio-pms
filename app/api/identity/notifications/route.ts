@@ -5,11 +5,16 @@ import {
   markIdentitySent,
 } from '@/lib/server/pms-store';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
-import { getDemoSession, hasPermission } from '@/lib/auth/roles';
+import { hasPermission } from '@/lib/auth/roles';
+import { resolveApiUser } from '@/lib/auth/require-api-user';
+import { requireApiPermission } from '@/lib/auth/require-permission';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const auth = await requireApiPermission(req, 'identity.read');
+  if (auth instanceof NextResponse) return auth;
+
   const propertyId = propertyIdFromRequest(req);
   const rows = await getIdentityNotifications(propertyId);
   return NextResponse.json({ ok: true, notifications: rows });
@@ -17,7 +22,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const propertyId = propertyIdFromRequest(req);
-  const user = getDemoSession();
+  const user = await resolveApiUser(req);
+  if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 });
   if (!hasPermission(user, 'identity.notify')) {
     return NextResponse.json({ error: 'Yetkisiz' }, { status: 403 });
   }

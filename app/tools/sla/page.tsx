@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { roomioFetch } from '@/lib/client/api';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui';
 
@@ -27,7 +28,7 @@ export default function SlaDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void fetch('/api/monitoring/sla')
+    void roomioFetch('/api/monitoring/sla')
       .then((r) => r.json())
       .then((j: SlaPayload) => setData(j))
       .finally(() => setLoading(false));

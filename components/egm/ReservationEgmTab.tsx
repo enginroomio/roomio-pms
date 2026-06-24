@@ -5,6 +5,7 @@ import { Button } from '@/components/ui';
 import { EgmKimlikDrawer } from '@/components/egm/EgmKimlikDrawer';
 import { EgmStatusBadge } from '@/components/egm/EgmStatusBadge';
 import { roomioFetch } from '@/lib/client/api';
+import { parseApiError } from '@/lib/client/api-errors';
 import { formatDate } from '@/lib/data/reservations';
 import { mergeReservationEgm, reservationToEgmSeed, type ReservationEgmRow } from '@/lib/egm/merge';
 import type { EgmIdentityRecord, EgmNotifyStatus } from '@/lib/egm/types';
@@ -23,13 +24,22 @@ export function ReservationEgmTab({ reservations, onRefreshReservations }: Props
   const [egmFilter, setEgmFilter] = useState<EgmNotifyStatus | typeof ALL>(ALL);
   const [drawerRow, setDrawerRow] = useState<ReservationEgmRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await roomioFetch('/api/egm/identity');
-    const j = (await res.json()) as { records?: EgmIdentityRecord[] };
-    setRecords(j.records ?? []);
-    setLoading(false);
+    setError(null);
+    try {
+      const res = await roomioFetch('/api/egm/identity', { cache: 'no-store' });
+      if (!res.ok) throw new Error(await parseApiError(res, 'EGM kayıtları yüklenemedi'));
+      const j = (await res.json()) as { records?: EgmIdentityRecord[] };
+      setRecords(j.records ?? []);
+    } catch (err) {
+      setRecords([]);
+      setError(err instanceof Error ? err.message : 'EGM kayıtları yüklenemedi');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
@@ -99,7 +109,19 @@ export function ReservationEgmTab({ reservations, onRefreshReservations }: Props
           <option value="error">Hata</option>
         </select>
         <Button variant="ghost" onClick={() => { setQuery(''); setEgmFilter(ALL); }}>Temizle</Button>
+        <Button variant="secondary" disabled={loading} onClick={() => void load()}>
+          {loading ? 'Yükleniyor…' : 'Yenile'}
+        </Button>
+        {onRefreshReservations ? (
+          <Button variant="ghost" onClick={() => onRefreshReservations()}>Rezervasyonları yenile</Button>
+        ) : null}
       </div>
+
+      {error ? (
+        <p className="roomio-page-desc roomio-text-warn" role="alert" style={{ marginBottom: 12 }}>
+          {error}
+        </p>
+      ) : null}
 
       <div className="roomio-card roomio-table-wrap">
         {loading ? <p className="roomio-page-desc">EGM kayıtları yükleniyor…</p> : (

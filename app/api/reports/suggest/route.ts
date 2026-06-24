@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
+import { requireApiPermission } from '@/lib/auth/require-permission';
 import { suggestReportFromPrompt } from '@/lib/reports/ai-suggest';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  const auth = await requireApiPermission(req, 'reports.export');
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const body = (await req.json()) as { prompt?: string };
     const prompt = body.prompt?.trim() ?? '';

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireApiPermission } from '@/lib/auth/require-permission';
 import { getRoomBlocksServer, saveRoomBlocksServer } from '@/lib/server/pms-store';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 import type { RoomBlock } from '@/lib/data/room-blocks';
@@ -6,12 +7,18 @@ import type { RoomBlock } from '@/lib/data/room-blocks';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const auth = await requireApiPermission(req, 'reservations.read');
+  if (auth instanceof NextResponse) return auth;
+
   const propertyId = propertyIdFromRequest(req);
   const blocks = await getRoomBlocksServer(propertyId);
   return NextResponse.json({ ok: true, blocks });
 }
 
 export async function PUT(req: Request) {
+  const auth = await requireApiPermission(req, 'reservations.write');
+  if (auth instanceof NextResponse) return auth;
+
   const propertyId = propertyIdFromRequest(req);
   try {
     const body = (await req.json()) as { blocks: RoomBlock[] };
@@ -26,6 +33,9 @@ export async function PUT(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireApiPermission(req, 'reservations.write');
+  if (auth instanceof NextResponse) return auth;
+
   const propertyId = propertyIdFromRequest(req);
   try {
     const block = (await req.json()) as Omit<RoomBlock, 'id'>;

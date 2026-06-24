@@ -1,10 +1,9 @@
-import { DEFAULT_HK_ROOMS } from '@/lib/data/hk-defaults';
 import { FAULT_CATEGORIES, technicianById } from '@/lib/housekeeping/technicians';
 import { sendRolePush } from '@/lib/push/send';
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
 import { updateHkRoom } from '@/lib/server/housekeeping-service';
-import { getAllRooms } from '@/lib/rooms/inventory';
+import { getAllRoomsServer } from '@/lib/server/room-inventory-bridge';
 
 export type FaultStatus = 'open' | 'assigned' | 'in_progress' | 'resolved';
 
@@ -34,8 +33,9 @@ function categoryLabel(id: string) {
   return FAULT_CATEGORIES.find((c) => c.id === id)?.label ?? id;
 }
 
-function floorForRoom(roomNo: string) {
-  return (getAllRooms(DEFAULT_HK_ROOMS).find((r) => r.roomNo === roomNo)?.floor ?? Math.floor(Number(roomNo) / 100)) || 1;
+async function floorForRoom(roomNo: string, propertyId?: string) {
+  const rooms = await getAllRoomsServer(propertyId);
+  return (rooms.find((r) => r.roomNo === roomNo)?.floor ?? Math.floor(Number(roomNo) / 100)) || 1;
 }
 
 function toFault(row: {
@@ -150,7 +150,7 @@ export async function createRoomFault(input: {
       id: `fault-${prop}-${input.roomNo}-${Date.now()}`,
       propertyId: prop,
       roomNo: input.roomNo,
-      floor: floorForRoom(input.roomNo),
+      floor: await floorForRoom(input.roomNo, prop),
       category,
       description: input.description ?? null,
       status: input.assignTechnicianId ? 'assigned' : 'open',
@@ -239,7 +239,7 @@ export async function ensureDemoFaultsSeeded(propertyId?: string): Promise<void>
         id: `fault-seed-${prop}-${d.roomNo}`,
         propertyId: prop,
         roomNo: d.roomNo,
-        floor: floorForRoom(d.roomNo),
+        floor: await floorForRoom(d.roomNo, prop),
         category: d.category,
         description: d.description,
         status: d.assignedTo ? 'assigned' : 'open',

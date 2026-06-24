@@ -1,20 +1,31 @@
 'use client';
 
+import { useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { ReceptionTabs } from '@/components/ReceptionTabs';
 import { Button, StatusBadge } from '@/components/ui';
+import { ReceptionLoading } from '@/components/reception/ReceptionLoading';
+import { useReservations } from '@/lib/client/use-reservations';
 import { formatDate, formatMoney, getTodayArrivals, TODAY } from '@/lib/data/reception';
 
 export default function ArrivalsPage() {
-  const arrivals = getTodayArrivals();
+  const { reservations, loading, error, reload } = useReservations();
+  const arrivals = useMemo(() => getTodayArrivals(reservations), [reservations]);
 
   return (
     <PageHeader
       breadcrumb="Resepsiyon > Bugün Giriş"
       title="Bugün Giriş Yapacaklar"
       description={`İş günü ${TODAY.split('-').reverse().join('.')} — check-in bekleyen rezervasyonlar.`}
+      actions={
+        <Button variant="secondary" disabled={loading} onClick={() => void reload()}>
+          {loading ? 'Yükleniyor…' : 'Yenile'}
+        </Button>
+      }
     >
       <ReceptionTabs />
+      <ReceptionLoading loading={loading} error={error} />
       <div className="roomio-card roomio-table-wrap">
         <table className="roomio-table">
           <thead>
@@ -30,7 +41,7 @@ export default function ArrivalsPage() {
             </tr>
           </thead>
           <tbody>
-            {arrivals.length === 0 ? (
+            {!loading && arrivals.length === 0 ? (
               <tr><td colSpan={8} className="roomio-table-empty">Bugün giriş bekleyen rezervasyon yok.</td></tr>
             ) : (
               arrivals.map((r) => (

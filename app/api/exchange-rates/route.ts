@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireApiAuth } from '@/lib/auth/require-permission';
 import { getExchangeRatesSnapshot } from '@/lib/server/exchange-rates-service';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 import { TcmbRateError } from '@/lib/server/tcmb-rates';
@@ -6,6 +7,9 @@ import { TcmbRateError } from '@/lib/server/tcmb-rates';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const auth = await requireApiAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const url = new URL(req.url);
   const refresh = url.searchParams.get('refresh') === '1';
   const date = url.searchParams.get('date') ?? undefined;

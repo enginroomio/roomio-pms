@@ -1,6 +1,6 @@
 'use client';
 
-import { FLOORS } from '@/lib/rooms/room-config';
+import { getActiveFloors } from '@/lib/rooms/room-config';
 
 type Floor = number | 'all';
 
@@ -26,7 +26,7 @@ export function FloorTabs({
       >
         {allLabel}
       </button>
-      {FLOORS.map(({ floor: f }) => (
+      {getActiveFloors().map(({ floor: f }) => (
         <button
           key={f}
           type="button"

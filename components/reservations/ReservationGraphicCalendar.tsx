@@ -3,19 +3,31 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Download, Printer, RefreshCw } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useClientSearchParams } from '@/lib/client/use-client-search-params';
+import { roomioFetch } from '@/lib/client/api';
+import { parseApiError } from '@/lib/client/api-errors';
 import { Button } from '@/components/ui';
 import { PROPERTY } from '@/lib/navigation';
 import { GraphicCharts } from '@/components/reservations/graphic/GraphicCharts';
 import { GraphicDesignPicker, GraphicMockupView, type GraphicDesignMode } from '@/components/reservations/graphic/GraphicDesignPicker';
 import { ElektraForecastF1Mockup } from '@/components/reservations/graphic/mockups/ElektraForecastF1Mockup';
+import { FilterWizardProMockup } from '@/components/reservations/graphic/mockups/FilterWizardProMockup';
+import { CalendarHeatmapMockup } from '@/components/reservations/graphic/mockups/CalendarHeatmapMockup';
+import { ElektraV5Mockup } from '@/components/reservations/graphic/mockups/ElektraV5Mockup';
+import { ForecastAnalyticsMockup } from '@/components/reservations/graphic/mockups/ForecastAnalyticsMockup';
 import { GraphicKpiStrip } from '@/components/reservations/graphic/GraphicKpiStrip';
 import { GraphicRoomMatrix } from '@/components/reservations/graphic/GraphicRoomMatrix';
+import type { GraphicFilterRule } from '@/lib/reservations/graphic-filters';
 import {
   buildChartPoints,
   buildGraphicKpis,
+  daysInMonth,
   formatGraphicMonthYear,
   GRAPHIC_RANGE_OPTIONS,
+  monthStartIso,
   shiftIsoDate,
+  shiftMonthIso,
   type GraphicCalendarDay,
   type GraphicRangeDays,
 } from '@/lib/reservations/graphic-calendar';
@@ -47,25 +59,77 @@ type Props = {
   initialFrom?: string;
 };
 
+const MODE_PARAM = 'mode';
+
+function parseDesignMode(raw: string | null): GraphicDesignMode | null {
+  if (!raw) return null;
+  const allowed: GraphicDesignMode[] = ['live', 'monthly-pro', 'filter-wizard', 'elektra', 'calendar', 'forecast'];
+  return allowed.includes(raw as GraphicDesignMode) ? (raw as GraphicDesignMode) : null;
+}
+
 export function ReservationGraphicCalendar({ initialFrom = PROPERTY.businessDate }: Props) {
+  const router = useRouter();
+  const searchParams = useClientSearchParams();
   const [from, setFrom] = useState(initialFrom);
   const [days, setDays] = useState<GraphicRangeDays>(31);
   const [matrix, setMatrix] = useState<GraphicCalendarDay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [filterRules, setFilterRules] = useState<GraphicFilterRule[]>([]);
+  // SSR + ilk hydrate aynı kalsın; URL modu mount sonrası (hydration hatası önlenir)
   const [designMode, setDesignMode] = useState<GraphicDesignMode>('monthly-pro');
+
+  useEffect(() => {
+    const fromUrl = searchParams.get(MODE_PARAM);
+    setDesignMode(parseDesignMode(fromUrl) ?? 'monthly-pro');
+  }, [searchParams.toString()]);
+
+  useEffect(() => {
+    if (designMode !== 'calendar' && designMode !== 'elektra' && designMode !== 'forecast') return;
+    const start = monthStartIso(from);
+    if (from !== start) setFrom(start);
+  }, [designMode, from]);
+
+  const setDesignModeAndUrl = useCallback(
+    (mode: GraphicDesignMode) => {
+      setDesignMode(mode);
+      const params = new URLSearchParams(searchParams.toString());
+      if (mode === 'monthly-pro') params.delete(MODE_PARAM);
+      else params.set(MODE_PARAM, mode);
+      const qs = params.toString();
+      router.replace(qs ? `/reservations/calendar?${qs}` : '/reservations/calendar', { scroll: false });
+      searchParams.sync();
+    },
+    [router, searchParams],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
-      const res = await fetch(`/api/reservations/availability?from=${from}&days=${days}`);
+      const fetchFrom = designMode === 'calendar' || designMode === 'elektra' || designMode === 'forecast'
+        ? monthStartIso(from)
+        : from;
+      const fetchDays = designMode === 'calendar' || designMode === 'elektra' || designMode === 'forecast'
+        ? daysInMonth(fetchFrom)
+        : days;
+      const filters = filterRules.length > 0
+        ? `&filters=${encodeURIComponent(JSON.stringify(filterRules))}`
+        : '';
+      const res = await roomioFetch(
+        `/api/reservations/availability?from=${fetchFrom}&days=${fetchDays}${filters}`,
+        { cache: 'no-store' },
+      );
+      if (!res.ok) throw new Error(await parseApiError(res, 'Doluluk verisi yüklenemedi'));
       const j = (await res.json()) as { matrix?: GraphicCalendarDay[] };
       setMatrix(j.matrix ?? []);
-    } catch {
+    } catch (err) {
       setMatrix([]);
+      setLoadError(err instanceof Error ? err.message : 'Doluluk verisi yüklenemedi');
     } finally {
       setLoading(false);
     }
-  }, [days, from]);
+  }, [days, designMode, filterRules, from]);
 
   useEffect(() => {
     void load();
@@ -77,18 +141,14 @@ export function ReservationGraphicCalendar({ initialFrom = PROPERTY.businessDate
   );
   const kpis = useMemo(() => buildGraphicKpis(matrix), [matrix]);
 
-  if (loading && designMode === 'live') {
-    return (
-      <div className="roomio-rez-graphic-pro roomio-rez-graphic-pro--loading">
-        <RefreshCw size={18} className="roomio-rez-graphic-pro__spin" aria-hidden />
-        <p>Grafikler yükleniyor…</p>
-      </div>
-    );
-  }
-
   return (
     <div className="roomio-rez-graphic-pro">
-      <GraphicDesignPicker mode={designMode} onChange={setDesignMode} />
+      {loadError ? (
+        <p className="roomio-page-desc roomio-text-warn" role="alert" style={{ marginBottom: 12 }}>
+          {loadError}
+        </p>
+      ) : null}
+      <GraphicDesignPicker mode={designMode} onChange={setDesignModeAndUrl} />
 
       {designMode === 'monthly-pro' ? (
         <ElektraForecastF1Mockup
@@ -99,6 +159,48 @@ export function ReservationGraphicCalendar({ initialFrom = PROPERTY.businessDate
           onRefresh={() => void load()}
           onShiftFrom={(delta) => setFrom((v) => shiftIsoDate(v, delta))}
           onResetFrom={() => setFrom(PROPERTY.businessDate)}
+          onOpenFilterWizard={() => setDesignModeAndUrl('filter-wizard')}
+        />
+      ) : designMode === 'filter-wizard' ? (
+        <FilterWizardProMockup
+          live
+          from={from}
+          days={days}
+          onApply={(rules) => {
+            setFilterRules(rules);
+            setDesignModeAndUrl('monthly-pro');
+          }}
+          onOpenForecast={() => setDesignModeAndUrl('monthly-pro')}
+        />
+      ) : designMode === 'calendar' ? (
+        <CalendarHeatmapMockup
+          live
+          matrix={matrix}
+          monthStart={monthStartIso(from)}
+          loading={loading}
+          onRefresh={() => void load()}
+          onShiftMonth={(delta) => setFrom((v) => shiftMonthIso(v, delta))}
+        />
+      ) : designMode === 'elektra' ? (
+        <ElektraV5Mockup
+          live
+          matrix={matrix}
+          from={from}
+          days={daysInMonth(monthStartIso(from))}
+          loading={loading}
+          onRefresh={() => void load()}
+          onShiftMonth={(delta) => setFrom((v) => shiftMonthIso(v, delta))}
+          onExport={() => downloadMatrixCsv(matrix, monthStartIso(from), daysInMonth(monthStartIso(from)))}
+        />
+      ) : designMode === 'forecast' ? (
+        <ForecastAnalyticsMockup
+          live
+          matrix={matrix}
+          from={from}
+          loading={loading}
+          onRefresh={() => void load()}
+          onShiftMonth={(delta) => setFrom((v) => shiftMonthIso(v, delta))}
+          onOpenFilterWizard={() => setDesignModeAndUrl('filter-wizard')}
         />
       ) : designMode !== 'live' ? (
         <GraphicMockupView mode={designMode} />

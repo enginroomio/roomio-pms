@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { ELEKTRA_STATUS, formatDateElektra, formatGuestElektra, formatRoomElektra } from '@/lib/reservations/display';
+import { useFolioBalances } from '@/lib/client/use-folio-balances';
+import { formatMoney } from '@/lib/data/reception';
 import type { Reservation } from '@/lib/types/reservation';
 import {
   DEFAULT_REZ_FILTERS,
@@ -35,6 +37,9 @@ export function ReservationListView({ reservations }: Props) {
     [reservations, applied, query],
   );
 
+  const folioIds = useMemo(() => filtered.map((r) => r.id), [filtered]);
+  const { balances, loading: folioLoading, error: folioError, reload: reloadFolio } = useFolioBalances(folioIds);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -54,15 +59,30 @@ export function ReservationListView({ reservations }: Props) {
         }}
       />
 
-      <div className="roomio-rez-list__search">
+      <div className="roomio-rez-list__search" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <input
           className="roomio-input"
           placeholder="Misafir, rez. no, acenta veya oda no…"
           value={query}
           onChange={(e) => { setQuery(e.target.value); setPage(1); }}
           aria-label="Hızlı arama"
+          style={{ flex: 1 }}
         />
+        <button
+          type="button"
+          className="roomio-btn roomio-btn--secondary roomio-btn--sm"
+          disabled={folioLoading}
+          onClick={() => void reloadFolio()}
+        >
+          {folioLoading ? 'Folyo…' : 'Folyo yenile'}
+        </button>
       </div>
+
+      {folioError ? (
+        <p className="roomio-page-desc roomio-text-warn" role="alert" style={{ marginBottom: 12 }}>
+          Folyo bakiyeleri yüklenemedi: {folioError}
+        </p>
+      ) : null}
 
       <div className="roomio-card roomio-table-wrap roomio-rez-table-card">
         <table className="roomio-table roomio-rez-table">
@@ -73,6 +93,7 @@ export function ReservationListView({ reservations }: Props) {
               <th>Giriş</th>
               <th>Çıkış</th>
               <th>Oda</th>
+              <th>Folyo</th>
               <th>Durum</th>
               <th>Acente</th>
               <th />
@@ -80,10 +101,11 @@ export function ReservationListView({ reservations }: Props) {
           </thead>
           <tbody>
             {pageRows.length === 0 ? (
-              <tr><td colSpan={8} className="roomio-table-empty">Kayıt bulunamadı.</td></tr>
+              <tr><td colSpan={9} className="roomio-table-empty">Kayıt bulunamadı.</td></tr>
             ) : (
               pageRows.map((r) => {
                 const status = ELEKTRA_STATUS[r.status];
+                const balance = balances[r.id];
                 return (
                   <tr key={r.id}>
                     <td><strong>{r.refNo}</strong></td>
@@ -91,6 +113,9 @@ export function ReservationListView({ reservations }: Props) {
                     <td>{formatDateElektra(r.checkIn)}</td>
                     <td>{formatDateElektra(r.checkOut)}</td>
                     <td>{formatRoomElektra(r.roomNo, r.roomType)}</td>
+                    <td className={balance != null && balance > 0 ? 'roomio-text-warn' : ''}>
+                      {folioLoading && balance == null ? '…' : balance != null ? formatMoney(balance) : '—'}
+                    </td>
                     <td>
                       <span className={`roomio-rez-status ${status.className}`}>{status.label}</span>
                     </td>

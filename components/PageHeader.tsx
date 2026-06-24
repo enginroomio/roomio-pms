@@ -10,7 +10,7 @@ type Props = {
 
 export function PageHeader({ breadcrumb, title, description, actions, children }: Props) {
   return (
-    <>
+    <div className="roomio-page-stack">
       <div className="roomio-page-header" style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
         <div>
           <div className="roomio-breadcrumb">{breadcrumb}</div>
@@ -20,7 +20,7 @@ export function PageHeader({ breadcrumb, title, description, actions, children }
         {actions}
       </div>
       {children}
-    </>
+    </div>
   );
 }
 

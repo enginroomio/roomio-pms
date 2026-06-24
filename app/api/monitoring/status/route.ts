@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
+import { requireApiPermission } from '@/lib/auth/require-permission';
 import { captureMessage, flushSentry, initSentry, sentryConfigured } from '@/lib/monitoring/sentry';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const auth = await requireApiPermission(req, 'settings.admin');
+  if (auth instanceof NextResponse) return auth;
+
   const url = new URL(req.url);
   const test = url.searchParams.get('test') === '1';
   const configured = sentryConfigured();

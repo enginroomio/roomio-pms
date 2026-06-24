@@ -6,13 +6,15 @@ import {
   buildReservationPdf,
 } from '@/lib/server/report-export';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
-import { getDemoSession, hasPermission } from '@/lib/auth/roles';
+import { hasPermission } from '@/lib/auth/roles';
+import { resolveApiUser } from '@/lib/auth/require-api-user';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   const propertyId = propertyIdFromRequest(req);
-  const user = getDemoSession();
+  const user = await resolveApiUser(req);
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!hasPermission(user, 'reports.export')) {
     return NextResponse.json({ error: 'Yetkisiz — reports.export gerekli' }, { status: 403 });
   }

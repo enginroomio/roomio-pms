@@ -1045,10 +1045,12 @@
   font-weight: 500;
 }
 
-/* HK Liste — okunabilir kart görünümü */
-.roomio-hk-mobile--scroll .roomio-hk-mobile-page {
-  overflow: visible;
-  min-height: 0;
+.roomio-hk-mobile--one-screen .roomio-hk-mobile-page {
+  overflow: hidden;
+}
+
+.roomio-hk-mobile--one-screen .roomio-hk-mobile-table {
+  overflow: hidden;
 }
 
 .roomio-hk-liste-readable {

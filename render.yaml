@@ -16,6 +16,8 @@ services:
         value: --max-old-space-size=512
       - key: HOSTNAME
         value: 0.0.0.0
+      # Kalıcı veri için Render Dashboard → PostgreSQL (roomio-db) → Internal URL
+      # npm run render:postgres:setup — aşağıdaki sqlite yalnızca geçici /tmp
       - key: DATABASE_URL
         value: file:/tmp/roomio.db
       - key: ROOMIO_DATA_DIR

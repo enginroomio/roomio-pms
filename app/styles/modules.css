@@ -94,6 +94,15 @@
 }
 
 /* Rollout test paneli */
+.roomio-rollout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  gap: 8px;
+}
+
 .roomio-rollout__summary {
   display: flex;
   flex-wrap: wrap;
@@ -185,7 +194,18 @@
   font-size: 0.85rem;
 }
 
+.roomio-rollout__panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .roomio-rollout__steps {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -393,8 +413,52 @@ html[data-fit='1'] .roomio-wizard-steps {
   gap: 6px;
 }
 
-html[data-fit='1'] .roomio-wizard-steps__item strong {
-  font-size: 0.72rem;
+html[data-fit='1'] .roomio-one-screen-fit__body--page .roomio-rez-graphic-pro,
+html[data-fit='1'] .roomio-one-screen-fit__body--page .roomio-module-layout {
+  min-height: 0;
+}
+
+html[data-fit='1'] .roomio-rez-graphic-pro {
+  gap: 8px;
+}
+
+html[data-fit='1'] .roomio-grafik-mockup--elektra-forecast,
+html[data-fit='1'] .roomio-grafik-mockup--wizard-pro,
+html[data-fit='1'] .roomio-grafik-mockup--calendar,
+html[data-fit='1'] .roomio-grafik-mockup--elektra,
+html[data-fit='1'] .roomio-grafik-mockup--forecast {
+  min-height: 0;
+  overflow: hidden;
+}
+
+html[data-fit='1'] .roomio-grafik-mockup--forecast .roomio-grafik-mockup__table {
+  font-size: 0.68rem;
+}
+
+html[data-fit='1'] .roomio-grafik-mockup--forecast .roomio-grafik-mockup__forecast-body {
+  min-height: 0;
+}
+
+html[data-fit='1'] .roomio-grafik-mockup--elektra .roomio-grafik-mockup__charts-live {
+  min-height: 0;
+  overflow: hidden;
+}
+
+html[data-fit='1'] .roomio-grafik-mockup--elektra .roomio-rez-graphic-pro__charts {
+  gap: 8px;
+}
+
+html[data-fit='1'] .roomio-grafik-mockup--elektra .roomio-rez-graphic-pro__svg {
+  max-height: 180px;
+}
+
+html[data-fit='1'] .roomio-grafik-mockup--calendar .roomio-grafik-mockup__cal-cell {
+  min-height: 52px;
+  padding: 4px 6px;
+}
+
+html[data-fit='1'] .roomio-grafik-mockup--calendar .roomio-grafik-mockup__cal-grid {
+  gap: 4px;
 }
 
 html[data-viewport='compact'] .roomio-icon-rail__btn span {
@@ -823,15 +887,16 @@ html[data-viewport='desktop'] .roomio-content {
   background: linear-gradient(145deg, #0f172a 0%, #134e4a 50%, #0f766e 100%);
 }
 
-/* Tasarım mockup'ları — tam ekran, kaydırılabilir, uygulama kabuğu yok */
+/* Tasarım mockup'ları — tam ekran, tek ekrana sığdır */
 .roomio-mockup-shell {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  overflow: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: #eceff4;
+  min-height: 0;
+  min-width: 0;
 }
 
 .roomio-mockup-shell .roomio-hk-assign-pro__shell {

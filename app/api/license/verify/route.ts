@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
+import { requireApiAuth } from '@/lib/auth/require-permission';
 import { verifyLicense, signLicense } from '@/lib/license/crypto-server';
 import type { LicensePayload } from '@/lib/license/types';
 import { randomUUID } from 'node:crypto';
 
 export async function POST(req: Request) {
+  const auth = await requireApiAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const body = (await req.json()) as { token?: string };
   if (!body.token) return NextResponse.json({ valid: false, error: 'token gerekli' }, { status: 400 });
   return NextResponse.json(verifyLicense(body.token));

@@ -14,7 +14,7 @@
   padding: 8px 10px 6px !important;
 }
 
-.roomio-content:has(.roomio-one-screen-fit__body--dashboard) .roomio-release-notice {
+.roomio-content:has(.roomio-one-screen-fit) .roomio-release-notice {
   display: none;
 }
 
@@ -36,5 +36,36 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.roomio-one-screen-fit__body--page .roomio-page-stack {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.roomio-one-screen-fit__body--page .roomio-page-header {
+  flex-shrink: 0;
+}
+
+.roomio-one-screen-fit__body--page .roomio-page-stack > *:not(.roomio-page-header) {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.roomio-one-screen-fit__body--page .roomio-rez-tabs,
+.roomio-one-screen-fit__body--page .roomio-fn-bar {
+  flex-shrink: 0;
+}
+
+.roomio-one-screen-fit__body--theme .roomio-theme-screen {
+  flex: 1;
+  min-height: 0;
 }

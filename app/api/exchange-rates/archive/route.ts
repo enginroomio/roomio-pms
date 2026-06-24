@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
+import { requireApiAuth, requireKurulusApiWrite } from '@/lib/auth/require-permission';
 import { archiveStats, listArchiveDates, readArchiveEntry } from '@/lib/server/tcmb-archive';
 import { backfillTcmbArchive, syncTcmbDaily } from '@/lib/server/tcmb-daily-sync';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const auth = await requireApiAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const url = new URL(req.url);
   const date = url.searchParams.get('date');
 
@@ -24,6 +28,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireKurulusApiWrite(req);
+  if (auth instanceof NextResponse) return auth;
+
   const url = new URL(req.url);
   const force = url.searchParams.get('force') === '1';
   const backfill = Number(url.searchParams.get('backfill') ?? '0');

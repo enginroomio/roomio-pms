@@ -6,9 +6,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui';
 import { EgmIdentityFormPanel } from '@/components/egm/EgmIdentityFormPanel';
 import { EgmStatusBadge } from '@/components/egm/EgmStatusBadge';
-import { ReservationPricingPanel } from '@/components/forms/ReservationPricingPanel';
 import { nextRefNo } from '@/lib/data/reservations';
-import { addReservation } from '@/lib/data/reservations-store';
+import { AgencyPicker } from '@/components/forms/AgencyPicker';
+import { CompanyPicker } from '@/components/forms/CompanyPicker';
+import { GuestArchiveLookup } from '@/components/forms/GuestArchiveLookup';
+import { RatePlanPicker } from '@/components/forms/RatePlanPicker';
+import { ReservationPricingPanel } from '@/components/forms/ReservationPricingPanel';
+import { ReservationStayAvailability } from '@/components/forms/ReservationStayAvailability';
+import { addReservation, updateLocalReservation } from '@/lib/data/reservations-store';
 import {
   defaultFormLayout,
   elektraCoverage,
@@ -25,6 +30,7 @@ import type { TaxRule } from '@/lib/tax/types';
 import { computeEgmStatus, splitGuestName } from '@/lib/egm/types';
 import type { Reservation } from '@/lib/types/reservation';
 import { roomioFetch } from '@/lib/client/api';
+import { parseApiError } from '@/lib/client/api-errors';
 
 function nightsBetween(checkIn: string, checkOut: string): number {
   if (!checkIn || !checkOut) return 0;
@@ -53,6 +59,7 @@ const PRICING_PRIMARY_KEYS = new Set(['currency', 'rate', 'rateDate']);
 const DEFAULTS: FormValues = {
   senderType: 'Münferit',
   agency: 'Direct',
+  agencyCode: '',
   resType: 'Kesin',
   checkIn: '2026-06-20',
   checkOut: '2026-06-22',
@@ -67,12 +74,14 @@ const DEFAULTS: FormValues = {
   nationality: 'TR',
   currency: 'TRY',
   rate: 5200,
+  ratePlanCode: '',
   discountPct: 0,
   market: 'BAR',
   segment: 'LEIS',
   source: 'DIR',
   paymentType: 'Kredi Kartı',
   payerType: 'Misafir',
+  companyCode: '',
   depositAmount: 0,
   idType: 'TCKN',
   birthDate: '',
@@ -84,16 +93,48 @@ const DEFAULTS: FormValues = {
   lastName: '',
 };
 
-export function ReservationFormWizard() {
+function reservationToFormValues(r: Reservation): FormValues {
+  const extra = r.extraData ?? {};
+  return {
+    ...DEFAULTS,
+    ...extra,
+    guestName: r.guestName,
+    email: r.email ?? '',
+    phone: r.phone ?? '',
+    checkIn: r.checkIn,
+    checkOut: r.checkOut,
+    roomType: r.roomType,
+    mealPlan: r.mealPlan,
+    adults: r.adults,
+    children: r.children,
+    currency: r.currency,
+    rate: r.rate,
+    agency: r.agency,
+    market: r.market,
+    notes: r.notes ?? '',
+    resType: r.status === 'OPTION' ? 'Opsiyon' : r.status === 'CONFIRMED' ? 'Kesin' : 'Kesin',
+  };
+}
+
+type Props = {
+  existing?: Reservation;
+};
+
+export function ReservationFormWizard({ existing }: Props) {
+  const isEdit = Boolean(existing);
   const router = useRouter();
   const [layout, setLayout] = useState<FormLayout | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
-  const [values, setValues] = useState<FormValues>(DEFAULTS);
+  const [values, setValues] = useState<FormValues>(() => (existing ? reservationToFormValues(existing) : DEFAULTS));
   const [taxRules, setTaxRules] = useState<TaxRule[]>([]);
   const [fx, setFx] = useState<ExchangeRateSnapshot | null>(null);
   const [fxLoading, setFxLoading] = useState(false);
   const [saved, setSaved] = useState(false);
-  const refPreview = useMemo(() => nextRefNo(), []);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [egmWarning, setEgmWarning] = useState<string | null>(null);
+  const [marketRequired, setMarketRequired] = useState(false);
+  const generatedRef = useMemo(() => nextRefNo(), []);
+  const refPreview = existing?.refNo ?? generatedRef;
 
   const page = formPageById('reservations-new')!;
   const coverage = useMemo(() => elektraCoverage('reservations-new'), []);
@@ -149,14 +190,17 @@ export function ReservationFormWizard() {
 
   useEffect(() => {
     void (async () => {
-      const [tplRes, taxRes] = await Promise.all([
+      const [tplRes, taxRes, marketRes] = await Promise.all([
         roomioFetch('/api/reports/templates?pageId=reservations-new'),
         roomioFetch('/api/tax/rules'),
+        roomioFetch('/api/market-required'),
       ]);
       const tplJ = (await tplRes.json()) as { template?: { layout?: FormLayout } };
       const taxJ = (await taxRes.json()) as { rules?: TaxRule[] };
+      const marketJ = (await marketRes.json()) as { required?: boolean };
       setLayout(mergeFormLayoutWithDefaults('reservations-new', tplJ.template?.layout) ?? defaultFormLayout('reservations-new'));
       if (taxJ.rules) setTaxRules(taxJ.rules);
+      setMarketRequired(Boolean(marketJ.required));
     })();
   }, []);
 
@@ -290,6 +334,13 @@ export function ReservationFormWizard() {
   }
 
   async function onSubmit() {
+    setSubmitError(null);
+    setEgmWarning(null);
+    if (marketRequired && !String(values.market ?? '').trim()) {
+      setSubmitError('Market kodu zorunludur — Kuruluş ayarlarından kontrol edin.');
+      return;
+    }
+
     const submissionValues: FormValues = {
       ...values,
       rateDate,
@@ -305,8 +356,8 @@ export function ReservationFormWizard() {
     }
 
     const reservation: Reservation = {
-      id: `new-${Date.now()}`,
-      refNo: refPreview,
+      id: existing?.id ?? `new-${Date.now()}`,
+      refNo: existing?.refNo ?? refPreview,
       guestName: String(values.guestName ?? ''),
       email: values.email ? String(values.email) : undefined,
       phone: values.phone ? String(values.phone) : undefined,
@@ -320,46 +371,95 @@ export function ReservationFormWizard() {
       currency: currency as PaymentCurrency,
       agency: senderType === 'Acenta' ? String(values.agency ?? 'Direct') : senderType,
       market: String(values.market ?? 'BAR'),
-      status: mapStatus(),
-      createdAt: new Date().toISOString().slice(0, 10),
+      status: isEdit ? (existing?.status ?? mapStatus()) : mapStatus(),
+      createdAt: existing?.createdAt ?? new Date().toISOString().slice(0, 10),
       notes: values.notes ? String(values.notes) : undefined,
       extraData: Object.keys(extraData).length ? extraData : undefined,
     };
 
-    addReservation(reservation);
-    await fetch('/api/reservations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(reservation),
-    });
+    const payload = {
+      id: reservation.id,
+      refNo: reservation.refNo,
+      guestName: reservation.guestName,
+      email: reservation.email,
+      phone: reservation.phone,
+      checkIn: reservation.checkIn,
+      checkOut: reservation.checkOut,
+      roomType: reservation.roomType,
+      adults: reservation.adults,
+      children: reservation.children,
+      mealPlan: reservation.mealPlan,
+      rate: reservation.rate,
+      currency: reservation.currency,
+      agency: reservation.agency,
+      market: reservation.market,
+      status: reservation.status,
+      notes: reservation.notes,
+      extraData: reservation.extraData,
+    };
 
-    const { firstName: fn, lastName: ln } = splitGuestName(String(values.guestName ?? ''));
-    await roomioFetch('/api/egm/identity', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        form: {
-          reservationId: reservation.id,
-          refNo: reservation.refNo,
-          firstName: String(values.firstName || fn),
-          lastName: String(values.lastName || ln),
-          roomNo: String(values.fixRoomNo ?? ''),
-          nationality: String(values.nationality ?? 'TR'),
-          idNo: String(values.idNo ?? ''),
-          idType: (values.idType as 'TCKN' | 'PASSPORT' | 'OTHER') ?? 'TCKN',
-          birthDate: String(values.birthDate ?? ''),
-          birthPlace: String(values.birthPlace ?? ''),
-          gender: (values.gender as 'E' | 'K' | '') ?? '',
-          fatherName: String(values.fatherName ?? ''),
-          motherName: String(values.motherName ?? ''),
-          checkIn: String(values.checkIn ?? ''),
-          checkOut: String(values.checkOut ?? ''),
-        },
-      }),
-    });
+    if (isEdit) {
+      const res = await roomioFetch('/api/reservations', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        setSubmitError(await parseApiError(res, 'Güncelleme başarısız'));
+        return;
+      }
+      updateLocalReservation(reservation.id, reservation);
+    } else {
+      addReservation(reservation);
+      const res = await roomioFetch('/api/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reservation),
+      });
+      if (!res.ok) {
+        setSubmitError(await parseApiError(res, 'Kayıt başarısız'));
+        return;
+      }
+    }
+
+    if (!isEdit) {
+      const { firstName: fn, lastName: ln } = splitGuestName(String(values.guestName ?? ''));
+      try {
+        const egmRes = await roomioFetch('/api/egm/identity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            form: {
+              reservationId: reservation.id,
+              refNo: reservation.refNo,
+              firstName: String(values.firstName || fn),
+              lastName: String(values.lastName || ln),
+              roomNo: String(values.fixRoomNo ?? ''),
+              nationality: String(values.nationality ?? 'TR'),
+              idNo: String(values.idNo ?? ''),
+              idType: (values.idType as 'TCKN' | 'PASSPORT' | 'OTHER') ?? 'TCKN',
+              birthDate: String(values.birthDate ?? ''),
+              birthPlace: String(values.birthPlace ?? ''),
+              gender: (values.gender as 'E' | 'K' | '') ?? '',
+              fatherName: String(values.fatherName ?? ''),
+              motherName: String(values.motherName ?? ''),
+              checkIn: String(values.checkIn ?? ''),
+              checkOut: String(values.checkOut ?? ''),
+            },
+          }),
+        });
+        if (!egmRes.ok) {
+          setEgmWarning(await parseApiError(egmRes, 'EGM kimlik kaydı oluşturulamadı'));
+        }
+      } catch (err) {
+        setEgmWarning(err instanceof Error ? err.message : 'EGM kimlik kaydı oluşturulamadı');
+      }
+    }
 
     setSaved(true);
-    setTimeout(() => router.push('/reservations'), 800);
+    setSubmitError(null);
+    const successTarget = isEdit ? `/reservations/${reservation.id}` : '/reservations';
+    setTimeout(() => router.push(successTarget), isEdit ? 1200 : 800);
   }
 
   if (!layout) {
@@ -369,7 +469,16 @@ export function ReservationFormWizard() {
   return (
     <>
       {saved ? (
-        <div className="roomio-card roomio-alert roomio-alert--success">Rezervasyon kaydedildi…</div>
+        <div className="roomio-card roomio-alert roomio-alert--success" role="status">
+          {isEdit
+            ? `${refPreview} güncellendi — detay sayfasına yönlendiriliyorsunuz…`
+            : `${refPreview} kaydedildi — listeye yönlendiriliyorsunuz…`}
+        </div>
+      ) : null}
+      {saved && egmWarning ? (
+        <p className="roomio-card roomio-text-warn" role="status" style={{ marginBottom: 16, padding: '12px 16px' }}>
+          Rezervasyon kaydedildi; EGM kimlik kaydı tamamlanamadı: {egmWarning}
+        </p>
       ) : null}
 
       <div className="roomio-card roomio-elektra-compare" style={{ marginBottom: 16, padding: '12px 16px' }}>
@@ -414,8 +523,52 @@ export function ReservationFormWizard() {
                 refNo={refPreview}
                 onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}
               />
+            ) : activeStep?.id === 'guest' ? (
+              <>
+                <GuestArchiveLookup values={values} onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))} />
+                <CompanyPicker
+                  senderType={senderType}
+                  companyCode={String(values.companyCode ?? '')}
+                  onSelect={(code, name) => setValues((prev) => ({ ...prev, companyCode: code, companyName: name }))}
+                />
+                <AgencyPicker
+                  senderType={senderType}
+                  agencyCode={String(values.agencyCode ?? values.agency ?? '')}
+                  onSelect={(code, name) => setValues((prev) => ({ ...prev, agencyCode: code, agency: name, market: 'OTA' }))}
+                />
+                <div className="roomio-form-grid roomio-form-grid--2">
+                  {stepFields.map(renderField)}
+                </div>
+              </>
+            ) : activeStep?.id === 'stay' ? (
+              <>
+                <ReservationStayAvailability
+                  checkIn={String(values.checkIn ?? '')}
+                  checkOut={String(values.checkOut ?? '')}
+                  roomType={String(values.roomType ?? 'DBL')}
+                  roomCount={roomCount}
+                />
+                <div className="roomio-form-grid roomio-form-grid--2">
+                  {stepFields.map(renderField)}
+                </div>
+              </>
             ) : activeStep?.id === 'pricing' ? (
               <>
+                <RatePlanPicker
+                  roomType={String(values.roomType ?? 'DBL')}
+                  checkIn={checkIn}
+                  selectedCode={String(values.ratePlanCode ?? '')}
+                  onApply={(plan) => {
+                    setValues((prev) => ({
+                      ...prev,
+                      ratePlanCode: plan.code,
+                      rate: plan.baseRate,
+                      currency: plan.currency,
+                      market: plan.market,
+                      ...(plan.mealPlan ? { mealPlan: plan.mealPlan } : {}),
+                    }));
+                  }}
+                />
                 <ReservationPricingPanel
                   currency={currency}
                   rate={rate}
@@ -446,6 +599,10 @@ export function ReservationFormWizard() {
               </div>
             )}
           </section>
+
+          {submitError ? (
+            <p className="roomio-text-warn" style={{ marginTop: 12 }} role="alert">{submitError}</p>
+          ) : null}
 
           <div className="roomio-form-actions roomio-reservation-new__actions">
             {stepIndex > 0 ? (
