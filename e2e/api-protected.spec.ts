@@ -274,7 +274,7 @@ test.describe('Korumalı API — admin kullanıcı', () => {
   });
 });
 
-test.describe('Korumalı API — viewer salt okunur', () => {
+test.describe('Korumalı API — viewer salt okunur (A)', () => {
   test('viewer rezervasyon listesi okuyabilir', async ({ request }) => {
     const token = await loginApiTokenWith(request, VIEWER_EMAIL, DEMO_PASSWORD);
     const res = await request.get('/api/reservations', { headers: authHeaders(token) });
@@ -556,7 +556,9 @@ test.describe('Korumalı API — viewer salt okunur', () => {
     });
     expect(res.status()).toBe(403);
   });
+});
 
+test.describe('Korumalı API — viewer salt okunur (B)', () => {
   test('viewer market zorunluluğu GET okuyabilir', async ({ request }) => {
     const token = await loginApiTokenWith(request, VIEWER_EMAIL, DEMO_PASSWORD);
     const res = await request.get('/api/market-required', { headers: authHeaders(token) });

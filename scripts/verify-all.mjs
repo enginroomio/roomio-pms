@@ -44,6 +44,20 @@ function killPort() {
   );
 }
 
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function waitPortFree(maxMs = 20_000) {
+  const deadline = Date.now() + maxMs;
+  while (Date.now() < deadline) {
+    if (!(await readHealth())) return true;
+    killPort();
+    await sleep(750);
+  }
+  return !(await readHealth());
+}
+
 async function waitHealth(maxMs = 120_000) {
   const start = Date.now();
   while (Date.now() - start < maxMs) {
@@ -75,7 +89,7 @@ async function readHealth() {
 function stopServer() {
   if (serverProc) {
     try {
-      serverProc.kill('SIGTERM');
+      serverProc.kill('SIGKILL');
     } catch {
       /* ignore */
     }
@@ -84,8 +98,13 @@ function stopServer() {
   killPort();
 }
 
-function startServer(useProductionServer) {
+async function stopServerAndWait() {
   stopServer();
+  await waitPortFree();
+  await sleep(1500);
+}
+
+function startServer(useProductionServer) {
   mkdirSync(join(ROOT, '.roomio/runtime'), { recursive: true });
   writeFileSync(join(ROOT, '.roomio/runtime/active-port.txt'), PORT);
 
@@ -109,31 +128,24 @@ function startServer(useProductionServer) {
 }
 
 async function ensureServer(useProductionServer, { fresh = false, label = 'Sunucu' } = {}) {
-  if (fresh) stopServer();
+  if (fresh) await stopServerAndWait();
 
   let health = await readHealth();
+  if (fresh && health) {
+    console.warn(`· ${label} eski süreç (uptime ${health.uptimeSec ?? '?'}s) — yeniden başlatılıyor…`);
+    await stopServerAndWait();
+    health = null;
+  }
+
   if (!health) {
     startServer(useProductionServer);
-    health = await waitHealth();
+    health = await waitHealth(180_000);
     if (!health) {
-      stopServer();
+      await stopServerAndWait();
       console.error(`✗ ${label} /api/health yanıt vermedi`);
       process.exit(1);
     }
     console.log(`✓ ${label} hazır → ${BASE} (uptime ${health.uptimeSec ?? '?'}s)`);
-    return health;
-  }
-
-  if (fresh && typeof health.uptimeSec === 'number' && health.uptimeSec > 180) {
-    console.warn(`· ${label} eski süreç (uptime ${health.uptimeSec}s) — yeniden başlatılıyor…`);
-    startServer(useProductionServer);
-    health = await waitHealth();
-    if (!health) {
-      stopServer();
-      console.error(`✗ ${label} yeniden başlatılamadı`);
-      process.exit(1);
-    }
-    console.log(`✓ ${label} yenilendi → ${BASE} (uptime ${health.uptimeSec ?? '?'}s)`);
     return health;
   }
 
@@ -143,10 +155,11 @@ async function ensureServer(useProductionServer, { fresh = false, label = 'Sunuc
 
 async function restartServer(useProductionServer, label = 'Sunucu') {
   console.warn(`\n· ${label} yeniden başlatılıyor…\n`);
+  await stopServerAndWait();
   startServer(useProductionServer);
-  const booted = await waitHealth(90_000);
+  const booted = await waitHealth(180_000);
   if (!booted) {
-    stopServer();
+    await stopServerAndWait();
     console.error(`✗ ${label} yeniden başlatılamadı`);
     process.exit(1);
   }
@@ -191,7 +204,9 @@ async function main() {
   keepServer = process.env.VERIFY_KEEP_SERVER === '1';
 
   const shutdown = () => {
-    if (!keepServer) stopServer();
+    if (!keepServer) {
+      stopServer();
+    }
   };
 
   process.on('SIGINT', () => {
@@ -260,7 +275,8 @@ async function main() {
       label: 'E2E — auth API (çekirdek)',
       grep: 'Oturum API|entegrasyon durumu|kimlik ve doluluk|grup rezervasyon|Korumalı API — rezervasyon|admin kullanıcı',
     },
-    { label: 'E2E — auth API (viewer)', grep: 'viewer salt okunur' },
+    { label: 'E2E — auth API (viewer A)', grep: 'viewer salt okunur \\(A\\)' },
+    { label: 'E2E — auth API (viewer B)', grep: 'viewer salt okunur \\(B\\)' },
     { label: 'E2E — auth API (HK & muhasebe)', grep: 'HK rolü|muhasebe rolü' },
     { label: 'E2E — auth API (resepsiyon & FO)', grep: 'resepsiyon rolü|fo_manager rolü' },
   ];

@@ -10,7 +10,7 @@ npm run verify:pipeline
 
 | # | Aşama | Script | Süre (tipik) |
 |---|--------|--------|----------------|
-| 1 | API tam | `verify:all` — typecheck, checklist, 57 route, 160 E2E API | ~5–8 dk |
+| 1 | API tam | `verify:all` — typecheck, checklist, 57 route, ~160 E2E API (api-protected 5 batch + sunucu yenileme) | ~8–12 dk |
 | 2 | UI rollout | `verify:ui` — kabuk, rezervasyon, resepsiyon, folio UI (chromium) | ~2–5 dk |
 | 3 | Production build | `VERIFY_BUILD=1` + `next start` + tam API E2E | ~8–12 dk |
 | 4 | Auth-required | `verify:auth` — `ROOMIO_AUTH_REQUIRED=1` + JWT 401/403 | ~2–3 dk |
