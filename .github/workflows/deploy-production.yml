@@ -6,7 +6,7 @@ on:
       registry:
         description: 'Container registry (ghcr.io/owner/roomio-pms)'
         required: false
-        default: 'ghcr.io/${{ github.repository_owner }}/roomio-pms'
+        default: 'ghcr.io/enginroomio/roomio-pms'
       tag:
         description: 'Image tag'
         required: false
