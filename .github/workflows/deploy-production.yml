@@ -41,6 +41,8 @@ jobs:
         run: |
           docker run -d --name roomio-prod-test -p 13200:3100 \
             -e DATABASE_URL=file:/data/roomio.db \
+            -e ROOMIO_JWT_SECRET=ci-test-secret-at-least-32-characters-long \
+            -e ROOMIO_AUTH_REQUIRED=0 \
             "$IMAGE"
           for i in $(seq 1 45); do
             if curl -sf http://127.0.0.1:13200/api/health >/dev/null; then

@@ -11,6 +11,9 @@ jobs:
     timeout-minutes: 25
     env:
       DATABASE_URL: file:.roomio-data/ci.db
+      NODE_ENV: production
+      ROOMIO_JWT_SECRET: ci-test-secret-at-least-32-characters-long
+      ROOMIO_AUTH_REQUIRED: '0'
 
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +40,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Start server
-        run: npm run start &
+        run: npx next start -H 127.0.0.1 -p 3100 &
 
       - name: Wait for health
         run: |
