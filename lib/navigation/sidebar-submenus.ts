@@ -35,21 +35,80 @@ function fromTabs(tabs: Array<{ label: string; href: string }>): SidebarSubItem[
   return tabs.map((t) => sub(t.label, t.href));
 }
 
-const REPORT_SAMPLES: Record<string, string[]> = {
-  forecast: ['Doluluk Tahmini', 'Gelir Tahmini', 'Segment Tahmini', 'Aylık Forecast'],
-  rezervasyon: ['Rezervasyon Listesi', 'Geliş Listesi', 'Ayrılış Listesi', 'No Show Listesi'],
-  gunluk: ['In House List', 'Boş Oda Listesi', 'VIP Listesi', 'Transfer Listesi'],
-  kathizmetleri: ['HK Durum Raporu', 'Temiz Oda Listesi', 'Kirli Oda Listesi', 'OOO Oda Listesi'],
-  gelir: ['Günlük Gelir', 'Departman Gelirleri', 'Market Gelirleri', 'Vergi Özeti'],
-  kontrol: ['Kasa Defteri', 'Tahsilat Özeti', 'Döviz İşlemleri', 'Kasa Kapatma'],
-  muhasebe: ['Fatura Listesi', 'Proforma Listesi', 'Cari Ekstre', 'Hesap Özeti'],
-  yonetim: ['Yönetim Raporu', 'Doluluk Analizi', 'RevPAR Raporu', 'Bütçe Karşılaştırma'],
-  crm: ['Misafir Listesi', 'Tekrarlayan Misafirler', 'VIP Raporu', 'Yorum Özeti'],
+type ReportSample = { id: string; label: string };
+
+const REPORT_SAMPLES: Record<string, ReportSample[]> = {
+  forecast: [
+    { id: 'occupancy', label: 'Doluluk Tahmini' },
+    { id: 'revenue', label: 'Gelir Tahmini' },
+    { id: 'segment', label: 'Segment Tahmini' },
+    { id: 'monthly', label: 'Aylık Forecast' },
+  ],
+  rezervasyon: [
+    { id: 'list', label: 'Rezervasyon Listesi' },
+    { id: 'arrivals', label: 'Geliş Listesi' },
+    { id: 'departures', label: 'Ayrılış Listesi' },
+    { id: 'noshow', label: 'No Show Listesi' },
+  ],
+  gunluk: [
+    { id: 'inhouse', label: 'In House List' },
+    { id: 'vacant', label: 'Boş Oda Listesi' },
+    { id: 'vip', label: 'VIP Listesi' },
+    { id: 'transfer', label: 'Transfer Listesi' },
+  ],
+  kathizmetleri: [
+    { id: 'status', label: 'HK Durum Raporu' },
+    { id: 'clean', label: 'Temiz Oda Listesi' },
+    { id: 'dirty', label: 'Kirli Oda Listesi' },
+    { id: 'ooo', label: 'OOO Oda Listesi' },
+  ],
+  gelir: [
+    { id: 'daily', label: 'Günlük Gelir' },
+    { id: 'dept', label: 'Departman Gelirleri' },
+    { id: 'market', label: 'Market Gelirleri' },
+    { id: 'tax', label: 'Vergi Özeti' },
+  ],
+  kontrol: [
+    { id: 'ledger', label: 'Kasa Defteri' },
+    { id: 'collections', label: 'Tahsilat Özeti' },
+    { id: 'fx', label: 'Döviz İşlemleri' },
+    { id: 'close', label: 'Kasa Kapatma' },
+  ],
+  muhasebe: [
+    { id: 'invoices', label: 'Fatura Listesi' },
+    { id: 'proforma', label: 'Proforma Listesi' },
+    { id: 'statement', label: 'Cari Ekstre' },
+    { id: 'summary', label: 'Hesap Özeti' },
+  ],
+  yonetim: [
+    { id: 'mgmt', label: 'Yönetim Raporu' },
+    { id: 'occupancy', label: 'Doluluk Analizi' },
+    { id: 'revpar', label: 'RevPAR Raporu' },
+    { id: 'budget', label: 'Bütçe Karşılaştırma' },
+  ],
+  crm: [
+    { id: 'guests', label: 'Misafir Listesi' },
+    { id: 'repeaters', label: 'Tekrarlayan Misafirler' },
+    { id: 'vip', label: 'VIP Raporu' },
+    { id: 'reviews', label: 'Yorum Özeti' },
+  ],
 };
 
+const REPORT_FALLBACK: ReportSample[] = [
+  { id: 'summary', label: 'Özet Rapor' },
+  { id: 'detail', label: 'Detay Rapor' },
+  { id: 'list', label: 'Liste' },
+];
+
 function reportCategoryItems(categoryId: string): SidebarSubItem[] {
-  const labels = REPORT_SAMPLES[categoryId] ?? ['Özet Rapor', 'Detay Rapor', 'Liste'];
-  return labels.map((label) => sub(label, `/reports?category=${categoryId}&report=${encodeURIComponent(label)}`));
+  const items = REPORT_SAMPLES[categoryId] ?? REPORT_FALLBACK;
+  return items.map((item) => ({
+    label: item.label,
+    href: `/reports?category=${categoryId}&report=${encodeURIComponent(item.label)}`,
+    i18nKey: REPORT_SAMPLES[categoryId]
+      ? `sidebar.report.${categoryId}.${item.id}`
+      : `sidebar.report.fallback.${item.id}`,
+  }));
 }
 
 export const SIDEBAR_SUBMENU_BY_KEY: Record<string, SidebarSubItem[]> = {

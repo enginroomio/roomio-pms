@@ -181,6 +181,23 @@ test.describe('i18n', () => {
     await page.getByPlaceholder('Search menu…').fill('reservation');
     await expect(page.getByRole('link', { name: /RESERVATIONS › New reservation/i })).toBeVisible({ timeout: 8000 });
   });
+
+  test('ana sayfa hareketler paneli İngilizce', async ({ page }) => {
+    await page.goto('/');
+    await page.getByLabel(/Dil|Language/i).selectOption('en');
+    await expect(page.getByRole('heading', { name: "Today's arrivals" })).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('heading', { name: "Today's departures" })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Alerts' })).toBeVisible();
+  });
+
+  test('sağ tık ana menü İngilizce', async ({ page }) => {
+    await page.goto('/');
+    await page.getByLabel(/Dil|Language/i).selectOption('en');
+    await page.locator('.roomio-home-screen').click({ button: 'right', position: { x: 200, y: 200 } });
+    await expect(page.getByRole('menu', { name: 'Elektra main menu' })).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('button', { name: 'Reservations' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Front office' })).toBeVisible();
+  });
 });
 
 test.describe('PWA offline', () => {

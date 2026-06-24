@@ -13,3 +13,6 @@ Thumbs.db
 keys/license-private.pem
 test-results/
 .roomio-active-port
+.roomio-data/
+.roomio/
+tsconfig.tsbuildinfo

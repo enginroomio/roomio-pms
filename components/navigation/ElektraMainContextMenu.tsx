@@ -1,14 +1,30 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight } from 'lucide-react';
+import { useI18n } from '@/components/i18n/I18nProvider';
 import { useContextMenuPosition } from '@/lib/client/context-menu-position';
+import { translateSidebarNavItems } from '@/lib/i18n/kurulus-nav-i18n';
 import { CONTEXT_MENU_GROUPS, contextMenuItems } from '@/lib/navigation/context-menu-nav';
 import type { SidebarNavItem } from '@/lib/navigation/sidebar-nav';
 
 export type MainContextMenuState = { x: number; y: number } | null;
+
+const CONTEXT_MENU_GROUP_KEYS: Record<string, string> = {
+  sistem: 'sidebar.ctx.sistem',
+  rezervasyon: 'sidebar.ctx.reservations',
+  resepsiyon: 'sidebar.ctx.frontOffice',
+  onkasa: 'sidebar.ctx.cashier',
+  kat: 'sidebar.ctx.housekeeping',
+  misafir: 'sidebar.ctx.guestRelations',
+  banket: 'sidebar.ctx.banquet',
+  arkaburo: 'sidebar.ctx.backOffice',
+  gunsonu: 'sidebar.ctx.endOfDay',
+  raporlar: 'sidebar.ctx.reports',
+  ayarlar: 'sidebar.ctx.settings',
+};
 
 type Props = {
   menu: MainContextMenuState;
@@ -52,8 +68,19 @@ function ContextMenuLeaf({
 }
 
 export function ElektraMainContextMenu({ menu, onClose }: Props) {
+  const { t } = useI18n();
   const menuRef = useRef<HTMLDivElement>(null);
   const pos = useContextMenuPosition(menu, menuRef);
+
+  const translatedGroups = useMemo(
+    () =>
+      CONTEXT_MENU_GROUPS.map((group) => ({
+        ...group,
+        label: t(CONTEXT_MENU_GROUP_KEYS[group.id] ?? '', undefined, group.label),
+        items: translateSidebarNavItems(contextMenuItems(group.id), t),
+      })),
+    [t],
+  );
 
   useEffect(() => {
     if (!menu) return;
@@ -97,12 +124,11 @@ export function ElektraMainContextMenu({ menu, onClose }: Props) {
         style={{ left: pos.x, top: pos.y }}
         onContextMenu={(e) => e.preventDefault()}
         role="menu"
-        aria-label="Elektra ana menü"
+        aria-label={t('sidebar.ctx.menuLabel')}
       >
-        <div className="roomio-ctx-title">Roomio PMS — Ana Menü</div>
-        {CONTEXT_MENU_GROUPS.map((group) => {
-          const items = contextMenuItems(group.id);
-          if (!items.length) return null;
+        <div className="roomio-ctx-title">{t('sidebar.ctx.title')}</div>
+        {translatedGroups.map((group) => {
+          if (!group.items.length) return null;
           return (
             <div key={group.id} className="roomio-ctx-branch roomio-ctx-branch--group">
               <button type="button" className="roomio-ctx-item roomio-ctx-item--group">
@@ -110,7 +136,7 @@ export function ElektraMainContextMenu({ menu, onClose }: Props) {
                 <ChevronRight size={14} aria-hidden />
               </button>
               <div className="roomio-ctx-flyout roomio-ctx-flyout--group" role="menu">
-                {items.map((item) => (
+                {group.items.map((item) => (
                   <ContextMenuLeaf key={item.id} item={item} onClose={onClose} />
                 ))}
               </div>

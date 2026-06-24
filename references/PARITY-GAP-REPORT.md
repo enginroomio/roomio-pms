@@ -30,6 +30,9 @@
 | **Sidebar pro modül i18n** | Modül sekmeleri, hızlı aksiyonlar, sistem üst menü, `PRO_ESSENTIAL_IDS` |
 | **ExchangeConfigPanel i18n** | Kur bozdurma ayarı TR/EN |
 | **Offline trace kuyruğu** | `guest_trace` sync push + `submitGuestTrace` + E2E |
+| **Rapor alt menü i18n** | `REPORT_SAMPLES` id + `sidebar.report.*` anahtarları (9 kategori × 4 örnek) |
+| **Sağ tık ana menü i18n** | `ElektraMainContextMenu` + `sidebar.ctx.*` grup etiketleri |
+| **Dashboard hareketler i18n** | `DailyMovements` + `dashboard.movements.*` |
 
 ---
 
@@ -50,7 +53,7 @@
 | Gün Sonu | ✅ | ✅ | Kapatma + arşiv |
 | Entegrasyonlar | ✅ | 🟡 | 5651, TESA, PBX (Roomio güçlü) |
 
-**Tamamlanma:** ~99% canlı, ~1% kısmi, ~0% planlı
+**Tamamlanma:** ~100% canlı, ~0% kısmi, ~0% planlı
 
 ---
 
@@ -68,7 +71,7 @@
 7. ~~Gelişmiş PDF şablonları~~ — ✅ `pdf-theme.ts`, fatura PDF, konsolide kartlar, gece denetim tema + `e2e/pdf-templates.spec.ts`
 
 ### Düşük
-8. i18n çeviri motoru — ✅ kuruluş + sidebar flyout href map; dinamik rapor alt örnekleri kısmi
+8. i18n çeviri motoru — ✅ kuruluş + sidebar flyout + rapor alt örnekleri + sağ tık menü + dashboard hareketler
 9. PWA offline shell — ✅ misafir talebi + HK durum + trace create/complete/delete sync + E2E
 10. ~~Yazarkasa (fiscal)~~ — ✅ canlı cihaz paneli + status/ping API + E2E
 11. ~~Misafir İlişkileri CRM~~ — ✅ şikayet + VIP + trace + review CRUD + E2E
