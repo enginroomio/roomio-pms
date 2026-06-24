@@ -8,6 +8,7 @@ export type SidebarSubItem = {
   label: string;
   href: string;
   separator?: boolean;
+  i18nKey?: string;
   children?: SidebarSubItem[];
 };
 function sub(label: string, href: string, children?: SidebarSubItem[]): SidebarSubItem {
@@ -20,6 +21,7 @@ function fromKurulus(entries: KurulusNavEntry[]): SidebarSubItem[] {
     return {
       label: e.label,
       href: e.href,
+      i18nKey: `nav.kurulus.${e.id}`,
       children: e.children?.length ? fromKurulus(e.children) : undefined,
     };
   });

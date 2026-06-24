@@ -21,6 +21,7 @@ import type { HkRoomRecord } from '@/lib/data/hk-defaults';
 import type { HousekeepingBoardRow } from '@/lib/rooms/inventory';
 import type { Reservation } from '@/lib/types/reservation';
 import { HK_STATUS_LABELS, type RoomHkStatus } from '@/lib/types/room';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 export type HkMobileSnapshot = {
   businessDate: string;
@@ -32,6 +33,7 @@ export type HkMobileSnapshot = {
 };
 
 export function HousekeepingMobileClient({ snapshot }: { snapshot: HkMobileSnapshot }) {
+  const { t } = useI18n();
   const pointerFine = usePointerFine();
   const { hkMap, applyUpdate } = useLiveHkMap(snapshot.hkMap);
   const { openFaultForRoom, removeFault } = useLiveFaults();
@@ -51,10 +53,10 @@ export function HousekeepingMobileClient({ snapshot }: { snapshot: HkMobileSnaps
     const label = HK_STATUS_LABELS[hkStatus] ?? status;
     lastLocalPatch.current = { roomNo, status: hkStatus, at: Date.now() };
     emitHkPushAlert({
-      title: `Oda ${roomNo}`,
-      body: `${label} — HK durumu güncellendi`,
+      title: t('hk.mobile.room', { room: roomNo }),
+      body: t('hk.mobile.statusUpdated', { label }),
     });
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const showAlert = (detail: HkPushAlertDetail) => {
@@ -182,16 +184,16 @@ export function HousekeepingMobileClient({ snapshot }: { snapshot: HkMobileSnaps
         <div className="roomio-hk-push-alert" role="status">
           <strong>{pushAlert.title}</strong>
           <span>{pushAlert.body}</span>
-          <button type="button" onClick={() => setPushAlert(null)} aria-label="Kapat">
+          <button type="button" onClick={() => setPushAlert(null)} aria-label={t('hk.mobile.close')}>
             ×
           </button>
         </div>
       ) : null}
 
       <header className="roomio-hk-mobile__header roomio-hk-mobile__header--compact">
-        <h1>Oda Rack</h1>
+        <h1>{t('hk.mobile.title')}</h1>
         {queuedCount > 0 ? (
-          <span className="roomio-hk-mobile__badge">{queuedCount} kuyruk</span>
+          <span className="roomio-hk-mobile__badge">{t('hk.mobile.queue', { count: queuedCount })}</span>
         ) : null}
         <HkPushRegister />
       </header>

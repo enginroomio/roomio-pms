@@ -12,6 +12,7 @@ import {
 } from '@/lib/navigation/rollout-phases';
 import { getNextPhasePlan } from '@/lib/navigation/rollout-plan';
 import { ModuleLayout } from '@/components/ModuleLayout';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 type StatusMap = Record<string, RolloutStepStatus>;
 
@@ -29,6 +30,7 @@ function saveStatus(map: StatusMap) {
 }
 
 export function RolloutTrackerClient({ phase }: { phase: string | null }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [status, setStatus] = useState<StatusMap>({});
 
@@ -85,36 +87,38 @@ export function RolloutTrackerClient({ phase }: { phase: string | null }) {
 
   return (
     <ModuleLayout
-      breadcrumb="Araçlar › Rollout Test"
-      title="Roomio Ekran Rollout"
-      description="Mockup sırasına göre adım adım menü ve ekran testi. Her adımı canlı ekranda doğrulayıp işaretleyin."
-      sideTitle="Fazlar"
+      breadcrumb={t('tools.rollout.breadcrumb')}
+      title={t('tools.rollout.title')}
+      description={t('tools.rollout.desc')}
+      sideTitle={t('tools.rollout.sideTitle')}
       menuSearch={menuSearch}
       actions={
         <Link href="/" className="roomio-btn roomio-btn--secondary roomio-btn--sm">
-          Ana Sayfa
+          {t('tools.rollout.home')}
         </Link>
       }
     >
       <div className="roomio-rollout">
         <div className="roomio-rollout__summary">
           <div className="roomio-rollout__stat">
-            <span className="roomio-rollout__stat-label">İlerleme</span>
+            <span className="roomio-rollout__stat-label">{t('tools.rollout.progress')}</span>
             <strong>{stats.done} / {stats.total}</strong>
-            <span className="roomio-rollout__stat-hint">%{stats.pct} tamamlandı</span>
+            <span className="roomio-rollout__stat-hint">{t('tools.rollout.completed').replace('{pct}', String(stats.pct))}</span>
           </div>
           <p className="roomio-rollout__hint">
-            Sıra: kabuk → ana sayfa → sistem → rezervasyon → resepsiyon → kasa → kat HK → misafir → raporlar → gün sonu.
+            {t('tools.rollout.hint')}
+            {' '}
+            <Link href="/tools/theme">{t('tools.rollout.themeLink')}</Link>
           </p>
           {stats.done < stats.total ? (
             <div className="roomio-form-actions" style={{ marginTop: 12 }}>
               <button type="button" className="roomio-btn roomio-btn--primary roomio-btn--sm" onClick={markAllSmokePassed}>
-                Smoke test geçti — {stats.total} adımı işaretle
+                {t('tools.rollout.smokePass').replace('{total}', String(stats.total))}
               </button>
             </div>
           ) : (
             <p className="roomio-rollout__hint" style={{ marginTop: 8 }}>
-              Tüm rollout adımları tamamlandı ({stats.total}/{stats.total}).
+              {t('tools.rollout.allDone').replace('{done}', String(stats.done)).replace('{total}', String(stats.total))}
             </p>
           )}
         </div>
@@ -147,7 +151,7 @@ export function RolloutTrackerClient({ phase }: { phase: string | null }) {
               <p>{activePhase.description}</p>
             </div>
             <button type="button" className="roomio-btn roomio-btn--secondary roomio-btn--sm" onClick={() => markPhaseDone(activePhase.id)}>
-              Fazı tamamla
+              {t('tools.rollout.completePhase')}
             </button>
           </div>
 
@@ -163,20 +167,20 @@ export function RolloutTrackerClient({ phase }: { phase: string | null }) {
                       {step.screenRef ? <span className="roomio-rollout__ref">Ref: {step.screenRef}</span> : null}
                       {step.notes ? <p>{step.notes}</p> : null}
                       <p className="roomio-page-desc">
-                        <Link href={step.href}>Canlı ekran →</Link>
+                        <Link href={step.href}>{t('tools.rollout.liveScreen')}</Link>
                       </p>
                     </div>
                   </div>
                   <div className="roomio-rollout__step-actions">
                     <Link href={step.href} className="roomio-btn roomio-btn--primary roomio-btn--sm" target="_blank">
-                      <ExternalLink size={14} /> Aç
+                      <ExternalLink size={14} /> {t('tools.rollout.open')}
                     </Link>
                     <button
                       type="button"
                       className="roomio-btn roomio-btn--ghost roomio-btn--sm"
                       onClick={() => setStepStatus(step.id, stepStatus === 'in_progress' ? 'pending' : 'in_progress')}
                     >
-                      <PlayCircle size={14} /> Test
+                      <PlayCircle size={14} /> {t('tools.rollout.test')}
                     </button>
                     <button
                       type="button"
@@ -184,7 +188,7 @@ export function RolloutTrackerClient({ phase }: { phase: string | null }) {
                       onClick={() => setStepStatus(step.id, stepStatus === 'done' ? 'pending' : 'done')}
                     >
                       {stepStatus === 'done' ? <CheckCircle2 size={14} /> : <Circle size={14} />}
-                      {stepStatus === 'done' ? 'Tamam' : 'İşaretle'}
+                      {stepStatus === 'done' ? t('tools.rollout.done') : t('tools.rollout.mark')}
                     </button>
                   </div>
                 </li>
@@ -195,9 +199,9 @@ export function RolloutTrackerClient({ phase }: { phase: string | null }) {
 
         {nextPlan ? (
           <section className="roomio-card roomio-rollout__next">
-            <h2 className="roomio-card-title">Sonraki faz: {nextPlan.nextTitle}</h2>
+            <h2 className="roomio-card-title">{t('tools.rollout.nextPhase').replace('{title}', nextPlan.nextTitle)}</h2>
             <p className="roomio-page-desc">{nextPlan.nextDescription}</p>
-            <h3 className="roomio-card-title" style={{ fontSize: '0.95rem', marginTop: 16 }}>Tasarım notları</h3>
+            <h3 className="roomio-card-title" style={{ fontSize: '0.95rem', marginTop: 16 }}>{t('tools.rollout.designNotes')}</h3>
             <ul className="roomio-compliance-list">
               {nextPlan.designNotes.map((note) => (
                 <li key={note}>{note}</li>
@@ -205,7 +209,7 @@ export function RolloutTrackerClient({ phase }: { phase: string | null }) {
             </ul>
             {nextPlan.targetFiles.length ? (
               <>
-                <h3 className="roomio-card-title" style={{ fontSize: '0.95rem', marginTop: 16 }}>Hedef dosyalar</h3>
+                <h3 className="roomio-card-title" style={{ fontSize: '0.95rem', marginTop: 16 }}>{t('tools.rollout.targetFiles')}</h3>
                 <ul className="roomio-compliance-list">
                   {nextPlan.targetFiles.map((f) => (
                     <li key={f.path}><code>{f.path}</code> — {f.task}</li>
@@ -215,7 +219,7 @@ export function RolloutTrackerClient({ phase }: { phase: string | null }) {
             ) : null}
             <div className="roomio-form-actions" style={{ marginTop: 16 }}>
               <button type="button" className="roomio-btn roomio-btn--secondary" onClick={() => selectPhase(nextPlan.nextPhaseId)}>
-                Sonraki faza geç
+                {t('tools.rollout.goNextPhase')}
               </button>
               <span className="roomio-page-desc">Detay: <code>references/NEXT-PHASE.md</code></span>
             </div>

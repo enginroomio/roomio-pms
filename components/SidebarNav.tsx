@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useI18n } from '@/components/i18n/I18nProvider';
+import { translateSidebarNavItems } from '@/lib/i18n/kurulus-nav-i18n';
 import {
   Banknote,
   BarChart3,
@@ -91,6 +93,7 @@ function FlyoutBranch({
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
   const routeModuleId = useMemo(() => activeProModuleId(pathname), [pathname]);
   const [moduleId, setModuleId] = useState(routeModuleId);
   const [query, setQuery] = useState('');
@@ -98,9 +101,17 @@ export function SidebarNav() {
   const [flyoutItem, setFlyoutItem] = useState<SidebarNavItem | null>(null);
   const flyoutRef = useRef<HTMLDivElement>(null);
 
-  const moduleItems = useMemo(() => proModuleVisibleItems(moduleId, pathname, showAll), [moduleId, pathname, showAll]);
+  const activeModule = useMemo(
+    () => PRO_SIDEBAR_MODULES.find((m) => m.id === moduleId) ?? PRO_SIDEBAR_MODULES[0],
+    [moduleId],
+  );
+  const activeModuleLabel = t(activeModule.labelKey, undefined, activeModule.label);
+
+  const moduleItems = useMemo(() => {
+    const raw = proModuleVisibleItems(moduleId, pathname, showAll);
+    return translateSidebarNavItems(raw, t);
+  }, [moduleId, pathname, showAll, t]);
   const totalModuleLinks = useMemo(() => countModuleLinks(moduleId), [moduleId]);
-  const activeModule = PRO_SIDEBAR_MODULES.find((m) => m.id === moduleId) ?? PRO_SIDEBAR_MODULES[0];
 
   const filteredLinks = useMemo(() => {
     const q = query.trim().toLocaleLowerCase('tr-TR');
@@ -139,21 +150,26 @@ export function SidebarNav() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Menüde ara…"
-          aria-label="Menüde ara"
+          placeholder={t('sidebar.searchPlaceholder')}
+          aria-label={t('sidebar.searchPlaceholder')}
         />
         <kbd>Ctrl K</kbd>
       </label>
 
       <div className="roomio-pro-quick">
         {PRO_QUICK_ACTIONS.map((action) => (
-          <Link key={action.href} href={action.href} className="roomio-pro-quick-btn" title={`${action.label} (${action.key})`}>
-            {action.label}
+          <Link
+            key={action.href}
+            href={action.href}
+            className="roomio-pro-quick-btn"
+            title={`${t(action.labelKey, undefined, action.label)} (${action.key})`}
+          >
+            {t(action.labelKey, undefined, action.label)}
           </Link>
         ))}
       </div>
 
-      <div className="roomio-pro-modules" role="tablist" aria-label="Modüller">
+      <div className="roomio-pro-modules" role="tablist" aria-label={t('sidebar.modules')}>
         {PRO_SIDEBAR_MODULES.map((mod) => {
           const Icon = icons[mod.icon] ?? Settings;
           const selected = mod.id === moduleId;
@@ -171,22 +187,22 @@ export function SidebarNav() {
               }}
             >
               <Icon size={17} />
-              <span>{mod.label}</span>
+              <span>{t(mod.labelKey, undefined, mod.label)}</span>
             </button>
           );
         })}
       </div>
 
-      <nav className="roomio-pro-nav" aria-label={activeModule.label}>
+      <nav className="roomio-pro-nav" aria-label={activeModuleLabel}>
         <div className="roomio-pro-nav-head">
-          <span>{activeModule.label}</span>
+          <span>{activeModuleLabel}</span>
           <small>{showAll ? totalModuleLinks : moduleItems.filter((i) => !i.separator).length} / {totalModuleLinks}</small>
         </div>
 
         {query.trim() ? (
           <div className="roomio-pro-nav-list">
             {filteredLinks.length === 0 ? (
-              <p className="roomio-pro-empty">Sonuç bulunamadı</p>
+              <p className="roomio-pro-empty">{t('sidebar.noResults')}</p>
             ) : (
               filteredLinks.map((link) => (
                 <Link
@@ -236,12 +252,12 @@ export function SidebarNav() {
             })}
             {!showAll && totalModuleLinks > moduleItems.filter((i) => !i.separator).length ? (
               <button type="button" className="roomio-pro-show-all" onClick={() => setShowAll(true)}>
-                Tüm menüyü göster ({totalModuleLinks})
+                {t('sidebar.showAll', { count: totalModuleLinks })}
               </button>
             ) : null}
             {showAll ? (
               <button type="button" className="roomio-pro-show-all muted" onClick={() => setShowAll(false)}>
-                Sadece öne çıkanlar
+                {t('sidebar.showFeatured')}
               </button>
             ) : null}
           </div>
@@ -250,11 +266,11 @@ export function SidebarNav() {
 
       {flyoutItem?.children?.length ? (
         <>
-          <button type="button" className="roomio-pro-flyout-backdrop" aria-label="Menüyü kapat" onClick={() => setFlyoutItem(null)} />
+          <button type="button" className="roomio-pro-flyout-backdrop" aria-label={t('sidebar.closeMenu')} onClick={() => setFlyoutItem(null)} />
           <div ref={flyoutRef} className="roomio-pro-flyout" role="dialog" aria-label={flyoutItem.label}>
             <div className="roomio-pro-flyout-header">
               <strong>{flyoutItem.label}</strong>
-              <button type="button" className="roomio-pro-flyout-close" onClick={() => setFlyoutItem(null)} aria-label="Kapat">
+              <button type="button" className="roomio-pro-flyout-close" onClick={() => setFlyoutItem(null)} aria-label={t('sidebar.close')}>
                 <X size={16} />
               </button>
             </div>

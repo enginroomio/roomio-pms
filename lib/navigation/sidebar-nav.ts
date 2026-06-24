@@ -6,6 +6,7 @@ export type SidebarNavItem = {
   href?: string;
   icon: string;
   separator?: boolean;
+  i18nKey?: string;
   children?: SidebarNavItem[];
 };
 
@@ -15,7 +16,7 @@ export type SidebarNavSection = {
   items: SidebarNavItem[];
 };
 
-type RawItem = { label: string; href: string; separator?: boolean };
+type RawItem = { label: string; href: string; separator?: boolean; i18nKey?: string };
 
 type RawGroup = {
   id: string;
@@ -46,6 +47,7 @@ function subToNav(id: string, item: SidebarSubItem): SidebarNavItem {
     label: item.label,
     href: children?.length ? undefined : item.href,
     icon: children?.length ? 'folder' : 'file-text',
+    i18nKey: item.i18nKey,
     children,
   };
 }
@@ -73,6 +75,7 @@ function rawToNav(group: RawGroup, item: RawItem, index: number): SidebarNavItem
     label: item.label,
     href: item.href,
     icon: group.defaultIcon,
+    i18nKey: item.i18nKey,
   };
 }
 
@@ -91,9 +94,9 @@ const RAW_GROUPS: RawGroup[] = [
     title: 'PANEL',
     defaultIcon: 'home',
     items: [
-      { label: 'Ana Sayfa', href: '/' },
-      { label: 'Oda Rack', href: '/rooms' },
-      { label: 'Günlük Oda Durumu', href: '/' },
+      { label: 'Ana Sayfa', href: '/', i18nKey: 'nav.home' },
+      { label: 'Oda Rack', href: '/rooms', i18nKey: 'sidebar.item.roomRack' },
+      { label: 'Günlük Oda Durumu', href: '/', i18nKey: 'sidebar.item.dailyRoomStatus' },
     ],
   },
   {
@@ -101,15 +104,15 @@ const RAW_GROUPS: RawGroup[] = [
     title: 'SİSTEM',
     defaultIcon: 'settings',
     items: [
-      { label: 'Kuruluş', href: '/settings' },
-      { label: 'Rapor Tasarım', href: '/reports?tab=design' },
-      { label: 'Raporla', href: '/reports' },
-      { label: 'Kullanıcı Tanımlı Raporlar', href: '/reports?tab=user' },
+      { label: 'Kuruluş', href: '/settings', i18nKey: 'nav.settings.sideTitle' },
+      { label: 'Rapor Tasarım', href: '/reports?tab=design', i18nKey: 'sidebar.sistem.reportDesign' },
+      { label: 'Raporla', href: '/reports', i18nKey: 'sidebar.sistem.reports' },
+      { label: 'Kullanıcı Tanımlı Raporlar', href: '/reports?tab=user', i18nKey: 'sidebar.sistem.userReports' },
       { label: '', href: '#', separator: true },
-      { label: 'Servis Programları', href: '/settings/integrations' },
-      { label: '5651 Hotspot Loglama', href: '/settings/compliance/5651' },
-      { label: 'TESA Kapı Kartı', href: '/settings/integrations/tesa' },
-      { label: 'Dil Tanımları', href: '/settings?section=language' },
+      { label: 'Servis Programları', href: '/settings/integrations', i18nKey: 'sidebar.sistem.servicePrograms' },
+      { label: '5651 Hotspot Loglama', href: '/settings/compliance/5651', i18nKey: 'sidebar.sistem.hotspot5651' },
+      { label: 'TESA Kapı Kartı', href: '/settings/integrations/tesa', i18nKey: 'sidebar.sistem.tesa' },
+      { label: 'Dil Tanımları', href: '/settings?section=language', i18nKey: 'nav.kurulus.language' },
       { label: 'Form Tasarım Listesi', href: '/reports?tab=forms' },
       { label: '', href: '#', separator: true },
       { label: 'SQL Mesaj', href: '/settings/privacy?tab=sql' },

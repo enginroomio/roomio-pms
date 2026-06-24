@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui';
+import { useI18n } from '@/components/i18n/I18nProvider';
 import { roomioFetch } from '@/lib/client/api';
 import type { TaxRule } from '@/lib/tax/types';
 
 export function TaxRulesPanel() {
+  const { t } = useI18n();
   const [rules, setRules] = useState<TaxRule[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,7 +31,7 @@ export function TaxRulesPanel() {
     setRules((prev) => [...prev, {
       id: '',
       code: `ek-${Date.now()}`,
-      name: 'Ek Vergi',
+      name: t('kurulus.taxRules.newRuleName'),
       rate: 0,
       base: 'subtotal',
       appliesTo: 'accommodation',
@@ -46,10 +48,10 @@ export function TaxRulesPanel() {
       body: JSON.stringify({ rules }),
     });
     if (r.ok) {
-      setMsg('Vergi oranları kaydedildi.');
+      setMsg(t('kurulus.taxRules.saved'));
       void load();
     } else {
-      setMsg('Kayıt başarısız.');
+      setMsg(t('kurulus.taxRules.saveError'));
     }
   }
 
@@ -57,29 +59,29 @@ export function TaxRulesPanel() {
     <div className="roomio-card">
       <div className="roomio-kurulus-toolbar">
         <div>
-          <h2 className="roomio-card-title" style={{ margin: 0 }}>Vergi Oranları</h2>
+          <h2 className="roomio-card-title" style={{ margin: 0 }}>{t('nav.kurulus.tax-rules')}</h2>
           <p className="roomio-page-desc" style={{ margin: '4px 0 0' }}>
-            KDV, konaklama vergisi ve ek vergiler — oranlar değiştiğinde buradan güncelleyin.
+            {t('kurulus.taxRules.desc')}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="secondary" onClick={addRule}>+ Ek vergi</Button>
-          <Button onClick={() => void save()}>Kaydet</Button>
+          <Button variant="secondary" onClick={addRule}>{t('kurulus.taxRules.add')}</Button>
+          <Button onClick={() => void save()}>{t('kurulus.save')}</Button>
         </div>
       </div>
       {msg ? <p className="roomio-page-desc">{msg}</p> : null}
-      {loading ? <p className="roomio-page-desc">Yükleniyor…</p> : (
+      {loading ? <p className="roomio-page-desc">{t('kurulus.loading')}</p> : (
         <div className="roomio-table-wrap" style={{ marginTop: 12 }}>
           <table className="roomio-table">
             <thead>
               <tr>
-                <th>Kod</th>
-                <th>Ad</th>
-                <th>Oran %</th>
-                <th>Matrah</th>
-                <th>Kapsam</th>
-                <th>Aktif</th>
-                <th>Sıra</th>
+                <th>{t('kurulus.col.code')}</th>
+                <th>{t('kurulus.col.name')}</th>
+                <th>{t('kurulus.taxRules.col.rate')}</th>
+                <th>{t('kurulus.taxRules.col.base')}</th>
+                <th>{t('kurulus.taxRules.col.scope')}</th>
+                <th>{t('kurulus.active')}</th>
+                <th>{t('kurulus.taxRules.col.sort')}</th>
               </tr>
             </thead>
             <tbody>
@@ -90,18 +92,18 @@ export function TaxRulesPanel() {
                   <td><input className="roomio-input roomio-input--sm" type="number" min={0} max={100} step={0.1} value={rule.rate} onChange={(e) => updateRule(i, { rate: Number(e.target.value) })} /></td>
                   <td>
                     <select className="roomio-select roomio-select--sm" value={rule.base} onChange={(e) => updateRule(i, { base: e.target.value as TaxRule['base'] })}>
-                      <option value="subtotal">Ara toplam</option>
-                      <option value="running">Kümülatif</option>
+                      <option value="subtotal">{t('kurulus.taxRules.base.subtotal')}</option>
+                      <option value="running">{t('kurulus.taxRules.base.running')}</option>
                     </select>
                   </td>
                   <td>
                     <select className="roomio-select roomio-select--sm" value={rule.appliesTo} onChange={(e) => updateRule(i, { appliesTo: e.target.value as TaxRule['appliesTo'] })}>
-                      <option value="accommodation">Konaklama</option>
-                      <option value="extras">Ekstralar</option>
-                      <option value="all">Tümü</option>
+                      <option value="accommodation">{t('kurulus.taxRules.scope.accommodation')}</option>
+                      <option value="extras">{t('kurulus.taxRules.scope.extras')}</option>
+                      <option value="all">{t('kurulus.taxRules.scope.all')}</option>
                     </select>
                   </td>
-                  <td><input type="checkbox" checked={rule.active} onChange={(e) => updateRule(i, { active: e.target.checked })} aria-label="Aktif" /></td>
+                  <td><input type="checkbox" checked={rule.active} onChange={(e) => updateRule(i, { active: e.target.checked })} aria-label={t('kurulus.active')} /></td>
                   <td><input className="roomio-input roomio-input--sm" type="number" value={rule.sortOrder} onChange={(e) => updateRule(i, { sortOrder: Number(e.target.value) })} style={{ width: 56 }} /></td>
                 </tr>
               ))}

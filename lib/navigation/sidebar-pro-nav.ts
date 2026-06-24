@@ -3,78 +3,79 @@ import { SIDEBAR_NAV, navItemActive, type SidebarNavItem } from './sidebar-nav';
 export type ProSidebarModule = {
   id: string;
   label: string;
+  labelKey: string;
   icon: string;
   sectionIds: string[];
 };
 
 /** Saha için sadeleştirilmiş 6 modül — tam menü arama ile erişilir */
 export const PRO_SIDEBAR_MODULES: ProSidebarModule[] = [
-  { id: 'daily', label: 'Günlük', icon: 'home', sectionIds: ['panel', 'gunsonu'] },
-  { id: 'front', label: 'Önbüro', icon: 'wallet', sectionIds: ['rezervasyon', 'resepsiyon', 'onkasa'] },
-  { id: 'hk', label: 'Kat HK', icon: 'bed-double', sectionIds: ['kat'] },
-  { id: 'guest', label: 'Misafir', icon: 'heart', sectionIds: ['misafir', 'banket'] },
-  { id: 'finance', label: 'Finans', icon: 'building', sectionIds: ['arkaburo', 'raporlar'] },
-  { id: 'system', label: 'Sistem', icon: 'settings', sectionIds: ['sistem', 'ayarlar'] },
+  { id: 'daily', label: 'Günlük', labelKey: 'sidebar.module.daily', icon: 'home', sectionIds: ['panel', 'gunsonu'] },
+  { id: 'front', label: 'Önbüro', labelKey: 'sidebar.module.front', icon: 'wallet', sectionIds: ['rezervasyon', 'resepsiyon', 'onkasa'] },
+  { id: 'hk', label: 'Kat HK', labelKey: 'sidebar.module.hk', icon: 'bed-double', sectionIds: ['kat'] },
+  { id: 'guest', label: 'Misafir', labelKey: 'sidebar.module.guest', icon: 'heart', sectionIds: ['misafir', 'banket'] },
+  { id: 'finance', label: 'Finans', labelKey: 'sidebar.module.finance', icon: 'building', sectionIds: ['arkaburo', 'raporlar'] },
+  { id: 'system', label: 'Sistem', labelKey: 'sidebar.module.system', icon: 'settings', sectionIds: ['sistem', 'ayarlar'] },
 ];
 
 export const PRO_QUICK_ACTIONS = [
-  { label: 'Yeni Rez.', href: '/reservations/new', key: 'F2' },
-  { label: 'Oda Rack', href: '/rooms', key: 'F12' },
-  { label: 'Ön Kasa', href: '/reception', key: 'F6' },
+  { label: 'Yeni Rez.', labelKey: 'sidebar.quick.newRes', href: '/reservations/new', key: 'F2' },
+  { label: 'Oda Rack', labelKey: 'sidebar.item.roomRack', href: '/rooms', key: 'F12' },
+  { label: 'Ön Kasa', labelKey: 'sidebar.quick.frontDesk', href: '/reception', key: 'F6' },
 ] as const;
 
-/** Modül başına öne çıkan menü — geri kalanı "Tümünü göster" veya arama */
-const PRO_ESSENTIAL_LABELS: Record<string, string[]> = {
-  daily: ['Ana Sayfa', 'Oda Rack', 'Gün Sonu Raporlarını Al', 'Günü Kapat'],
+/** Modül başına öne çıkan menü — locale-bağımsız item id'leri */
+const PRO_ESSENTIAL_IDS: Record<string, string[]> = {
+  daily: ['panel-ana-sayfa', 'panel-oda-rack', 'gunsonu-gun-sonu-raporlarn-al', 'gunsonu-gunu-kapat'],
   front: [
-    'Yeni Rezervasyon Kaydı',
-    'Rezervasyon Listesi',
-    'Konaklayanlar Listesi',
-    'Boş Oda Listesi',
-    'Planlanan Oda Değişimleri',
-    'Kasa Defterleri',
-    'Takip Listesi (Traces)',
+    'rezervasyon-yeni-rezervasyon-kayd',
+    'rezervasyon-rezervasyon-listesi',
+    'resepsiyon-konaklayanlar-listesi',
+    'resepsiyon-bos-oda-listesi',
+    'resepsiyon-planlanan-oda-degisimleri',
+    'onkasa-kasa-defterleri',
+    'rezervasyon-takip-listesi-traces',
   ],
   hk: [
-    'Oda Listesi',
-    'Room Rack',
-    'House Keeping Oda İşlemleri',
-    'House Keeping Oda Kontrolü',
-    'Takip Listesi (Traces)',
-    'Arıza ve Şikayet Listesi',
+    'kat-oda-listesi',
+    'kat-room-rack',
+    'kat-house-keeping-oda-islemleri',
+    'kat-house-keeping-oda-kontrolu',
+    'kat-takip-listesi-traces',
+    'kat-arza-ve-sikayet-listesi',
   ],
   guest: [
-    'Takip Listesi (Traces)',
-    'In House List',
-    'Info Rack (İsim Listesi)',
-    'Arıza ve Şikayet Listesi',
-    'Kayıp ve Bulunan Listesi',
-    'Banket Rezervasyon',
+    'misafir-takip-listesi-traces',
+    'misafir-in-house-list',
+    'misafir-info-rack-isim-listesi',
+    'misafir-arza-ve-sikayet-listesi',
+    'misafir-kayp-ve-bulunan-listesi',
+    'banket-banket-rezervasyon',
   ],
   finance: [
-    'Fatura Listesi',
-    'Yeni Fatura',
-    'Raporlama Programı',
-    'Cari Kartlar',
-    'Yönetim Raporları',
-    'FO-Önbüro Raporları',
-    'HK-HouseKeeping Raporları',
+    'arkaburo-fatura-listesi',
+    'arkaburo-yeni-fatura',
+    'raporlar-raporlama-program',
+    'arkaburo-cari-kartlar',
+    'raporlar-yonetim-raporlar',
+    'raporlar-fo-onburo-raporlar',
+    'raporlar-hk-housekeeping-raporlar',
   ],
   system: [
-    'Kuruluş',
-    'Servis Programları',
-    'Rapor Tasarım',
-    'Sisteme Giriş',
-    'KVKK & Gizlilik',
-    'Lisanslama',
-    'Kapı Entegrasyonu',
+    'sistem-kurulus',
+    'sistem-servis-programlar',
+    'sistem-rapor-tasarm',
+    'ayarlar-sisteme-giris',
+    'ayarlar-kvkk-gizlilik',
+    'ayarlar-lisanslama',
+    'ayarlar-kap-entegrasyonu',
   ],
 };
 
-function itemMatchesEssential(item: SidebarNavItem, labels: string[]): boolean {
+function itemMatchesEssential(item: SidebarNavItem, ids: string[]): boolean {
   if (item.separator) return false;
-  if (labels.includes(item.label)) return true;
-  if (item.children?.some((c) => itemMatchesEssential(c, labels) || labels.includes(c.label))) return true;
+  if (ids.includes(item.id)) return true;
+  if (item.children?.some((c) => itemMatchesEssential(c, ids))) return true;
   return false;
 }
 
@@ -98,7 +99,7 @@ export function proModuleVisibleItems(
   const all = proModuleItems(moduleId);
   if (showAll) return all;
 
-  const labels = PRO_ESSENTIAL_LABELS[moduleId] ?? [];
+  const ids = PRO_ESSENTIAL_IDS[moduleId] ?? [];
   const picked: SidebarNavItem[] = [];
   let lastWasSep = false;
 
@@ -111,7 +112,7 @@ export function proModuleVisibleItems(
       continue;
     }
     lastWasSep = false;
-    if (itemMatchesEssential(item, labels) || navItemActive(pathname, item)) {
+    if (itemMatchesEssential(item, ids) || navItemActive(pathname, item)) {
       picked.push(item);
     }
   }

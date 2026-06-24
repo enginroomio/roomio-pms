@@ -1,67 +1,49 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui';
+import { useI18n } from '@/components/i18n/I18nProvider';
 import { ReservationEgmTab } from '@/components/egm/ReservationEgmTab';
 import { ReservationListView } from '@/components/reservations/ReservationListView';
 import { ReservationModuleTabs } from '@/components/reservations/ReservationModuleTabs';
 import { AvailabilityCalendar } from '@/app/reservations/AvailabilityCalendar';
-import type { Reservation } from '@/lib/types/reservation';
+import { useReservations } from '@/lib/client/use-reservations';
+import { GroupReservationsPanel } from '@/components/reservations/GroupReservationsPanel';
 
 export function ReservationsPageClient() {
+  const { t } = useI18n();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadReservations = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const r = await fetch('/api/reservations');
-      if (!r.ok) throw new Error('Rezervasyonlar yüklenemedi');
-      const j = (await r.json()) as { reservations?: Reservation[] };
-      setReservations(j.reservations ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Beklenmeyen hata');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadReservations();
-  }, [loadReservations]);
+  const { reservations, loading, error, reload } = useReservations();
 
   const title = tab === 'availability'
-    ? 'Oda Planı'
+    ? t('reservations.title.availability')
     : tab === 'egm'
-      ? 'EGM Kimlik Bildirimi'
-      : 'Rezervasyon Listesi';
+      ? t('reservations.title.egm')
+      : tab === 'group'
+        ? t('reservations.title.group')
+        : t('reservations.title.list');
 
   return (
     <PageHeader
-      breadcrumb={`Rezervasyon › ${title}`}
+      breadcrumb={`${t('nav.reservations')} › ${title}`}
       title={title}
-      description={
-        tab === 'egm'
-          ? 'Rezervasyon tablosu ile EGM/KBS kimlik bildirimi — kayıt, kontrol ve gönderim.'
-          : 'Elektra screen-039 uyumlu liste — filtreler, durum rozetleri, F2–F10 kısayollar.'
-      }
+      description={tab === 'egm' ? t('reservations.description.egm') : t('reservations.description')}
       actions={
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button variant="secondary" href="/api/reports/export?format=csv">Excel (CSV)</Button>
-          <Button href="/reservations/new">+ Yeni Rezervasyon (F2)</Button>
+          <Button variant="secondary" disabled={loading} onClick={() => void reload()}>
+            {loading ? t('reservations.loading') : t('reservations.refresh')}
+          </Button>
+          <Button variant="secondary" href="/api/reports/export?format=csv">{t('reservations.exportCsv')}</Button>
+          <Button href="/reservations/new">{t('reservations.new')}</Button>
         </div>
       }
     >
       <ReservationModuleTabs />
 
       {loading ? (
-        <p className="roomio-page-desc">Rezervasyonlar yükleniyor…</p>
+        <p className="roomio-page-desc">{t('reservations.loadingList')}</p>
       ) : error ? (
         <p className="roomio-page-desc roomio-text-warn">{error}</p>
       ) : tab === 'availability' ? (
@@ -69,8 +51,10 @@ export function ReservationsPageClient() {
       ) : tab === 'egm' ? (
         <ReservationEgmTab
           reservations={reservations}
-          onRefreshReservations={() => { void loadReservations(); }}
+          onRefreshReservations={() => { void reload(); }}
         />
+      ) : tab === 'group' ? (
+        <GroupReservationsPanel />
       ) : (
         <ReservationListView reservations={reservations} />
       )}

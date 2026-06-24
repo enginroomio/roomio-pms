@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { FileBarChart, LayoutTemplate } from 'lucide-react';
 import { ModuleLayout } from '@/components/ModuleLayout';
@@ -8,15 +9,30 @@ import { Button } from '@/components/ui';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { useProperty } from '@/components/property/PropertyProvider';
-import { FormDesignEditor, type FormTemplateDraft } from '@/components/forms/FormDesignEditor';
-import { ReportDesignEditor } from '@/components/reports/ReportDesignEditor';
-import { ReportAiSuggest } from '@/components/reports/ReportAiSuggest';
+import type { FormTemplateDraft } from '@/components/forms/FormDesignEditor';
 import { TemplateSharePanel } from '@/components/reports/TemplateSharePanel';
 import { FORM_PAGES, defaultFormLayout, formPageById } from '@/lib/forms/form-catalog';
 import { fieldLabel, LIVE_DATA_MODULES, REPORT_MODULES } from '@/lib/reports/field-catalog';
 import { roomioFetch } from '@/lib/client/api';
 import { SIDEBAR_NAV } from '@/lib/navigation/sidebar-nav';
 import { CATEGORY_REPORTS, DEMO_EOD_REPORTS, type EodArchive } from '@/lib/data/eod';
+import { NightAuditPanel } from '@/components/reports/NightAuditPanel';
+import { NightAuditPreClosePanel } from '@/components/reports/NightAuditPreClosePanel';
+
+const editorLoading = () => <p className="roomio-page-desc">Editör yükleniyor…</p>;
+
+const ReportDesignEditor = dynamic(
+  () => import('@/components/reports/ReportDesignEditor').then((m) => m.ReportDesignEditor),
+  { loading: editorLoading },
+);
+const FormDesignEditor = dynamic(
+  () => import('@/components/forms/FormDesignEditor').then((m) => m.FormDesignEditor),
+  { loading: editorLoading },
+);
+const ReportAiSuggest = dynamic(
+  () => import('@/components/reports/ReportAiSuggest').then((m) => m.ReportAiSuggest),
+  { loading: editorLoading },
+);
 
 type ReportTemplate = {
   id: string;
@@ -66,13 +82,14 @@ export function ReportsPageClient({
   const [businessDate, setBusinessDate] = useState('2026-06-18');
   const [eodMsg, setEodMsg] = useState<string | null>(null);
   const [eodBusy, setEodBusy] = useState(false);
+  const [eodCanClose, setEodCanClose] = useState(true);
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [editing, setEditing] = useState<ReportTemplate | null>(null);
   const [formTemplates, setFormTemplates] = useState<ReportTemplate[]>([]);
   const [formEditing, setFormEditing] = useState<FormTemplateDraft | null>(null);
   const [tplMsg, setTplMsg] = useState<string | null>(null);
   const [consolidated, setConsolidated] = useState<{
-    properties: Array<{ name: string; city: string | null; checkedIn: number; totalRooms: number; occupancyPct: number }>;
+    properties: Array<{ propertyId: string; name: string; city: string | null; checkedIn: number; totalRooms: number; occupancyPct: number }>;
     totals: { properties: number; rooms: number; checkedIn: number };
   } | null>(null);
 
@@ -103,14 +120,18 @@ export function ReportsPageClient({
       });
   }, [activeTab, propertyId]);
 
-  useEffect(() => {
-    if (activeTab !== 'consolidated') return;
-    void roomioFetch('/api/reports/consolidated')
+  function loadConsolidated() {
+    void roomioFetch('/api/reports/consolidated', { cache: 'no-store' })
       .then((r) => r.json())
       .then((j) => {
         if (j.properties) setConsolidated({ properties: j.properties, totals: j.totals });
       });
-  }, [activeTab]);
+  }
+
+  useEffect(() => {
+    if (activeTab !== 'consolidated') return;
+    loadConsolidated();
+  }, [activeTab, propertyId]);
 
   function exportHref(format: 'pdf' | 'csv', cat?: string | null): string {
     const params = new URLSearchParams({ format, propertyId });
@@ -250,30 +271,30 @@ export function ReportsPageClient({
   }
 
   const tabs: { id: Tab; label: string; href: string }[] = [
-    { id: 'hub', label: 'Raporla', href: '/reports' },
+    { id: 'hub', label: t('reports.tab.hub'), href: '/reports' },
     { id: 'design', label: t('reports.design'), href: '/reports?tab=design' },
-    { id: 'forms', label: 'Form Tasarım', href: '/reports?tab=forms' },
-    { id: 'user', label: 'Kullanıcı Tanımlı', href: '/reports?tab=user' },
-    { id: 'eod', label: 'Gün Sonu', href: '/reports?tab=eod' },
-    { id: 'consolidated', label: 'Konsolide', href: '/reports?tab=consolidated' },
+    { id: 'forms', label: t('reports.tab.forms'), href: '/reports?tab=forms' },
+    { id: 'user', label: t('reports.tab.user'), href: '/reports?tab=user' },
+    { id: 'eod', label: t('reports.tab.eod'), href: '/reports?tab=eod' },
+    { id: 'consolidated', label: t('reports.tab.consolidated'), href: '/reports?tab=consolidated' },
   ];
 
   return (
     <ModuleLayout
       breadcrumb="Sistem › Raporlar"
-      title={activeTab === 'design' ? t('reports.design') : activeCategory?.label ?? 'Raporlama Programı'}
+      title={activeTab === 'design' ? t('reports.design') : activeCategory?.label ?? t('reports.hub')}
       description="Rapor kategorileri, şablon tasarımı ve gün sonu raporları."
-      sideTitle="Raporlar"
+      sideTitle={t('nav.reports')}
       menuSearch={tab ? `?tab=${tab}` : category ? `?category=${category}` : ''}
     >
       <div className="roomio-tabs">
-        {tabs.map((t) => (
+        {tabs.map((item) => (
           <Link
-            key={t.id}
-            href={t.href}
-            className={`roomio-tab${activeTab === t.id ? ' is-active' : ''}`}
+            key={item.id}
+            href={item.href}
+            className={`roomio-tab${activeTab === item.id ? ' is-active' : ''}`}
           >
-            {t.label}
+            {item.label}
           </Link>
         ))}
       </div>
@@ -536,8 +557,11 @@ export function ReportsPageClient({
 
       {activeTab === 'consolidated' ? (
         <div className="roomio-card roomio-table-wrap" style={{ marginTop: 16 }}>
-          <h2 className="roomio-card-title">Konsolide Yönetim Raporu</h2>
-          <p className="roomio-page-desc">Tüm tesisler — İstanbul + Antalya özet doluluk ve rezervasyon.</p>
+          <div className="roomio-card-head-row">
+            <h2 className="roomio-card-title">{t('reports.consolidatedTitle')}</h2>
+            <Button variant="secondary" onClick={() => loadConsolidated()}>Yenile</Button>
+          </div>
+          <p className="roomio-page-desc">Tüm tesisler — canlı doluluk ve rezervasyon özeti.</p>
           {consolidated ? (
             <>
               <table className="roomio-table">
@@ -552,7 +576,7 @@ export function ReportsPageClient({
                 </thead>
                 <tbody>
                   {consolidated.properties.map((p) => (
-                    <tr key={p.name}>
+                    <tr key={p.propertyId}>
                       <td><strong>{p.name}</strong></td>
                       <td>{p.city ?? '—'}</td>
                       <td>{p.totalRooms}</td>
@@ -566,6 +590,8 @@ export function ReportsPageClient({
                 Toplam {consolidated.totals.properties} tesis · {consolidated.totals.rooms} oda · {consolidated.totals.checkedIn} konaklayan
               </p>
               <Button href="/api/reports/consolidated?format=csv">CSV indir</Button>
+              {' '}
+              <Button href="/api/reports/consolidated?format=pdf">{t('reports.downloadPdf')}</Button>
             </>
           ) : (
             <p className="roomio-page-desc">Yükleniyor…</p>
@@ -576,22 +602,29 @@ export function ReportsPageClient({
       {activeTab === 'eod' ? (
         <div className="roomio-card" style={{ marginTop: 16 }}>
           <h2 className="roomio-card-title">
-            {action === 'close' ? 'Günü Kapat' : action === 'archive' ? 'Eski Gün Sonu Raporları' : action === 'room-prices' ? 'Oda Fiyatlarını İşle' : 'Gün Sonu Raporları'}
+            {action === 'close' ? 'Günü Kapat' : action === 'archive' ? 'Eski Gün Sonu Raporları' : action === 'room-prices' ? 'Oda Fiyatlarını İşle' : action === 'audit' ? 'Gece Denetim İzi' : 'Gün Sonu Raporları'}
           </h2>
           <nav className="roomio-tabs" style={{ marginTop: 12 }}>
-            <Link href="/reports?tab=eod&action=fetch" className={`roomio-tab${(!action || action === 'fetch') ? ' is-active' : ''}`}>Raporları al</Link>
-            <Link href="/reports?tab=eod&action=close" className={`roomio-tab${action === 'close' ? ' is-active' : ''}`}>Günü kapat</Link>
-            <Link href="/reports?tab=eod&action=archive" className={`roomio-tab${action === 'archive' ? ' is-active' : ''}`}>Arşiv</Link>
-            <Link href="/reports?tab=eod&action=room-prices" className={`roomio-tab${action === 'room-prices' ? ' is-active' : ''}`}>Oda fiyatları</Link>
+            <Link href="/reports?tab=eod&action=fetch" className={`roomio-tab${(!action || action === 'fetch') ? ' is-active' : ''}`}>{t('reports.eod.fetch')}</Link>
+            <Link href="/reports?tab=eod&action=close" className={`roomio-tab${action === 'close' ? ' is-active' : ''}`}>{t('reports.eod.close')}</Link>
+            <Link href="/reports?tab=eod&action=archive" className={`roomio-tab${action === 'archive' ? ' is-active' : ''}`}>{t('reports.eod.archive')}</Link>
+            <Link href="/reports?tab=eod&action=room-prices" className={`roomio-tab${action === 'room-prices' ? ' is-active' : ''}`}>{t('reports.eod.roomPrices')}</Link>
+            <Link href="/reports?tab=eod&action=audit" className={`roomio-tab${action === 'audit' ? ' is-active' : ''}`}>{t('reports.eod.audit')}</Link>
           </nav>
 
-          {action === 'close' ? (
+          {action === 'audit' ? (
+            <NightAuditPanel businessDate={businessDate} />
+          ) : action === 'close' ? (
             <div style={{ marginTop: 16 }}>
+              <NightAuditPreClosePanel businessDate={businessDate} onReadyChange={setEodCanClose} />
               <p className="roomio-page-desc">İş günü <strong>{businessDate}</strong> kapatılmaya hazır.</p>
               {eodMsg ? <p className="roomio-page-desc">{eodMsg}</p> : null}
+              {!eodCanClose ? (
+                <p className="roomio-page-desc roomio-text-warn">Açık kasa varken gün kapatılamaz — önce kasaları kapatın.</p>
+              ) : null}
               <div className="roomio-form-actions" style={{ marginTop: 16 }}>
                 <PermissionGate permission="eod.close" fallback={<p className="roomio-page-desc">Gün kapatma yetkiniz yok (RBAC).</p>}>
-                  <Button disabled={eodBusy} onClick={() => void handleCloseDay()}>
+                  <Button disabled={eodBusy || !eodCanClose} onClick={() => void handleCloseDay()}>
                     {eodBusy ? 'Kapatılıyor…' : 'Günü kapat ve arşivle'}
                   </Button>
                 </PermissionGate>

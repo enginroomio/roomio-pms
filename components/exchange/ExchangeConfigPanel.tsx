@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui';
+import { useI18n } from '@/components/i18n/I18nProvider';
 import { roomioFetch } from '@/lib/client/api';
 import type { ExchangeConfig } from '@/lib/exchange/config';
 
 export function ExchangeConfigPanel({ onSaved }: { onSaved?: () => void }) {
+  const { t } = useI18n();
   const [config, setConfig] = useState<ExchangeConfig>({ exchangeDiscountPct: 2 });
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,11 +30,11 @@ export function ExchangeConfigPanel({ onSaved }: { onSaved?: () => void }) {
       body: JSON.stringify({ config }),
     });
     if (r.ok) {
-      setMsg('Kur bozdurma ayarı kaydedildi.');
+      setMsg(t('kurulus.exchangeConfig.saved'));
       onSaved?.();
       void load();
     } else {
-      setMsg('Kayıt başarısız.');
+      setMsg(t('kurulus.exchangeConfig.saveError'));
     }
   }
 
@@ -40,18 +42,18 @@ export function ExchangeConfigPanel({ onSaved }: { onSaved?: () => void }) {
     <div className="roomio-card" style={{ marginTop: 16 }}>
       <div className="roomio-kurulus-toolbar">
         <div>
-          <h2 className="roomio-card-title" style={{ margin: 0 }}>Kur Bozdurma Ayarı</h2>
+          <h2 className="roomio-card-title" style={{ margin: 0 }}>{t('kurulus.exchangeConfig.title')}</h2>
           <p className="roomio-page-desc" style={{ margin: '4px 0 0' }}>
-            Tüm hesaplamalar <strong>TCMB alış</strong> kuruyla yapılır. Misafir döviz bozdururken TCMB alış kurundan belirli bir oran düşülür.
+            {t('kurulus.exchangeConfig.desc')}
           </p>
         </div>
-        <Button onClick={() => void save()}>Kaydet</Button>
+        <Button onClick={() => void save()}>{t('kurulus.save')}</Button>
       </div>
       {msg ? <p className="roomio-page-desc">{msg}</p> : null}
-      {loading ? <p className="roomio-page-desc">Yükleniyor…</p> : (
+      {loading ? <p className="roomio-page-desc">{t('kurulus.loading')}</p> : (
         <div className="roomio-form-grid" style={{ marginTop: 12, maxWidth: 420 }}>
           <label className="roomio-field">
-            <span>Kur bozdurma indirimi (%)</span>
+            <span>{t('kurulus.exchangeConfig.discount')}</span>
             <input
               className="roomio-input"
               type="number"
@@ -63,7 +65,7 @@ export function ExchangeConfigPanel({ onSaved }: { onSaved?: () => void }) {
             />
           </label>
           <p className="roomio-page-desc roomio-field--full">
-            Örnek: TCMB USD alış 34,10 ve indirim %2 ise bozdurma kuru = 34,10 × 0,98 = <strong>33,42</strong> TRY/USD
+            {t('kurulus.exchangeConfig.example')}
           </p>
         </div>
       )}
