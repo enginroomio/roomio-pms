@@ -13,6 +13,10 @@ const ROOT = process.cwd();
 const PORT = process.env.VERIFY_PORT ?? '3117';
 const BASE = `http://127.0.0.1:${PORT}`;
 
+/** @type {import('node:child_process').ChildProcess | null} */
+let serverProc = null;
+let keepServer = false;
+
 function run(label, cmd, args, opts = {}) {
   const optional = Boolean(opts.optional);
   console.log(`\n▶ ${label}\n`);
@@ -47,14 +51,107 @@ async function waitHealth(maxMs = 120_000) {
       const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(8000) });
       if (res.ok) {
         const j = await res.json();
-        if (j.ok) return true;
+        if (j.ok) return j;
       }
     } catch {
       /* retry */
     }
     await new Promise((r) => setTimeout(r, 1500));
   }
-  return false;
+  return null;
+}
+
+async function readHealth() {
+  try {
+    const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return null;
+    const j = await res.json();
+    return j.ok ? j : null;
+  } catch {
+    return null;
+  }
+}
+
+function stopServer() {
+  if (serverProc) {
+    try {
+      serverProc.kill('SIGTERM');
+    } catch {
+      /* ignore */
+    }
+    serverProc = null;
+  }
+  killPort();
+}
+
+function startServer(useProductionServer) {
+  stopServer();
+  mkdirSync(join(ROOT, '.roomio/runtime'), { recursive: true });
+  writeFileSync(join(ROOT, '.roomio/runtime/active-port.txt'), PORT);
+
+  console.log(`\n▶ Sunucu başlatılıyor (${useProductionServer ? 'production' : 'dev'})…\n`);
+  serverProc = spawn(
+    'npx',
+    useProductionServer
+      ? ['next', 'start', '-p', PORT, '-H', '127.0.0.1']
+      : ['next', 'dev', '-p', PORT, '-H', '127.0.0.1'],
+    {
+      cwd: ROOT,
+      stdio: 'ignore',
+      env: {
+        ...process.env,
+        ROOMIO_AUTH_REQUIRED: '0',
+        WATCHPACK_POLLING: 'true',
+        NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=4096',
+      },
+    },
+  );
+}
+
+async function ensureServer(useProductionServer, { fresh = false, label = 'Sunucu' } = {}) {
+  if (fresh) stopServer();
+
+  let health = await readHealth();
+  if (!health) {
+    startServer(useProductionServer);
+    health = await waitHealth();
+    if (!health) {
+      stopServer();
+      console.error(`✗ ${label} /api/health yanıt vermedi`);
+      process.exit(1);
+    }
+    console.log(`✓ ${label} hazır → ${BASE} (uptime ${health.uptimeSec ?? '?'}s)`);
+    return health;
+  }
+
+  if (fresh && typeof health.uptimeSec === 'number' && health.uptimeSec > 180) {
+    console.warn(`· ${label} eski süreç (uptime ${health.uptimeSec}s) — yeniden başlatılıyor…`);
+    startServer(useProductionServer);
+    health = await waitHealth();
+    if (!health) {
+      stopServer();
+      console.error(`✗ ${label} yeniden başlatılamadı`);
+      process.exit(1);
+    }
+    console.log(`✓ ${label} yenilendi → ${BASE} (uptime ${health.uptimeSec ?? '?'}s)`);
+    return health;
+  }
+
+  console.log(`✓ ${label} hazır → ${BASE} (uptime ${health.uptimeSec ?? '?'}s)`);
+  return health;
+}
+
+async function restartServer(useProductionServer, label = 'Sunucu') {
+  console.warn(`\n· ${label} yeniden başlatılıyor…\n`);
+  startServer(useProductionServer);
+  const booted = await waitHealth(90_000);
+  if (!booted) {
+    stopServer();
+    console.error(`✗ ${label} yeniden başlatılamadı`);
+    process.exit(1);
+  }
+  console.log(`✓ ${label} yenilendi (uptime ${booted.uptimeSec ?? '?'}s)`);
+  return booted;
 }
 
 function chromiumInstalled() {
@@ -90,34 +187,11 @@ async function main() {
   }
   const hasBrowser = chromiumInstalled();
 
-  killPort();
-  mkdirSync(join(ROOT, '.roomio/runtime'), { recursive: true });
-  writeFileSync(join(ROOT, '.roomio/runtime/active-port.txt'), PORT);
-
   const useProductionServer = process.env.VERIFY_BUILD === '1';
-
-  console.log(`\n▶ Sunucu başlatılıyor (${useProductionServer ? 'production' : 'dev'})…\n`);
-  const server = spawn(
-    'npx',
-    useProductionServer
-      ? ['next', 'start', '-p', PORT, '-H', '127.0.0.1']
-      : ['next', 'dev', '-p', PORT, '-H', '127.0.0.1'],
-    {
-      cwd: ROOT,
-      stdio: 'ignore',
-      env: { ...process.env, ROOMIO_AUTH_REQUIRED: '0', WATCHPACK_POLLING: 'true' },
-    },
-  );
-
-  const keepServer = process.env.VERIFY_KEEP_SERVER === '1';
+  keepServer = process.env.VERIFY_KEEP_SERVER === '1';
 
   const shutdown = () => {
-    try {
-      server.kill('SIGTERM');
-    } catch {
-      /* ignore */
-    }
-    killPort();
+    if (!keepServer) stopServer();
   };
 
   process.on('SIGINT', () => {
@@ -128,14 +202,7 @@ async function main() {
     process.on('exit', shutdown);
   }
 
-  console.log('▶ Health bekleniyor…\n');
-  const healthy = await waitHealth();
-  if (!healthy) {
-    shutdown();
-    console.error('✗ Sunucu /api/health yanıt vermedi');
-    process.exit(1);
-  }
-  console.log(`✓ Sunucu hazır → ${BASE}`);
+  await ensureServer(useProductionServer, { fresh: true, label: 'Sunucu' });
 
   run('Deploy checklist', 'npm', ['run', 'deploy:checklist'], {
     env: { ROOMIO_URL: BASE, ROOMIO_PUBLIC_URL: BASE },
@@ -150,40 +217,61 @@ async function main() {
   const e2eEnv = {
     ROOMIO_URL: BASE,
     PLAYWRIGHT_REUSE_SERVER: '1',
+    PLAYWRIGHT_SKIP_WARM: '1',
     PLAYWRIGHT_PORT: PORT,
     ROOMIO_AUTH_REQUIRED: '0',
   };
 
-  async function e2e(label, spec, grep) {
+  async function e2e(label, spec, grep, { restartOnFail = true } = {}) {
     console.log(`\n▶ ${label}\n`);
     const args = ['run', 'test:e2e', '--', spec];
     if (grep) args.push('-g', grep);
-    const r = spawnSync('npm', args, {
-      cwd: ROOT,
-      stdio: 'inherit',
-      shell: false,
-      env: { ...process.env, ...e2eEnv },
-    });
-    if (r.status !== 0) {
-      console.warn(`\n· ${label} ilk deneme başarısız — sunucu kontrol edilip yeniden deneniyor…\n`);
-      if (!(await waitHealth(30_000))) {
-        console.error(`\n✗ ${label} başarısız (sunucu yanıt vermiyor)\n`);
-        process.exit(r.status ?? 1);
-      }
-      const retry = spawnSync('npm', args, {
+    const runOnce = () =>
+      spawnSync('npm', args, {
         cwd: ROOT,
         stdio: 'inherit',
         shell: false,
         env: { ...process.env, ...e2eEnv },
       });
-      if (retry.status !== 0) {
-        console.error(`\n✗ ${label} başarısız (kod ${retry.status})\n`);
-        process.exit(retry.status ?? 1);
+
+    let result = runOnce();
+    if (result.status !== 0) {
+      console.warn(`\n· ${label} ilk deneme başarısız — sunucu kontrol edilip yeniden deneniyor…\n`);
+      const health = await readHealth();
+      if (!health?.ok) {
+        if (restartOnFail) await restartServer(useProductionServer, label);
+        else {
+          console.error(`\n✗ ${label} başarısız (sunucu yanıt vermiyor)\n`);
+          process.exit(result.status ?? 1);
+        }
+      } else if (restartOnFail) {
+        await restartServer(useProductionServer, label);
+      }
+      result = runOnce();
+      if (result.status !== 0) {
+        console.error(`\n✗ ${label} başarısız (kod ${result.status})\n`);
+        process.exit(result.status ?? 1);
       }
     }
   }
 
-  await e2e('E2E — auth korumalı API', 'e2e/api-protected.spec.ts');
+  const apiProtectedBatches = [
+    {
+      label: 'E2E — auth API (çekirdek)',
+      grep: 'Oturum API|entegrasyon durumu|kimlik ve doluluk|grup rezervasyon|Korumalı API — rezervasyon|admin kullanıcı',
+    },
+    { label: 'E2E — auth API (viewer)', grep: 'viewer salt okunur' },
+    { label: 'E2E — auth API (HK & muhasebe)', grep: 'HK rolü|muhasebe rolü' },
+    { label: 'E2E — auth API (resepsiyon & FO)', grep: 'resepsiyon rolü|fo_manager rolü' },
+  ];
+
+  for (let i = 0; i < apiProtectedBatches.length; i++) {
+    const batch = apiProtectedBatches[i];
+    await e2e(batch.label, 'e2e/api-protected.spec.ts', batch.grep);
+    if (i < apiProtectedBatches.length - 1) {
+      await restartServer(useProductionServer, 'Sunucu (batch arası)');
+    }
+  }
 
   const folioGrep = hasBrowser ? undefined : 'Folyo API|Kasa API';
   await e2e(hasBrowser ? 'E2E — folio & kasa (tam)' : 'E2E — folio & kasa (API only)', 'e2e/folio-cash.spec.ts', folioGrep);
@@ -231,10 +319,9 @@ async function main() {
   await e2e(hasBrowser ? 'E2E — roomio çekirdek (tam)' : 'E2E — roomio çekirdek (API)', 'e2e/roomio.spec.ts', roomioGrep);
 
   if (keepServer) {
-    server.unref();
     console.log('\n· Sunucu açık bırakıldı (VERIFY_KEEP_SERVER=1)\n');
   } else {
-    shutdown();
+    stopServer();
   }
 
   console.log('\n════════════════════════════════════════');

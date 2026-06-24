@@ -3,20 +3,26 @@ import { defineConfig, devices } from '@playwright/test';
 const e2ePort = process.env.PLAYWRIGHT_PORT ?? '3111';
 const e2eBaseUrl = process.env.ROOMIO_URL ?? `http://127.0.0.1:${e2ePort}`;
 const authRequired = process.env.ROOMIO_AUTH_REQUIRED ?? '0';
+const skipWarm = process.env.PLAYWRIGHT_SKIP_WARM === '1';
 
 export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
+  testIgnore: authRequired === '1' ? undefined : ['**/auth-required.spec.ts'],
+  fullyParallel: false,
+  workers: 1,
   use: {
     baseURL: e2eBaseUrl,
     trace: 'on-first-retry',
   },
   projects: [
-    { name: 'setup', testMatch: /warm-routes\.setup\.ts/ },
+    ...(skipWarm
+      ? []
+      : [{ name: 'setup', testMatch: /warm-routes\.setup\.ts/ }]),
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
+      ...(skipWarm ? {} : { dependencies: ['setup'] }),
     },
   ],
   webServer: {
