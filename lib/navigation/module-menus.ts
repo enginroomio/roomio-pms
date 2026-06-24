@@ -22,6 +22,20 @@ function fromKurulus(entries: KurulusNavEntry[]): ModuleNavItem[] {
 
 export const KURULUS_MODULE_MENU = fromKurulus(KURULUS_NAV);
 
+const IDENTITY_KURULUS_MENU: ModuleNavItem[] = [
+  { id: 'users', label: 'Kullanıcı Tanımları', href: '/settings?section=users' },
+  { id: 'user-groups', label: 'Kullanıcı Grup Tanımları', href: '/settings?section=user-groups' },
+];
+
+export function kurulusModuleMenuForUser(
+  user: { permissions: string[] } | null | undefined,
+): ModuleNavItem[] {
+  if (!user) return KURULUS_MODULE_MENU;
+  if (user.permissions.includes('settings.admin')) return KURULUS_MODULE_MENU;
+  if (user.permissions.includes('identity.read')) return IDENTITY_KURULUS_MENU;
+  return [];
+}
+
 export const SISTEM_MODULE_MENU: ModuleNavItem[] = [
   { id: 'kurulus', label: 'Kuruluş', href: '/settings' },
   { id: 'rapor-design', label: 'Rapor Tasarım', href: '/reports?tab=design' },

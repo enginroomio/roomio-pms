@@ -5,6 +5,7 @@ import { Phone } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { FormActions, FormField, FormGrid, FormSection, Input, Textarea } from '@/components/kit';
 import { Button } from '@/components/ui';
+import { roomioFetch } from '@/lib/client/api';
 import {
   DEFAULT_PBX_CONFIG,
   UCM6301_DEFAULTS,
@@ -18,13 +19,13 @@ export default function PbxIntegrationPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    void fetch('/api/integrations/pbx/config')
+    void roomioFetch('/api/integrations/pbx/config')
       .then((r) => r.json())
       .then((j: PbxConfig) => setConfig({ ...DEFAULT_PBX_CONFIG, ...j }));
   }, []);
 
   async function save() {
-    await fetch('/api/integrations/pbx/config', {
+    await roomioFetch('/api/integrations/pbx/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
@@ -34,7 +35,7 @@ export default function PbxIntegrationPage() {
   }
 
   async function test() {
-    const res = await fetch('/api/integrations/pbx/test');
+    const res = await roomioFetch('/api/integrations/pbx/test');
     const j = (await res.json()) as { connection: { ok: boolean; message: string; simulated?: boolean } };
     setConn(j.connection.message + (j.connection.simulated ? ' (simülasyon)' : ''));
   }

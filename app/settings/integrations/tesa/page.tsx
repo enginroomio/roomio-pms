@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { FormActions, FormField, FormGrid, FormSection, Input, Textarea } from '@/components/kit';
 import { Button } from '@/components/ui';
+import { roomioFetch } from '@/lib/client/api';
 import { DEFAULT_TESA_CONFIG, TESA_DEFAULTS, type TesaConfig } from '@/lib/integrations/tesa/types';
 
 export default function TesaIntegrationPage() {
@@ -12,13 +13,13 @@ export default function TesaIntegrationPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    void fetch('/api/integrations/tesa/config')
+    void roomioFetch('/api/integrations/tesa/config')
       .then((r) => r.json())
       .then((j: TesaConfig) => setConfig({ ...DEFAULT_TESA_CONFIG, ...j }));
   }, []);
 
   async function save() {
-    await fetch('/api/integrations/tesa/config', {
+    await roomioFetch('/api/integrations/tesa/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
@@ -28,7 +29,7 @@ export default function TesaIntegrationPage() {
   }
 
   async function test() {
-    const res = await fetch('/api/integrations/tesa/encode');
+    const res = await roomioFetch('/api/integrations/tesa/encode');
     const j = (await res.json()) as { connection: { ok: boolean; message: string; simulated?: boolean } };
     setConn(j.connection.message + (j.connection.simulated ? ' (simülasyon)' : ''));
   }

@@ -50,6 +50,8 @@ export const KURULUS_NAV: KurulusNavEntry[] = [
   { id: 'meal-plans', label: 'Pansiyon Tanımları', href: '/settings?section=meal-plans' },
   { id: 'meal-prices', label: 'Pansiyon Fiyatlarını Tanımlama', href: '/settings?section=meal-prices' },
   { id: 'sep-5', label: '', href: '#', separator: true },
+  { id: 'theme', label: 'Tema & Ekran Kataloğu', href: '/settings?tab=theme' },
+  { id: 'pro-hub', label: 'Profesyonel PMS Merkezi', href: '/tools/pro' },
   { id: 'warehouse', label: 'Depo Tanımları', href: '/settings?section=warehouse' },
   { id: 'currencies', label: 'Döviz Tanımları', href: '/settings?section=currencies' },
   { id: 'tax-rules', label: 'Vergi Oranları', href: '/settings?section=tax-rules' },

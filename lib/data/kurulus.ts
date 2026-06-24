@@ -132,3 +132,102 @@ export const CONFIG_PARAMS = [
   { key: 'CHECKOUT_TIME', value: '12:00', description: 'Standart çıkış saati' },
   { key: 'EARLY_CHECKIN', value: '10:00', description: 'Erken giriş limiti' },
 ];
+
+export const USER_PARAMS = [
+  { key: 'DEFAULT_LANG', value: 'tr', description: 'Varsayılan dil' },
+  { key: 'RACK_VIEW', value: 'classic', description: 'Oda rack görünümü' },
+  { key: 'AUTO_LOGOUT_MIN', value: '30', description: 'Otomatik çıkış (dk)' },
+];
+
+export type RatePlanRow = {
+  code: string;
+  name: string;
+  market: string;
+  baseRate: string;
+  currency: string;
+  active: boolean;
+};
+
+export const RATE_PLANS: RatePlanRow[] = [
+  { code: 'BAR-STD', name: 'Standart BAR', market: 'BAR', baseRate: '₺4.800', currency: 'TRY', active: true },
+  { code: 'CORP-A', name: 'Kurumsal A', market: 'CORP', baseRate: '₺4.200', currency: 'TRY', active: true },
+  { code: 'OTA-BKG', name: 'Booking.com', market: 'OTA', baseRate: '€145', currency: 'EUR', active: true },
+  { code: 'GRP-2026', name: 'Grup Yaz 2026', market: 'GRP', baseRate: '₺3.900', currency: 'TRY', active: true },
+];
+
+export type AgencyRow = {
+  code: string;
+  name: string;
+  commission: string;
+  contractEnd: string;
+  active: boolean;
+};
+
+export const AGENCY_CONTRACTS: AgencyRow[] = [
+  { code: 'BKG', name: 'Booking.com', commission: '%15', contractEnd: '2026-12-31', active: true },
+  { code: 'EXP', name: 'Expedia', commission: '%18', contractEnd: '2026-12-31', active: true },
+  { code: 'TUI', name: 'TUI Deutschland', commission: '%12', contractEnd: '2027-03-31', active: true },
+  { code: 'DIR', name: 'Doğrudan / Walk-in', commission: '—', contractEnd: '—', active: true },
+];
+
+export const REVENUE_GROUPS: CodeRow[] = [
+  { code: 'RM', name: 'Oda Geliri', description: 'Konaklama', active: true },
+  { code: 'FB', name: 'Yiyecek & İçecek', description: 'Restoran / bar', active: true },
+  { code: 'MB', name: 'Minibar', description: 'Oda minibar', active: true },
+  { code: 'SPA', name: 'SPA & Wellness', description: 'Spa hizmetleri', active: true },
+  { code: 'OTH', name: 'Diğer', description: 'Çeşitli gelirler', active: true },
+];
+
+export type MealPriceRow = {
+  mealPlan: string;
+  roomType: string;
+  adult: string;
+  child: string;
+  season: string;
+};
+
+export const MEAL_PRICES: MealPriceRow[] = [
+  { mealPlan: 'BB', roomType: 'STD', adult: '₺450', child: '₺225', season: 'Yaz 2026' },
+  { mealPlan: 'HB', roomType: 'STD', adult: '₺850', child: '₺425', season: 'Yaz 2026' },
+  { mealPlan: 'FB', roomType: 'DLX', adult: '₺1.200', child: '₺600', season: 'Yaz 2026' },
+  { mealPlan: 'BB', roomType: 'SUI', adult: '₺650', child: '₺325', season: 'Yaz 2026' },
+];
+
+export const HOTEL_SEASONS = [
+  { code: 'LOW', name: 'Düşük Sezon', start: '2026-01-01', end: '2026-03-31', active: true },
+  { code: 'MID', name: 'Orta Sezon', start: '2026-04-01', end: '2026-05-31', active: true },
+  { code: 'HIGH', name: 'Yüksek Sezon', start: '2026-06-01', end: '2026-09-30', active: true },
+  { code: 'PEAK', name: 'Pik Sezon', start: '2026-07-15', end: '2026-08-20', active: true },
+];
+
+export const BRANCHES = [
+  { code: 'IST-01', name: 'Sapphire İstanbul', city: 'İstanbul', rooms: 186, active: true },
+  { code: 'ANK-01', name: 'Sapphire Ankara', city: 'Ankara', rooms: 94, active: true },
+  { code: 'AYT-01', name: 'Sapphire Antalya', city: 'Antalya', rooms: 220, active: false },
+];
+
+export const WAREHOUSES = [
+  { code: 'ANA', name: 'Ana Depo', location: 'Bodrum -1', active: true },
+  { code: 'HK', name: 'HK Deposu', location: 'Kat 2', active: true },
+  { code: 'FB', name: 'Mutfak Deposu', location: 'Ana mutfak', active: true },
+];
+
+export const FISCAL_DEVICES = [
+  { code: 'YK-01', name: 'Ön Büro Yazarkasa', serial: 'SN-88421', active: true },
+  { code: 'YK-02', name: 'Restoran POS', serial: 'SN-88422', active: true },
+  { code: 'YK-03', name: 'Spa POS', serial: 'SN-88423', active: false },
+];
+
+export const RES_TYPES: CodeRow[] = [
+  { code: 'IND', name: 'Bireysel', active: true },
+  { code: 'GRP', name: 'Grup', active: true },
+  { code: 'CRP', name: 'Kurumsal', active: true },
+  { code: 'WLK', name: 'Walk-in', active: true },
+];
+
+export const EXTRA_CHARGES = [
+  { code: 'COT', name: 'Bebek Yatağı', price: '₺200/gece', active: true },
+  { code: 'BED', name: 'Ek Yatak', price: '₺350/gece', active: true },
+  { code: 'PET', name: 'Evcil Hayvan', price: '₺500/konaklama', active: true },
+  { code: 'LCO', name: 'Geç Çıkış', price: '₺800', active: true },
+];

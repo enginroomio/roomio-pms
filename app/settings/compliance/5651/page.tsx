@@ -8,6 +8,7 @@ import { Hotspot5651DevicesPanel } from '@/components/compliance/Hotspot5651Devi
 import { Hotspot5651AutomationPanel } from '@/components/compliance/Hotspot5651AutomationPanel';
 import { ModuleLayout } from '@/components/ModuleLayout';
 import { Button } from '@/components/ui';
+import { roomioFetch } from '@/lib/client/api';
 import {
   DEFAULT_HOTSPOT_5651_CONFIG,
   type Hotspot5651Config,
@@ -48,9 +49,9 @@ export default function Hotspot5651Page() {
 
   useEffect(() => {
     void Promise.all([
-      fetch('/api/compliance/5651/config').then((r) => r.json()),
-      fetch('/api/compliance/5651/logs').then((r) => r.json()),
-      fetch('/api/compliance/5651/stats').then((r) => r.json()),
+      roomioFetch('/api/compliance/5651/config').then((r) => r.json()),
+      roomioFetch('/api/compliance/5651/logs').then((r) => r.json()),
+      roomioFetch('/api/compliance/5651/stats').then((r) => r.json()),
     ]).then(([cfg, logRes, st]) => {
       setConfig(mergeConfig(cfg));
       setLogs(logRes.logs ?? []);
@@ -59,7 +60,7 @@ export default function Hotspot5651Page() {
   }, []);
 
   async function saveConfig() {
-    await fetch('/api/compliance/5651/config', {
+    await roomioFetch('/api/compliance/5651/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
@@ -71,12 +72,25 @@ export default function Hotspot5651Page() {
   async function exportBtk() {
     const from = new Date(Date.now() - 30 * 86_400_000).toISOString();
     const to = new Date().toISOString();
-    window.open(`/api/compliance/5651/export?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&format=csv`, '_blank');
+    const res = await roomioFetch(
+      `/api/compliance/5651/export?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&format=csv`,
+    );
+    if (!res.ok) {
+      setMsg('BTK dışa aktarım başarısız.');
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `btk-5651-${to.slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
     setMsg('BTK uyumlu CSV dışa aktarıldı.');
   }
 
   async function addManualLog() {
-    const res = await fetch('/api/compliance/5651/logs', {
+    const res = await roomioFetch('/api/compliance/5651/logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -1,63 +1,142 @@
 'use client';
 
-import Link from 'next/link';
+import { useMemo } from 'react';
 import { ModuleLayout } from '@/components/ModuleLayout';
 import { KurulusScreen } from '@/components/kurulus/KurulusScreen';
-import { KURULUS_NAV } from '@/lib/navigation/kurulus-nav';
+import { useSession } from '@/components/auth/SessionProvider';
+import { useI18n } from '@/components/i18n/I18nProvider';
+import { canAccessRoute, hasPermission } from '@/lib/auth/roles';
+import { findKurulusNavTitle, translateKurulusModuleMenu } from '@/lib/i18n/kurulus-nav-i18n';
+import { kurulusModuleMenuForUser } from '@/lib/navigation/module-menus';
 import { Button } from '@/components/ui';
+import type { ThemeMode } from '@/components/theme/ThemeProvider';
 
-function findPageTitle(section: string | null, tab: string | null): string {
-  const href = section ? `/settings?section=${section}` : tab ? `/settings?tab=${tab}` : '/settings';
-  for (const entry of KURULUS_NAV) {
-    if (entry.href === href) return entry.label;
-    for (const child of entry.children ?? []) {
-      if (child.href === href) return child.label;
-    }
+function KurulusAccessBanner() {
+  const { user } = useSession();
+  const { t } = useI18n();
+  if (!user || hasPermission(user, 'settings.admin')) return null;
+
+  const isViewer = user.role === 'viewer';
+  const identityOnly = hasPermission(user, 'identity.read');
+
+  let message = t('nav.settings.accessLimited');
+  if (isViewer) {
+    message = t('nav.settings.accessViewer');
+  } else if (identityOnly) {
+    message = t('nav.settings.accessIdentity');
   }
-  return 'Otel Bilgileri';
+
+  return (
+    <p
+      className="roomio-card roomio-page-desc"
+      role="status"
+      style={{ marginBottom: 16, padding: '12px 16px' }}
+    >
+      {message}
+    </p>
+  );
 }
 
 export function SettingsPageClient({
   section,
   tab,
+  theme,
+  themeFixed,
 }: {
   section: string | null;
   tab: string | null;
+  theme?: ThemeMode | null;
+  themeFixed?: boolean;
 }) {
+  const { user } = useSession();
+  const { t } = useI18n();
   const menuSearch = section ? `?section=${section}` : tab ? `?tab=${tab}` : '';
-  const title = findPageTitle(section, tab);
+  const title = findKurulusNavTitle(t, section, tab);
+  const canAccess = user ? canAccessRoute(user, '/settings', { section, tab }) : true;
+  const kurulusMenu = useMemo(
+    () => translateKurulusModuleMenu(kurulusModuleMenuForUser(user), t),
+    [user, t],
+  );
+
+  if (tab === 'theme') {
+    if (user && !canAccessRoute(user, '/settings', { section, tab: 'theme' })) {
+      return (
+        <div className="roomio-card" style={{ padding: 16 }}>
+          <p className="roomio-page-desc">{t('nav.settings.themeAdminRequired')}</p>
+          <Button href="/settings?section=users" style={{ marginTop: 12 }}>
+            {t('nav.settings.userDefs')}
+          </Button>
+        </div>
+      );
+    }
+    return <KurulusScreen section={section} tab={tab} theme={theme} themeFixed={themeFixed} />;
+  }
+
+  if (user && !canAccess) {
+    return (
+      <ModuleLayout
+        breadcrumb={t('nav.settings.breadcrumb')}
+        title={t('nav.settings.title')}
+        description={t('nav.settings.noAccess')}
+        sideTitle={t('nav.settings.sideTitle')}
+        menuSearch={menuSearch}
+        menuItems={kurulusMenu}
+      >
+        <div className="roomio-card" style={{ padding: 16 }}>
+          <p className="roomio-page-desc">
+            {hasPermission(user, 'identity.read')
+              ? t('nav.settings.noAccessIdentity')
+              : t('nav.settings.noAccessAdmin')}
+          </p>
+          {hasPermission(user, 'identity.read') ? (
+            <div className="roomio-quick-actions" style={{ marginTop: 12 }}>
+              <Button href="/settings?section=users">{t('nav.settings.userDefs')}</Button>
+              <Button variant="secondary" href="/settings?section=user-groups">
+                {t('nav.settings.groupDefs')}
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      </ModuleLayout>
+    );
+  }
 
   return (
     <ModuleLayout
-      breadcrumb="Sistem › Kuruluş"
-      title="Kuruluş"
-      description="Otel, oda, kullanıcı ve kod tanımları — mockup SC-003 yapısı."
-      sideTitle="Kuruluş"
+      breadcrumb={t('nav.settings.breadcrumb')}
+      title={t('nav.settings.title')}
+      description={t('nav.settings.description')}
+      sideTitle={t('nav.settings.sideTitle')}
       menuSearch={menuSearch}
+      menuItems={kurulusMenu}
     >
       <div className="roomio-kurulus-meta">
-        <span className="roomio-badge">Kuruluş</span>
+        <span className="roomio-badge">{t('nav.settings.badge')}</span>
         <div className="roomio-quick-actions">
+          <Button variant="ghost" href="/tools/theme">
+            {t('nav.settings.themeScreen')}
+          </Button>
           <Button variant="ghost" href="/tools/rollout?phase=sistem">
-            Rollout test
+            {t('nav.settings.rolloutTest')}
           </Button>
           <Button variant="ghost" href="/settings/integrations">
-            Entegrasyonlar
+            {t('nav.settings.integrations')}
           </Button>
           <Button variant="ghost" href="/settings/compliance/5651">
-            5651 Hotspot
+            {t('nav.settings.hotspot5651')}
           </Button>
           <Button variant="ghost" href="/settings/integrations/pbx">
-            Santral
+            {t('nav.settings.pbx')}
           </Button>
           <Button variant="ghost" href="/settings/integrations/tesa">
-            TESA
+            {t('nav.settings.tesa')}
           </Button>
         </div>
       </div>
-      <KurulusScreen section={section} tab={tab} />
+      <KurulusAccessBanner />
+      <KurulusScreen section={section} tab={tab} theme={theme} themeFixed={themeFixed} />
       <p className="roomio-page-desc" style={{ marginTop: 16 }}>
-        Aktif ekran: <strong>{title}</strong> — yan menüden diğer kuruluş tanımlarına geçebilirsiniz.
+        {t('nav.settings.activeScreen', { title })}
       </p>
     </ModuleLayout>
   );
