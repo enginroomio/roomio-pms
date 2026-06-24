@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
+import { AUTH_COOKIE } from '@/lib/auth/config';
+import { getJwtPayloadFromRequest } from '@/lib/auth/request-token';
 import { revokeToken } from '@/lib/auth/session-store';
-import { tokenFromRequest, verifyToken } from '@/lib/auth/jwt';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
-  const token = tokenFromRequest(req);
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const payload = await getJwtPayloadFromRequest(req);
+  if (payload?.jti) await revokeToken(payload.jti);
 
-  const payload = await verifyToken(token);
-  if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-
-  if (payload.jti) await revokeToken(payload.jti);
-  return NextResponse.json({ ok: true, message: 'Oturum kapatıldı' });
+  const res = NextResponse.json({ ok: true, message: 'Oturum kapatıldı' });
+  res.cookies.set(AUTH_COOKIE, '', { httpOnly: true, path: '/', maxAge: 0 });
+  return res;
 }

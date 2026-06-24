@@ -11,12 +11,19 @@ export type JwtPayload = {
   email: string;
   name: string;
   role: Role;
+  groupCode?: string;
   jti?: string;
 };
 
 export async function signToken(payload: JwtPayload, expiresIn = '8h'): Promise<string> {
   const jti = payload.jti ?? crypto.randomUUID();
-  return new SignJWT({ email: payload.email, name: payload.name, role: payload.role, jti })
+  return new SignJWT({
+    email: payload.email,
+    name: payload.name,
+    role: payload.role,
+    groupCode: payload.groupCode ?? '',
+    jti,
+  })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(payload.sub)
     .setJti(jti)
@@ -35,6 +42,7 @@ export async function verifyToken(token: string): Promise<JwtPayload | null> {
       email: String(payload.email),
       name: String(payload.name),
       role: payload.role as Role,
+      groupCode: payload.groupCode ? String(payload.groupCode) : undefined,
       jti,
     };
   } catch {
@@ -42,6 +50,7 @@ export async function verifyToken(token: string): Promise<JwtPayload | null> {
   }
 }
 
+/** @deprecated use tokenFromRequest from lib/auth/request-token */
 export function tokenFromRequest(req: Request): string | null {
   const auth = req.headers.get('authorization');
   if (auth?.startsWith('Bearer ')) return auth.slice(7);
