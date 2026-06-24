@@ -140,7 +140,7 @@ async function ensureServer(useProductionServer, { fresh = false, label = 'Sunuc
 
   if (!health) {
     startServer(useProductionServer);
-    health = await waitHealth(180_000);
+    health = await waitHealth(300_000);
     if (!health) {
       await stopServerAndWait();
       console.error(`✗ ${label} /api/health yanıt vermedi`);
@@ -158,7 +158,7 @@ async function restartServer(useProductionServer, label = 'Sunucu') {
   console.warn(`\n· ${label} yeniden başlatılıyor…\n`);
   await stopServerAndWait();
   startServer(useProductionServer);
-  const booted = await waitHealth(180_000);
+  const booted = await waitHealth(300_000);
   if (!booted) {
     await stopServerAndWait();
     console.error(`✗ ${label} yeniden başlatılamadı`);
