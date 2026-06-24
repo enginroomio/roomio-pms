@@ -27,18 +27,27 @@ const LOCALE_SEED = [
 
 let seedPromise: Promise<boolean> | null = null;
 
+const DEMO_USERS = [
+  { id: 'user-arda', email: 'arda@hotelsapphire.com', name: 'Arda Yılmaz', role: 'fo_manager' },
+  { id: 'user-admin', email: 'admin@roomio.local', name: 'Sistem Admin', role: 'admin' },
+  { id: 'user-hk', email: 'hk@hotelsapphire.com', name: 'Elif Kaya', role: 'hk' },
+  { id: 'user-acc', email: 'muhasebe@hotelsapphire.com', name: 'Selin Demir', role: 'accounting' },
+  { id: 'user-viewer', email: 'viewer@hotelsapphire.com', name: 'Deniz Salt', role: 'viewer' },
+  { id: 'user-reception', email: 'reception@hotelsapphire.com', name: 'Can Demir', role: 'reception' },
+] as const;
+
+/** Eksik demo kullanıcıları ekler (eski seed DB'ler için). */
 async function ensureDemoUsers(): Promise<boolean> {
-  if ((await prisma.user.count()) > 0) return false;
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
-  await prisma.user.createMany({
-    data: [
-      { id: 'user-arda', email: 'arda@hotelsapphire.com', name: 'Arda Yılmaz', role: 'fo_manager', passwordHash: hash },
-      { id: 'user-admin', email: 'admin@roomio.local', name: 'Sistem Admin', role: 'admin', passwordHash: hash },
-      { id: 'user-hk', email: 'hk@hotelsapphire.com', name: 'Elif Kaya', role: 'hk', passwordHash: hash },
-      { id: 'user-acc', email: 'muhasebe@hotelsapphire.com', name: 'Selin Demir', role: 'accounting', passwordHash: hash },
-    ],
-  });
-  return true;
+  let created = false;
+  for (const u of DEMO_USERS) {
+    const exists = await prisma.user.findUnique({ where: { email: u.email } });
+    if (!exists) {
+      await prisma.user.create({ data: { ...u, passwordHash: hash } });
+      created = true;
+    }
+  }
+  return created;
 }
 
 async function performSeed(): Promise<boolean> {
@@ -63,12 +72,7 @@ async function performSeed(): Promise<boolean> {
       ],
     }),
     prisma.user.createMany({
-      data: [
-        { id: 'user-arda', email: 'arda@hotelsapphire.com', name: 'Arda Yılmaz', role: 'fo_manager', passwordHash: hash },
-        { id: 'user-admin', email: 'admin@roomio.local', name: 'Sistem Admin', role: 'admin', passwordHash: hash },
-        { id: 'user-hk', email: 'hk@hotelsapphire.com', name: 'Elif Kaya', role: 'hk', passwordHash: hash },
-        { id: 'user-acc', email: 'muhasebe@hotelsapphire.com', name: 'Selin Demir', role: 'accounting', passwordHash: hash },
-      ],
+      data: DEMO_USERS.map((u) => ({ ...u, passwordHash: hash })),
     }),
     prisma.reservation.createMany({
       data: DEMO_RESERVATIONS.map((r) => ({

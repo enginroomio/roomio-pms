@@ -1,24 +1,26 @@
 import { NextResponse } from 'next/server';
+import { requireApiPermission } from '@/lib/auth/require-permission';
 import { closeBusinessDay, getBusinessDate, getEodArchiveServer } from '@/lib/server/pms-store';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
-import { getDemoSession, hasPermission } from '@/lib/auth/roles';
 import { buildEodPdf } from '@/lib/server/report-export';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const auth = await requireApiPermission(req, 'eod.close');
+  if (auth instanceof NextResponse) return auth;
+
   const propertyId = propertyIdFromRequest(req);
   const [businessDate, archive] = await Promise.all([getBusinessDate(propertyId), getEodArchiveServer(propertyId)]);
   return NextResponse.json({ ok: true, businessDate, archive });
 }
 
 export async function POST(req: Request) {
-  const propertyId = propertyIdFromRequest(req);
-  const user = getDemoSession();
-  if (!hasPermission(user, 'eod.close')) {
-    return NextResponse.json({ error: 'Yetkisiz — eod.close gerekli' }, { status: 403 });
-  }
+  const auth = await requireApiPermission(req, 'eod.close');
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
 
+  const propertyId = propertyIdFromRequest(req);
   try {
     const body = (await req.json()) as { closedBy?: string };
     const result = await closeBusinessDay(body.closedBy ?? user.name, propertyId);

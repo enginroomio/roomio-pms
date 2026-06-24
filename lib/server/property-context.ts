@@ -12,7 +12,8 @@ export type PropertyInfo = {
 };
 
 export function propertyIdFromRequest(req: Request): string {
-  const header = req.headers.get('x-roomio-property');
+  const header =
+    req.headers.get('x-roomio-property') ?? req.headers.get('x-roomio-property-id');
   if (header) return header;
   try {
     const url = new URL(req.url);

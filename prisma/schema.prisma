@@ -16,6 +16,16 @@ model Property {
   totalRooms            Int
   isDefault             Boolean                @default(false)
   createdAt             String
+  company               String?
+  taxOffice             String?
+  taxNumber             String?
+  address               String?
+  phone                 String?
+  email                 String?
+  stars                 Int?
+  checkInTime           String?                @default("14:00")
+  checkOutTime          String?                @default("12:00")
+  currency              String?                @default("TRY")
   appStates             AppState[]
   reservations          Reservation[]
   roomBlocks            RoomBlock[]
@@ -24,6 +34,43 @@ model Property {
   invoices              Invoice[]
   stockItems            StockItem[]
   ledgerEntries         LedgerEntry[]
+  folioLines            FolioLine[]
+  cashEntries           CashEntry[]
+  cashRegisters         CashRegister[]
+  deposits              Deposit[]
+  auditLogs             AuditLog[]
+  ratePlans             RatePlan[]
+  rateCalendar          RateCalendarEntry[]
+  reservationGroups     ReservationGroup[]
+  companies             Company[]
+  agencyContracts       AgencyContract[]
+  hkRoutes              HkRoute[]
+  fxExchanges           FxExchange[]
+  guestTraces           GuestTrace[]
+  guestComplaints       GuestComplaint[]
+  vipGuests             VipGuest[]
+  banketEvents          BanketEvent[]
+  lostFoundItems        LostFoundItem[]
+  guestReviews          GuestReview[]
+  masterCodes           MasterCode[]
+  facilityBookings      FacilityBooking[]
+  reclamations          ReclamationCase[]
+  guestActivities       GuestActivity[]
+  dailyActivities       DailyActivity[]
+  extraCharges          ExtraCharge[]
+  propertyLanguages     PropertyLanguage[]
+  mealPrices            MealPrice[]
+  hotelSeasons          HotelSeason[]
+  configParams          ConfigParam[]
+  warehouses            Warehouse[]
+  fiscalDevices         FiscalDevice[]
+  propertyBranches      PropertyBranch[]
+  userGroups            UserGroup[]
+  propertyFloors        PropertyFloor[]
+  roomTypeDefs          RoomTypeDefinition[]
+  propertyRooms         PropertyRoom[]
+  userParams            UserParam[]
+  emailOutbox           EmailOutbox[]
   reportTemplates       ReportTemplate[]
   taxRules              TaxRule[]
   exchangeConfig        ExchangeConfig?
@@ -41,11 +88,14 @@ model AppState {
 }
 
 model User {
-  id           String @id
-  email        String @unique
+  id           String  @id
+  email        String  @unique
   name         String
   role         String
   passwordHash String
+  department   String?
+  groupCode    String?
+  active       Boolean @default(true)
 }
 
 model Reservation {
@@ -69,6 +119,7 @@ model Reservation {
   status     String
   createdAt  String
   notes      String?
+  groupId    String?
   extraData  String?
   property   Property @relation(fields: [propertyId], references: [id])
 
@@ -126,16 +177,19 @@ model IdentityNotification {
 }
 
 model Invoice {
-  id         String   @id
-  propertyId String
-  no         String
-  date       String
-  guest      String
-  amount     Float
-  vat        Float
-  status     String
-  type       String
-  property   Property @relation(fields: [propertyId], references: [id])
+  id            String   @id
+  propertyId    String
+  no            String
+  date          String
+  guest         String
+  amount        Float
+  vat           Float
+  status        String
+  type          String
+  reservationId String?
+  companyName   String?
+  ref           String?
+  property      Property @relation(fields: [propertyId], references: [id])
 
   @@unique([propertyId, no])
 }
@@ -231,6 +285,7 @@ model RoomHousekeeping {
   roomNo     String
   hkStatus   String   @default("CLEAN")
   assignedTo String?
+  routeCode  String?
   notes      String?
   updatedAt  String
   property   Property @relation(fields: [propertyId], references: [id])
@@ -286,4 +341,576 @@ model HkGuestRequest {
   @@index([propertyId, status])
   @@index([propertyId, assignedStaff])
   @@index([propertyId, roomNo])
+}
+
+model FolioLine {
+  id            String   @id
+  propertyId    String
+  reservationId String
+  date          String
+  description   String
+  amount        Float
+  type          String
+  window        String   @default("guest")
+  createdAt     String
+  property      Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, reservationId])
+}
+
+model CashEntry {
+  id            String   @id
+  propertyId    String
+  businessDate  String
+  time          String
+  register      String
+  type          String
+  description   String
+  amount        Float
+  currency      String   @default("TRY")
+  user          String
+  reservationId String?
+  property      Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, businessDate])
+}
+
+model CashRegister {
+  id             String   @id
+  propertyId     String
+  name           String
+  businessDate   String
+  openedAt       String
+  closedAt       String?
+  openingBalance Float
+  closingBalance Float?
+  variance       Float    @default(0)
+  status         String
+  property       Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, businessDate])
+}
+
+model Deposit {
+  id            String   @id
+  propertyId    String
+  reservationId String?
+  guestName     String
+  roomNo        String?
+  amount        Float
+  method        String
+  status        String
+  takenAt       String
+  user          String
+  notes         String?
+  property      Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, status])
+}
+
+model AuditLog {
+  id           String   @id
+  propertyId   String
+  businessDate String
+  createdAt    String
+  module       String
+  action       String
+  entityType   String?
+  entityId     String?
+  user         String
+  detail       String?
+  property     Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, businessDate])
+  @@index([propertyId, module])
+}
+
+model RatePlan {
+  id         String   @id
+  propertyId String
+  code       String
+  name       String
+  market     String
+  roomType   String?
+  baseRate   Float
+  currency   String   @default("TRY")
+  mealPlan   String?
+  active     Boolean  @default(true)
+  validFrom  String?
+  validTo    String?
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model RateCalendarEntry {
+  id           String   @id
+  propertyId   String
+  date         String
+  ratePlanCode String
+  roomType     String?
+  rate         Float
+  currency     String   @default("TRY")
+  property     Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, date, ratePlanCode, roomType])
+  @@index([propertyId, date])
+}
+
+model ReservationGroup {
+  id            String   @id
+  propertyId    String
+  refNo         String
+  name          String
+  contactName   String?
+  checkIn       String
+  checkOut      String
+  roomCount     Int
+  status        String
+  notes         String?
+  allotmentJson String?
+  createdAt     String
+  property      Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, refNo])
+}
+
+model Company {
+  id          String   @id
+  propertyId  String
+  code        String
+  name        String
+  branch      String?
+  taxNo       String?
+  address     String?
+  contactName String?
+  email       String?
+  phone       String?
+  creditLimit Float?
+  active      Boolean  @default(true)
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model HkRoute {
+  id         String   @id
+  propertyId String
+  code       String
+  name       String
+  floors     String
+  staffName  String?
+  active     Boolean  @default(true)
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model FxExchange {
+  id            String   @id
+  propertyId    String
+  businessDate  String
+  time          String
+  guest         String
+  roomNo        String
+  reservationId String?
+  fromCurrency  String
+  fromAmount    Float
+  rate          Float
+  tryAmount     Float
+  user          String
+  property      Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, businessDate])
+}
+
+model GuestTrace {
+  id            String   @id
+  propertyId    String
+  date          String
+  guest         String
+  roomNo        String
+  reservationId String?
+  subject       String
+  due           String
+  status        String
+  assignee      String
+  notes         String?
+  createdAt     String
+  property      Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, status])
+}
+
+model GuestComplaint {
+  id          String   @id
+  propertyId  String
+  date        String
+  roomNo      String
+  guest       String
+  category    String
+  description String
+  priority    String
+  status      String
+  resolvedAt  String?
+  createdAt   String
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, status])
+}
+
+model VipGuest {
+  id            String   @id
+  propertyId    String
+  level         String
+  guestName     String
+  country       String
+  arrival       String
+  departure     String
+  nights        Int
+  room          String
+  status        String
+  reservationId String?
+  property      Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, level])
+}
+
+model BanketEvent {
+  id         String   @id
+  propertyId String
+  eventName  String
+  hall       String
+  date       String
+  startTime  String
+  endTime    String
+  pax        Int
+  contact    String
+  status     String
+  revenue    Float
+  createdAt  String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, date])
+}
+
+model LostFoundItem {
+  id         String   @id
+  propertyId String
+  date       String
+  type       String
+  item       String
+  location   String
+  guest      String?
+  roomNo     String?
+  status     String
+  createdAt  String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, status])
+}
+
+model GuestReview {
+  id            String   @id
+  propertyId    String
+  date          String
+  guestName     String
+  roomNo        String
+  stayRange     String?
+  source        String
+  rating        Int
+  title         String
+  comment       String
+  response      String?
+  status        String
+  lang          String   @default("TR")
+  category      String?
+  reservationId String?
+  property      Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, status])
+}
+
+model MasterCode {
+  id          String   @id
+  propertyId  String
+  kind        String
+  code        String
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, kind, code])
+}
+
+model FacilityBooking {
+  id            String   @id
+  propertyId    String
+  kind          String
+  date          String
+  time          String
+  guest         String
+  roomNo        String
+  party         Int
+  status        String
+  notes         String?
+  reservationId String?
+  createdAt     String
+  property      Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, kind, date])
+}
+
+model ReclamationCase {
+  id           String   @id
+  propertyId   String
+  refNo        String
+  date         String
+  guest        String
+  roomNo       String
+  subject      String
+  compensation String
+  status       String
+  createdAt    String
+  property     Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, refNo])
+}
+
+model GuestActivity {
+  id            String   @id
+  propertyId    String
+  datetime      String
+  guestName     String
+  roomNo        String
+  nationality   String
+  activity      String
+  description   String
+  staff         String
+  reservationId String?
+  createdAt     String
+  property      Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, datetime])
+}
+
+model DailyActivity {
+  id          String   @id
+  propertyId  String
+  date        String
+  time        String
+  type        String
+  description String
+  guest       String
+  roomNo      String
+  staff       String
+  department  String
+  createdAt   String
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, date])
+}
+
+model ExtraCharge {
+  id         String   @id
+  propertyId String
+  code       String
+  name       String
+  price      Float
+  priceUnit  String   @default("gece")
+  currency   String   @default("TRY")
+  active     Boolean  @default(true)
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model PropertyLanguage {
+  id          String   @id
+  propertyId  String
+  code        String
+  name        String
+  nativeName  String
+  active      Boolean  @default(true)
+  defaultLang Boolean  @default(false)
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model MealPrice {
+  id          String   @id
+  propertyId  String
+  mealPlan    String
+  roomType    String
+  adultPrice  Float
+  childPrice  Float
+  seasonName  String
+  currency    String   @default("TRY")
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, mealPlan, roomType, seasonName])
+}
+
+model HotelSeason {
+  id         String   @id
+  propertyId String
+  code       String
+  name       String
+  start      String
+  end        String
+  active     Boolean  @default(true)
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model ConfigParam {
+  id          String   @id
+  propertyId  String
+  key         String
+  value       String
+  description String
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, key])
+}
+
+model Warehouse {
+  id         String   @id
+  propertyId String
+  code       String
+  name       String
+  location   String
+  active     Boolean  @default(true)
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model FiscalDevice {
+  id         String   @id
+  propertyId String
+  code       String
+  name       String
+  serial     String
+  active     Boolean  @default(true)
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model PropertyBranch {
+  id         String   @id
+  propertyId String
+  code       String
+  name       String
+  city       String
+  rooms      Int
+  active     Boolean  @default(true)
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model UserGroup {
+  id          String   @id
+  propertyId  String
+  code        String
+  name        String
+  userCount   Int      @default(0)
+  description String?
+  permissions String?
+  active      Boolean  @default(true)
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model PropertyFloor {
+  id         String   @id
+  propertyId String
+  floor      Int
+  start      Int
+  end        Int
+  active     Boolean  @default(true)
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, floor])
+}
+
+model RoomTypeDefinition {
+  id          String   @id
+  propertyId  String
+  code        String
+  short       String
+  name        String
+  description String?
+  location    String?
+  bedType     String
+  maxPersons  Int
+  maxAdults   Int
+  maxChildren Int      @default(0)
+  baseRate    Float
+  specialInfo String?
+  active      Boolean  @default(true)
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
+}
+
+model PropertyRoom {
+  id         String   @id
+  propertyId String
+  roomNo     String
+  floor      Int
+  typeCode   String
+  location   String?
+  building   String   @default("Ana Bina")
+  isActive   Boolean  @default(true)
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, roomNo])
+}
+
+model UserParam {
+  id          String   @id
+  propertyId  String
+  key         String
+  value       String
+  description String
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, key])
+}
+
+model EmailOutbox {
+  id         String   @id
+  propertyId String
+  to         String
+  subject    String
+  body       String
+  attachment String?
+  status     String
+  sentAt     String?
+  error      String?
+  createdAt  String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, status])
+}
+
+model AgencyContract {
+  id          String   @id
+  propertyId  String
+  code        String
+  name        String
+  commission  Float
+  contractEnd String?
+  market      String?
+  active      Boolean  @default(true)
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, code])
 }

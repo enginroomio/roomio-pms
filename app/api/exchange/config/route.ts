@@ -1,17 +1,24 @@
 import { NextResponse } from 'next/server';
 import type { ExchangeConfig } from '@/lib/exchange/config';
+import { requireKurulusApiRead, requireKurulusApiWrite } from '@/lib/auth/require-permission';
 import { getExchangeConfig, saveExchangeConfig } from '@/lib/server/pms-store';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const auth = await requireKurulusApiRead(req);
+  if (auth instanceof NextResponse) return auth;
+
   const propertyId = propertyIdFromRequest(req);
   const config = await getExchangeConfig(propertyId);
   return NextResponse.json({ ok: true, config });
 }
 
 export async function POST(req: Request) {
+  const auth = await requireKurulusApiWrite(req);
+  if (auth instanceof NextResponse) return auth;
+
   const propertyId = propertyIdFromRequest(req);
   try {
     const body = (await req.json()) as { config?: ExchangeConfig };
