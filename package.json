@@ -79,6 +79,7 @@
     "render:uptime:setup": "node scripts/render-uptime-setup.mjs",
     "render:go-live": "node scripts/render-go-live.mjs",
     "render:diagnose": "node scripts/render-diagnose.mjs",
+    "render:paste-env": "node scripts/render-paste-env.mjs",
     "render:set-secrets": "node scripts/render-set-secrets.mjs",
     "setup:render": "node scripts/setup-render.mjs",
     "setup:render:all": "bash scripts/render-quickstart.sh",
