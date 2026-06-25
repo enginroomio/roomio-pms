@@ -78,6 +78,7 @@ model Property {
   roomHousekeeping      RoomHousekeeping[]
   roomMaintenanceFaults RoomMaintenanceFault[]
   hkGuestRequests       HkGuestRequest[]
+  queueRooms            QueueRoom[]
 }
 
 model AppState {
@@ -341,6 +342,31 @@ model HkGuestRequest {
   @@index([propertyId, status])
   @@index([propertyId, assignedStaff])
   @@index([propertyId, roomNo])
+}
+
+// Opera Queue Rooms — oda hazır olana kadar misafir bekleme kuyruğu
+model QueueRoom {
+  id             String   @id
+  propertyId     String
+  reservationId  String?
+  refNo          String?
+  guestName      String
+  email          String?
+  phone          String?
+  roomType       String
+  adults         Int      @default(1)
+  priority       String   @default("normal")
+  status         String   @default("waiting")
+  notes          String?
+  assignedRoomNo String?
+  queuedAt       String
+  readyAt        String?
+  assignedAt     String?
+  notifiedAt     String?
+  property       Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, status])
+  @@index([propertyId, queuedAt])
 }
 
 model FolioLine {

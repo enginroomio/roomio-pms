@@ -16,6 +16,7 @@ export function StatusBadge({ status }: { status: ReservationStatus }) {
 
 type BtnProps = React.ComponentProps<'button'> & {
   variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
   href?: string;
   target?: React.HTMLAttributeAnchorTarget;
   rel?: string;
@@ -23,6 +24,7 @@ type BtnProps = React.ComponentProps<'button'> & {
 
 export function Button({
   variant = 'primary',
+  size,
   href,
   target,
   rel,
@@ -30,7 +32,8 @@ export function Button({
   className = '',
   ...rest
 }: BtnProps) {
-  const cls = `roomio-btn roomio-btn--${variant} ${className}`.trim();
+  const sizeClass = size ? `roomio-btn--${size}` : '';
+  const cls = `roomio-btn roomio-btn--${variant} ${sizeClass} ${className}`.trim();
   if (href) {
     return (
       <Link

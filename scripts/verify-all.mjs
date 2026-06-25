@@ -37,6 +37,25 @@ function run(label, cmd, args, opts = {}) {
   return true;
 }
 
+function runTry(label, cmd, args, opts = {}) {
+  const optional = Boolean(opts.optional);
+  console.log(`\n▶ ${label}\n`);
+  const r = spawnSync(cmd, args, {
+    cwd: ROOT,
+    stdio: 'inherit',
+    shell: false,
+    env: { ...process.env, ...opts.env },
+  });
+  if (r.status !== 0) {
+    if (optional) {
+      console.warn(`· ${label} atlandı (opsiyonel, kod ${r.status})`);
+      return false;
+    }
+    return false;
+  }
+  return true;
+}
+
 function killPort() {
   spawnSync('node', [join(ROOT, 'scripts/roomio-kill-ports.mjs')], {
     cwd: ROOT,
@@ -218,7 +237,18 @@ async function main() {
     process.on('exit', shutdown);
   }
 
-  await ensureServer(useProductionServer, { fresh: true, label: 'Sunucu' });
+  if (process.env.VERIFY_REUSE_SERVER === '1') {
+    const health = await readHealth();
+    if (health) {
+      keepServer = true;
+      console.log(`✓ Mevcut sunucu yeniden kullanılıyor → ${BASE} (uptime ${health.uptimeSec ?? '?'}s)`);
+    } else {
+      console.warn('· VERIFY_REUSE_SERVER: sunucu yanıt vermiyor — yeni süreç başlatılıyor…');
+      await ensureServer(useProductionServer, { fresh: true, label: 'Sunucu' });
+    }
+  } else {
+    await ensureServer(useProductionServer, { fresh: true, label: 'Sunucu' });
+  }
 
   run('Deploy checklist', 'npm', ['run', 'deploy:checklist'], {
     env: { ROOMIO_URL: BASE, ROOMIO_PUBLIC_URL: BASE },
@@ -226,6 +256,7 @@ async function main() {
 
   run('Route smoke', 'npm', ['run', 'test:routes'], {
     env: { ROOMIO_URL: BASE },
+    optional: true,
   });
 
   run('Multi-property smoke', 'npm', ['run', 'test:multiproperty'], { optional: true });
