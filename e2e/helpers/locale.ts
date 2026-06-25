@@ -1,6 +1,13 @@
 import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
+/** HK mobil kabukta dil seçici yok — localStorage ile EN. */
+export async function setEnglishViaStorage(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('roomio-locale', 'en');
+  });
+}
+
 /** Top bar may render duplicate locale switchers in compact layouts — always target the first. */
 export async function selectEnglish(page: Page) {
   const switcher = page.getByLabel(/Dil|Language/i).first();

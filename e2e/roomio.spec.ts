@@ -72,7 +72,7 @@ test('housekeeping pano mockup', async ({ page }) => {
   await page.goto('/housekeeping');
   await expect(page.getByRole('heading', { name: /Housekeeping Pano/i }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: '101' })).toBeVisible();
-  await expect(page.getByText('Kat Görevlileri')).toBeVisible();
+  await expect(page.getByText('Kat Görevlileri').first()).toBeVisible();
 });
 
 test('room rack F12 sayfası', async ({ page }) => {
