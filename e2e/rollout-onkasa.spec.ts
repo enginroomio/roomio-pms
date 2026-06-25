@@ -4,7 +4,7 @@ test.describe('Ön Kasa rollout — adım adım', () => {
   test('Adım 1 — Kasa defteri (F6)', async ({ page }) => {
     await page.goto('/reception');
     await expect(page.getByRole('heading', { name: /Resepsiyon & Ön Kasa/i })).toBeVisible();
-    await expect(page.getByText('Kasa Defteri — bugün')).toBeVisible();
+    await expect(page.getByText('Kasa Defteri — bugün').first()).toBeVisible();
     await expect(page.getByRole('table')).toBeVisible();
   });
 

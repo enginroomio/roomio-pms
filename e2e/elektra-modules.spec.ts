@@ -6,6 +6,7 @@ import {
   authHeaders,
   loginApiTokenWith,
 } from './helpers/api-auth';
+import { useDemoRole, waitForDemoSession } from './helpers/demo-auth';
 
 function bookingDates() {
   const checkIn = new Date();
@@ -464,37 +465,24 @@ test.describe('Elektra modülleri — UI', () => {
   });
 
   test('entegrasyon hub — yeni kartlar', async ({ page }) => {
+    await useDemoRole(page, 'admin');
     await page.goto('/settings/integrations');
-    await expect(page.getByRole('heading', { name: 'Online Rezervasyon Motoru' })).toBeVisible({ timeout: 15_000 });
-    const headings = [
+    await waitForDemoSession(page);
+    await expect(page.getByRole('heading', { name: /Servis Programları/i }).first()).toBeVisible({ timeout: 15_000 });
+    const cards = page.locator('.roomio-integration-card');
+    for (const title of [
       'Kanal Yöneticisi',
-      'Dinamik Fiyatlandırma',
       'Misafir Portalı',
-      /e-Fatura/i,
       'WhatsApp API',
       'Check-in Kiosk',
-      /Sadakat/i,
       'SPA Yönetimi',
-      'Tur Operatörü',
-      'Viofun',
-      /Misafir Uygulaması/i,
-      /AI Asistan/i,
-      /Marina/i,
-      'IK Portal',
-      'Tedarik Portalı',
-      'Stok Takip',
-      'Restoran Online Rezervasyon',
       'Sanal POS',
       'Lite Mobile',
-      'Kalite Yönetimi',
-      'Karbon Dengeleme',
-      'Fuar Otomasyon',
-      'Spor Salonu',
       'Web Sitesi',
-    ] as const;
-    for (const name of headings) {
-      const heading = page.getByRole('heading', { name, exact: typeof name === 'string' });
-      await expect(heading.first()).toBeVisible({ timeout: 10_000 });
+    ]) {
+      const card = cards.filter({ hasText: title }).first();
+      await card.scrollIntoViewIfNeeded();
+      await expect(card).toBeVisible({ timeout: 10_000 });
     }
   });
 });

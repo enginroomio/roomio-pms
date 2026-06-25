@@ -1,10 +1,17 @@
 import { test, expect } from '@playwright/test';
+import { useDemoRole, waitForDemoSession } from './helpers/demo-auth';
 
 test.describe('Sistem rollout — adım adım', () => {
+  test.beforeEach(async ({ page }) => {
+    await useDemoRole(page, 'admin');
+  });
+
   test('Adım 1 — Kuruluş — yan menü + alt ağaç', async ({ page }) => {
     await page.goto('/settings');
+    await waitForDemoSession(page);
     await expect(page.getByRole('heading', { name: 'Kuruluş', level: 1 })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('navigation', { name: 'Kuruluş' })).toBeVisible();
+    await page.getByRole('link', { name: /Otel Bilgileri/i }).first().scrollIntoViewIfNeeded();
     await expect(page.getByRole('link', { name: /Otel Bilgileri/i }).first()).toBeVisible();
   });
 
@@ -28,6 +35,7 @@ test.describe('Sistem rollout — adım adım', () => {
 
   test('Adım 5 — Dil Tanımları', async ({ page }) => {
     await page.goto('/settings?section=language');
+    await waitForDemoSession(page);
     await expect(page.getByRole('heading', { name: /Dil Tanımları/i }).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('button', { name: /Yeni dil/i }).first()).toBeVisible();
   });
