@@ -1435,6 +1435,55 @@ async function probeLive() {
   }
 
   try {
+    const { res, ms } = await timed('/api/reservations/groups?view=summary', 10_000);
+    if (res.ok) {
+      const j = await res.json();
+      const s = j.summary;
+      pass(`grup blok özeti (${ms} ms, ${s?.openBlocks ?? 0} aktif blok, %${s?.pickupPct ?? 0} pickup)`);
+    } else note(`grup summary → ${res.status}`);
+  } catch (err) {
+    note(`grup summary — ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  try {
+    const { res, ms } = await timed('/api/revenue-management/forecast?days=7', 15_000);
+    if (res.ok) {
+      const j = await res.json();
+      pass(`RMS forecast (${ms} ms, ${j.days?.length ?? 0} gün, %${j.summary?.avgOccupancy ?? '?'})`);
+    } else note(`RMS forecast → ${res.status}`);
+  } catch (err) {
+    note(`RMS forecast — ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  try {
+    const { res, ms } = await timed('/api/loyalty/summary', 10_000);
+    if (res.ok) {
+      const j = await res.json();
+      pass(`sadakat özeti (${ms} ms, ${j.summary?.accountCount ?? 0} üye)`);
+    } else note(`loyalty summary → ${res.status}`);
+  } catch (err) {
+    note(`loyalty summary — ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  try {
+    const { res, ms } = await timed('/api/integrations/channel-manager/logs', 10_000);
+    if (res.ok) pass(`kanal yöneticisi log API (${ms} ms)`);
+    else note(`channel-manager logs → ${res.status}`);
+  } catch (err) {
+    note(`channel-manager logs — ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  try {
+    const { res, ms } = await timed('/api/deploy/readiness', 20_000);
+    if (res.ok) {
+      const j = await res.json();
+      pass(`deploy readiness (${ms} ms, ${j.summary?.passed ?? '?'}/${j.summary?.total ?? '?'} geçti)`);
+    } else note(`deploy readiness → ${res.status}`);
+  } catch (err) {
+    note(`deploy readiness — ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  try {
     const { res, ms } = await timed('/api/rate-plans?view=calendar&from=2026-06-01&to=2026-06-14', 10_000);
     if (res.ok) pass(`rate takvim API (${ms} ms)`);
     else note(`rate calendar API → ${res.status}`);

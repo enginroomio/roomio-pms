@@ -268,8 +268,10 @@ async function main() {
     if (health) {
       keepServer = true;
       console.log(`✓ Mevcut sunucu yeniden kullanılıyor → ${BASE} (uptime ${health.uptimeSec ?? '?'}s)`);
-      if (!(await waitAppReady(60_000))) {
-        console.warn('· Mevcut sunucu henüz hazır değil — yeni süreç başlatılıyor…');
+      const appReady = await waitAppReady(60_000);
+      if (!appReady) {
+        console.warn('· Mevcut sunucu sağlıklı değil (500/derleme) — yeni süreç başlatılıyor…');
+        keepServer = false;
         await ensureServer(useProductionServer, { fresh: true, label: 'Sunucu' });
       }
     } else {

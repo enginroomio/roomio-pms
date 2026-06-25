@@ -125,6 +125,7 @@ export const SIDEBAR_SUBMENU_BY_KEY: Record<string, SidebarSubItem[]> = {
     sub('Gelir Yönetimi (RMS)', '/revenue'),
     sub('Grup & Blok Yönetimi', '/groups'),
     sub('Sadakat Programı', '/loyalty'),
+    sub('Production Deploy', '/tools/deploy'),
     sub('Dinamik Fiyat', '/settings/integrations/dynamic-pricing'),
     sub('Misafir Portalı', '/settings/integrations/guest-portal'),
     sub('e-Fatura', '/settings/integrations/efatura'),

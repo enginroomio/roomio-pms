@@ -23,6 +23,14 @@ const HK_ROUTES = [
   '/reception/guest-requests',
 ];
 
+const PRO_MODULE_ROUTES = [
+  '/revenue',
+  '/loyalty',
+  '/groups',
+  '/tools/deploy',
+  '/settings/integrations/channel-manager',
+];
+
 async function timedFetch(path, init) {
   const start = performance.now();
   const res = await fetch(`${BASE}${path}`, {
@@ -53,10 +61,14 @@ async function probeHealth() {
 
 async function probeRoutes() {
   const results = [];
-  for (const path of HK_ROUTES) {
+  for (const path of [...HK_ROUTES, ...PRO_MODULE_ROUTES]) {
     try {
-      const { res, ms } = await timedFetch(path);
-      results.push({ path, status: res.status, ms, ok: res.status === 200 });
+      const { res, ms } = await timedFetch(path, { redirect: 'manual' });
+      const isApi = path.startsWith('/api/');
+      const ok = isApi
+        ? res.status === 200
+        : res.status === 200 || res.status === 302 || res.status === 307;
+      results.push({ path, status: res.status, ms, ok });
     } catch (err) {
       results.push({ path, status: 0, ms: -1, ok: false, error: err instanceof Error ? err.message : String(err) });
     }
@@ -139,7 +151,7 @@ async function main() {
   console.log(`  Ortalama: ${health.avgMs}ms · ${health.warm ? 'sıcak' : health.cold ? 'soğuk/cold start' : 'kararsız'}`);
 
   const routes = await probeRoutes();
-  console.log('\nHK rotaları:');
+  console.log('\nHK + profesyonel modül rotaları:');
   let routesOk = true;
   for (const r of routes) {
     console.log(`  ${r.ok ? '✓' : '✗'} ${r.path} [${r.status}] ${r.ms >= 0 ? `${r.ms}ms` : r.error ?? ''}`);

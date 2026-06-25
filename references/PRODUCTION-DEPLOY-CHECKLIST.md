@@ -1,6 +1,6 @@
 # Roomio PMS — Production Deploy Checklist
 
-Canlıya almadan önce bu listeyi sırayla tamamlayın. Otomatik kontrol: `npm run deploy:checklist`.
+Canlıya almadan önce bu listeyi sırayla tamamlayın. Otomatik kontrol: `npm run deploy:checklist`. Görsel özet: `/tools/deploy` (Production Deploy hub).
 
 ## 1. Ortam değişkenleri
 
@@ -12,6 +12,8 @@ Canlıya almadan önce bu listeyi sırayla tamamlayın. Otomatik kontrol: `npm r
 | `REDIS_URL` | Önerilir | Oturum / kuyruk / cache için |
 | `SENTRY_DSN` | Önerilir | Hata izleme |
 | `VAPID_*` | HK push için | `npm run vapid:gen` |
+| `ROOMIO_INTEGRATION_LIVE` | Kanal/RMS canlı | `1` = gerçek gateway |
+| `ROOMIO_CHANNEL_GATEWAY_URL` | OTA bridge | Kanal yöneticisi canlı senkron |
 
 Şablon: `.env.production.example`
 

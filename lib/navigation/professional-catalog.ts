@@ -35,6 +35,7 @@ export const PROFESSIONAL_MODULES: ProModule[] = [
   { id: 'rack', group: 'Kabuk & Ana Sayfa', label: 'Oda Rack (F12)', href: '/rooms', status: 'live', shortcut: 'F12' },
   { id: 'theme', group: 'Kabuk & Ana Sayfa', label: 'Tema & Ekran Kataloğu', href: '/tools/theme', status: 'live' },
   { id: 'rollout', group: 'Kabuk & Ana Sayfa', label: 'Rollout Test', href: '/tools/rollout', status: 'live' },
+  { id: 'deploy-hub', group: 'Kabuk & Ana Sayfa', label: 'Production Deploy', href: '/tools/deploy', status: 'live', note: 'Canlıya alma hazırlık' },
   { id: 'pro-hub', group: 'Kabuk & Ana Sayfa', label: 'Profesyonel PMS Merkezi', href: '/tools/pro', status: 'live' },
 
   { id: 'kurulus', group: 'Sistem & Kuruluş', label: 'Kuruluş Tanımları', href: '/settings', status: 'live', note: 'Oda envanteri, kullanıcı parametreleri, market kuralı canlı' },
