@@ -479,8 +479,8 @@ test.describe('Elektra modülleri — UI', () => {
     await expect(page.getByRole('heading', { name: /Misafir Uygulaması/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /AI Asistan/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /Marina/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'IK Portal' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Tedarik Portalı' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'IK Portal', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tedarik Portalı', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Stok Takip' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Restoran Online Rezervasyon' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Sanal POS' })).toBeVisible();

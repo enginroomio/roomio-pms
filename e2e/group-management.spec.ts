@@ -63,9 +63,10 @@ test.describe('Grup & Blok Yönetimi', () => {
   });
 
   test('Grup hub UI', async ({ page }) => {
+    test.setTimeout(90_000);
     await page.goto('/groups');
-    await expect(page.getByRole('heading', { name: /Grup & Blok Yönetimi/i })).toBeVisible();
-    await expect(page.getByText('Aktif blok')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Grup & Blok Yönetimi/i })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText('Aktif blok')).toBeVisible({ timeout: 20000 });
     await expect(page.getByText('Grup pickup raporu')).toBeVisible();
   });
 });

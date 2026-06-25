@@ -1,5 +1,7 @@
 import { test as setup } from '@playwright/test';
 
+setup.setTimeout(120_000);
+
 /** Next.js dev ilk derleme 404'lerini önlemek için kritik rotaları ısıtır. */
 const WARM_PATHS = [
   '/api/health',
@@ -37,10 +39,9 @@ const WARM_PATHS = [
   '/api/integrations/digital-menu/menu',
   '/api/loyalty/summary',
   '/api/loyalty/accounts',
-  '/api/revenue-management/forecast?days=14',
+  '/api/reservations/groups?view=summary',
   '/groups',
-  '/revenue',
-  '/loyalty',
+  '/tools/deploy',
 ];
 
 setup('warm API routes', async ({ request }) => {
