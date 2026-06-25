@@ -269,6 +269,15 @@ input {
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
 }
 
+.roomio-top-menu__panel--portal::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
 .roomio-top-menu__cascade {
   display: flex;
   align-items: stretch;
