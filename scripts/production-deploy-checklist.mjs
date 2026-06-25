@@ -400,6 +400,29 @@ async function probeLive() {
     note(`auth/config — ${err instanceof Error ? err.message : String(err)}`);
   }
 
+  const publicIntegrationGets = [
+    '/api/integrations/hr-portal/info',
+    '/api/integrations/inventory/summary',
+    '/api/integrations/restaurant-booking/catalog',
+    '/api/integrations/carbon/info',
+    '/api/integrations/lite-mobile/info',
+    '/api/integrations/fair-events/catalog',
+    '/api/integrations/gym/catalog',
+    '/api/integrations/website-builder/preview',
+    '/api/booking/availability?checkIn=2026-06-25&checkOut=2026-06-27',
+  ];
+  for (const path of publicIntegrationGets) {
+    try {
+      const start = performance.now();
+      const res = await fetch(`${BASE}${path}`, { signal: AbortSignal.timeout(10_000) });
+      const ms = Math.round(performance.now() - start);
+      if (res.ok) pass(`${path} herkese açık → ${res.status} (${ms} ms)`);
+      else note(`${path} → ${res.status}`);
+    } catch (err) {
+      note(`${path} — ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
   if (checklistAuthHeaders.Authorization) {
     try {
       const start = performance.now();

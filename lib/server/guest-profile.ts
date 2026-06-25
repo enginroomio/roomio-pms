@@ -1,3 +1,5 @@
+import { getLoyaltyAccountByEmail } from '@/lib/loyalty/service';
+import { loadLoyaltyConfig } from '@/lib/integrations/loyalty/client';
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
 import { getAllReservationsServer, init } from '@/lib/server/pms-store';
@@ -51,6 +53,11 @@ export type GuestProfile360 = {
   complaints: number;
   reviews: number;
   preferences: string[];
+  loyalty?: {
+    tierName: string;
+    points: number;
+    discountPercent: number;
+  };
 };
 
 function matchesQuery(
@@ -149,6 +156,22 @@ export async function getGuestProfile360(
       nights: nightsBetween(r.checkIn, r.checkOut),
     }));
 
+  let loyalty: GuestProfile360['loyalty'];
+  if (email) {
+    const loyaltyConfig = await loadLoyaltyConfig();
+    if (loyaltyConfig.enabled) {
+      const account = await getLoyaltyAccountByEmail(email, prop);
+      if (account) {
+        const tier = loyaltyConfig.tiers.find((t) => t.id === account.tierId);
+        loyalty = {
+          tierName: account.tierName,
+          points: account.points,
+          discountPercent: tier?.discountPercent ?? 0,
+        };
+      }
+    }
+  }
+
   return {
     guestName,
     email,
@@ -166,6 +189,7 @@ export async function getGuestProfile360(
     complaints,
     reviews,
     preferences: preferences.slice(0, 8),
+    loyalty,
   };
 }
 

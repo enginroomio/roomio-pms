@@ -79,6 +79,8 @@ model Property {
   roomMaintenanceFaults RoomMaintenanceFault[]
   hkGuestRequests       HkGuestRequest[]
   queueRooms            QueueRoom[]
+  loyaltyAccounts       LoyaltyAccount[]
+  loyaltyTransactions   LoyaltyTransaction[]
 }
 
 model AppState {
@@ -367,6 +369,46 @@ model QueueRoom {
 
   @@index([propertyId, status])
   @@index([propertyId, queuedAt])
+}
+
+// Sadakat programı — misafir hesabı ve puan işlemleri
+model LoyaltyAccount {
+  id             String               @id
+  propertyId     String
+  guestName      String
+  email          String
+  phone          String?
+  tierId         String               @default("bronze")
+  tierName       String               @default("Bronz")
+  points         Int                  @default(0)
+  lifetimeNights Int                  @default(0)
+  lifetimeSpend  Float                @default(0)
+  createdAt      String
+  updatedAt      String
+  property       Property             @relation(fields: [propertyId], references: [id])
+  transactions   LoyaltyTransaction[]
+
+  @@unique([propertyId, email])
+  @@index([propertyId, tierId])
+  @@index([propertyId, points])
+}
+
+model LoyaltyTransaction {
+  id            String         @id
+  propertyId    String
+  accountId     String
+  type          String
+  points        Int
+  balanceAfter  Int
+  reservationId String?
+  refNo         String?
+  description   String
+  createdAt     String
+  property      Property       @relation(fields: [propertyId], references: [id])
+  account       LoyaltyAccount @relation(fields: [accountId], references: [id])
+
+  @@index([propertyId, accountId])
+  @@index([propertyId, reservationId])
 }
 
 model FolioLine {

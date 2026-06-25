@@ -13,11 +13,13 @@ export type ReservationGroup = {
   checkIn: string;
   checkOut: string;
   roomCount: number;
-  status: 'open' | 'confirmed' | 'checked_in' | 'closed';
+  status: 'open' | 'confirmed' | 'checked_in' | 'closed' | 'released';
   notes?: string;
   createdAt: string;
   memberCount?: number;
   allotment?: Record<string, number>;
+  releaseDays?: number;
+  releaseDate?: string;
 };
 
 export type GroupAllotmentStatus = {
@@ -26,7 +28,68 @@ export type GroupAllotmentStatus = {
   remaining: Record<string, number>;
   totalAllotted: number;
   totalPickedUp: number;
+  releaseDays?: number;
+  releaseDate?: string;
 };
+
+export type GroupBlocksSummary = {
+  groupCount: number;
+  openBlocks: number;
+  roomsAllotted: number;
+  roomsPickedUp: number;
+  pickupPct: number;
+  dueForRelease: number;
+};
+
+const DEFAULT_RELEASE_DAYS = 7;
+
+type AllotmentPayload = {
+  rooms: Record<string, number>;
+  releaseDays: number;
+};
+
+function parseAllotmentJson(json: string | null, roomCount: number): AllotmentPayload {
+  if (!json) {
+    return { rooms: defaultAllotment(roomCount), releaseDays: DEFAULT_RELEASE_DAYS };
+  }
+  try {
+    const parsed = JSON.parse(json) as Record<string, unknown>;
+    const rooms: Record<string, number> = {};
+    let releaseDays = DEFAULT_RELEASE_DAYS;
+    for (const [key, value] of Object.entries(parsed)) {
+      if (key === '_releaseDays' && typeof value === 'number') {
+        releaseDays = Math.max(0, Math.min(90, value));
+      } else if (!key.startsWith('_') && typeof value === 'number') {
+        rooms[key] = value;
+      }
+    }
+    if (!Object.keys(rooms).length) {
+      return { rooms: defaultAllotment(roomCount), releaseDays };
+    }
+    return { rooms, releaseDays };
+  } catch {
+    return { rooms: defaultAllotment(roomCount), releaseDays: DEFAULT_RELEASE_DAYS };
+  }
+}
+
+function serializeAllotmentJson(rooms: Record<string, number>, releaseDays: number): string {
+  return JSON.stringify({ ...rooms, _releaseDays: releaseDays });
+}
+
+function releaseDateFor(checkIn: string, releaseDays: number): string {
+  const d = new Date(checkIn);
+  if (!Number.isFinite(d.getTime())) return checkIn;
+  d.setDate(d.getDate() - releaseDays);
+  return d.toISOString().slice(0, 10);
+}
+
+function roomAllotmentOnly(allotment: Record<string, number>): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [key, value] of Object.entries(allotment)) {
+    if (!key.startsWith('_') && typeof value === 'number') out[key] = value;
+  }
+  return out;
+}
 
 function pid(propertyId?: string) {
   return propertyId ?? DEFAULT_PROPERTY_ID;
@@ -45,14 +108,7 @@ function mapGroup(r: {
   createdAt: string;
   allotmentJson: string | null;
 }): ReservationGroup {
-  let allotment: Record<string, number> | undefined;
-  if (r.allotmentJson) {
-    try {
-      allotment = JSON.parse(r.allotmentJson) as Record<string, number>;
-    } catch {
-      allotment = undefined;
-    }
-  }
+  const payload = parseAllotmentJson(r.allotmentJson, r.roomCount);
   return {
     id: r.id,
     refNo: r.refNo,
@@ -64,7 +120,9 @@ function mapGroup(r: {
     status: r.status as ReservationGroup['status'],
     notes: r.notes ?? undefined,
     createdAt: r.createdAt,
-    allotment,
+    allotment: payload.rooms,
+    releaseDays: payload.releaseDays,
+    releaseDate: releaseDateFor(r.checkIn, payload.releaseDays),
   };
 }
 
@@ -100,6 +158,7 @@ export async function createReservationGroupServer(
     checkOut: string;
     roomCount: number;
     notes?: string;
+    releaseDays?: number;
     user?: string;
   },
   propertyId?: string,
@@ -121,7 +180,7 @@ export async function createReservationGroupServer(
       roomCount: data.roomCount,
       status: 'open',
       notes: data.notes ?? null,
-      allotmentJson: JSON.stringify(allotment),
+      allotmentJson: serializeAllotmentJson(allotment, data.releaseDays ?? DEFAULT_RELEASE_DAYS),
       createdAt: new Date().toISOString().slice(0, 10),
     },
   });
@@ -185,14 +244,22 @@ export async function setGroupAllotmentServer(
   groupId: string,
   allotment: Record<string, number>,
   propertyId?: string,
+  releaseDays?: number,
 ): Promise<ReservationGroup | null> {
   await init();
   const prop = pid(propertyId);
   const existing = await prisma.reservationGroup.findFirst({ where: { id: groupId, propertyId: prop } });
   if (!existing) return null;
+  const current = parseAllotmentJson(existing.allotmentJson, existing.roomCount);
+  const rooms = roomAllotmentOnly(allotment);
   const row = await prisma.reservationGroup.update({
     where: { id: groupId },
-    data: { allotmentJson: JSON.stringify(allotment) },
+    data: {
+      allotmentJson: serializeAllotmentJson(
+        rooms,
+        releaseDays ?? current.releaseDays,
+      ),
+    },
   });
   bustReadCaches(prop);
   return mapGroup(row);
@@ -208,7 +275,8 @@ export async function getGroupAllotmentStatusServer(
   if (!group) return null;
 
   const mapped = mapGroup(group);
-  const allotment = mapped.allotment ?? defaultAllotment(group.roomCount);
+  const payload = parseAllotmentJson(group.allotmentJson, group.roomCount);
+  const allotment = mapped.allotment ?? payload.rooms;
   const members = await getGroupMembersServer(groupId, prop);
   const pickedUp: Record<string, number> = {};
   for (const m of members) {
@@ -224,5 +292,83 @@ export async function getGroupAllotmentStatusServer(
   const totalAllotted = Object.values(allotment).reduce((s, n) => s + n, 0);
   const totalPickedUp = members.length;
 
-  return { allotment, pickedUp, remaining, totalAllotted, totalPickedUp };
+  return {
+    allotment,
+    pickedUp,
+    remaining,
+    totalAllotted,
+    totalPickedUp,
+    releaseDays: payload.releaseDays,
+    releaseDate: releaseDateFor(group.checkIn, payload.releaseDays),
+  };
+}
+
+export async function releaseGroupBlockServer(
+  groupId: string,
+  propertyId?: string,
+  user = 'Resepsiyon',
+): Promise<ReservationGroup | null> {
+  await init();
+  const prop = pid(propertyId);
+  const group = await prisma.reservationGroup.findFirst({ where: { id: groupId, propertyId: prop } });
+  if (!group) return null;
+
+  const status = await getGroupAllotmentStatusServer(groupId, prop);
+  if (!status) return null;
+
+  const releasedAllotment = { ...status.pickedUp };
+  const row = await prisma.reservationGroup.update({
+    where: { id: groupId },
+    data: {
+      status: 'released',
+      allotmentJson: serializeAllotmentJson(releasedAllotment, status.releaseDays ?? DEFAULT_RELEASE_DAYS),
+    },
+  });
+
+  const releasedRooms = status.totalAllotted - status.totalPickedUp;
+  await appendAuditLog({
+    module: 'group',
+    action: 'release_block',
+    entityType: 'ReservationGroup',
+    entityId: groupId,
+    user,
+    detail: `${group.name} · ${releasedRooms} oda envantere iade`,
+  }, prop);
+
+  bustReadCaches(prop);
+  return mapGroup(row);
+}
+
+export async function getGroupBlocksSummaryServer(propertyId?: string): Promise<GroupBlocksSummary> {
+  const groups = await getReservationGroupsServer(propertyId);
+  let roomsAllotted = 0;
+  let roomsPickedUp = 0;
+  let openBlocks = 0;
+  let dueForRelease = 0;
+  const today = new Date().toISOString().slice(0, 10);
+
+  for (const g of groups) {
+    const status = await getGroupAllotmentStatusServer(g.id, propertyId);
+    if (!status) continue;
+    roomsAllotted += status.totalAllotted;
+    roomsPickedUp += status.totalPickedUp;
+    if (g.status === 'open' || g.status === 'confirmed') openBlocks += 1;
+    if (
+      status.releaseDate
+      && status.releaseDate <= today
+      && status.totalPickedUp < status.totalAllotted
+      && g.status !== 'released'
+    ) {
+      dueForRelease += 1;
+    }
+  }
+
+  return {
+    groupCount: groups.length,
+    openBlocks,
+    roomsAllotted,
+    roomsPickedUp,
+    pickupPct: roomsAllotted > 0 ? Math.round((roomsPickedUp / roomsAllotted) * 100) : 0,
+    dueForRelease,
+  };
 }

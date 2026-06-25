@@ -126,7 +126,7 @@ const RAW_GROUPS: RawGroup[] = [
       { label: 'Grafikler (F1)', href: '/reservations/calendar' },
       { label: 'Yeni Rezervasyon Kaydı', href: '/reservations/new', i18nKey: 'sidebar.item.newReservation' },
       { label: 'Rezervasyon Listesi', href: '/reservations', i18nKey: 'sidebar.item.reservationList' },
-      { label: 'Toplu Rezervasyon', href: '/reservations?tab=group' },
+      { label: 'Toplu Rezervasyon', href: '/groups' },
       { label: 'Rez. Durum Takip Listesi', href: '/reservations?track=1' },
       { label: '', href: '#', separator: true },
       { label: 'Konaklayanlar Listesi', href: '/reception/inhouse', i18nKey: 'sidebar.item.inhouseList' },

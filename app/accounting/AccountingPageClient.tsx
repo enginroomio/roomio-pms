@@ -160,6 +160,17 @@ export default function AccountingPageClient() {
     load();
   }
 
+  async function sendEfatura(invoiceId: string) {
+    const res = await roomioFetch('/api/integrations/efatura/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoiceId }),
+    });
+    const j = (await res.json()) as { ok: boolean; message: string };
+    window.alert(j.message);
+    load();
+  }
+
   async function createLedger(e: React.FormEvent) {
     e.preventDefault();
     const payload = {
@@ -337,6 +348,8 @@ export default function AccountingPageClient() {
                       {inv.status !== 'paid' ? (
                         <Button variant="ghost" onClick={() => void markInvoicePaid(inv.id)}>{t('accounting.collect')}</Button>
                       ) : null}
+                      {' '}
+                      <Button variant="ghost" onClick={() => void sendEfatura(inv.id)}>e-Fatura</Button>
                       {' '}
                       <Button variant="ghost" onClick={() => startEditInvoice(inv)}>{t('accounting.edit')}</Button>
                       {' '}

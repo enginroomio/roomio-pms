@@ -147,6 +147,23 @@ function startServer(useProductionServer) {
   );
 }
 
+async function waitAppReady(maxMs = 300_000) {
+  const start = Date.now();
+  while (Date.now() - start < maxMs) {
+    try {
+      const [health, home] = await Promise.all([
+        fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(8000) }),
+        fetch(`${BASE}/`, { signal: AbortSignal.timeout(20_000) }),
+      ]);
+      if (health.ok && home.ok) return true;
+    } catch {
+      /* compile sürüyor */
+    }
+    await sleep(2000);
+  }
+  return false;
+}
+
 async function ensureServer(useProductionServer, { fresh = false, label = 'Sunucu' } = {}) {
   if (fresh) await stopServerAndWait();
 
@@ -166,10 +183,19 @@ async function ensureServer(useProductionServer, { fresh = false, label = 'Sunuc
       process.exit(1);
     }
     console.log(`✓ ${label} hazır → ${BASE} (uptime ${health.uptimeSec ?? '?'}s)`);
+    if (!(await waitAppReady())) {
+      await stopServerAndWait();
+      console.error(`✗ ${label} ana sayfa hazır değil`);
+      process.exit(1);
+    }
     return health;
   }
 
   console.log(`✓ ${label} hazır → ${BASE} (uptime ${health.uptimeSec ?? '?'}s)`);
+  if (!(await waitAppReady())) {
+    console.error(`✗ ${label} ana sayfa hazır değil`);
+    process.exit(1);
+  }
   return health;
 }
 
@@ -242,6 +268,10 @@ async function main() {
     if (health) {
       keepServer = true;
       console.log(`✓ Mevcut sunucu yeniden kullanılıyor → ${BASE} (uptime ${health.uptimeSec ?? '?'}s)`);
+      if (!(await waitAppReady(60_000))) {
+        console.warn('· Mevcut sunucu henüz hazır değil — yeni süreç başlatılıyor…');
+        await ensureServer(useProductionServer, { fresh: true, label: 'Sunucu' });
+      }
     } else {
       console.warn('· VERIFY_REUSE_SERVER: sunucu yanıt vermiyor — yeni süreç başlatılıyor…');
       await ensureServer(useProductionServer, { fresh: true, label: 'Sunucu' });
@@ -283,16 +313,23 @@ async function main() {
 
     let result = runOnce();
     if (result.status !== 0) {
-      console.warn(`\n· ${label} ilk deneme başarısız — sunucu kontrol edilip yeniden deneniyor…\n`);
-      const health = await readHealth();
-      if (!health?.ok) {
-        if (restartOnFail) await restartServer(useProductionServer, label);
-        else {
-          console.error(`\n✗ ${label} başarısız (sunucu yanıt vermiyor)\n`);
-          process.exit(result.status ?? 1);
+      const reuse = process.env.VERIFY_REUSE_SERVER === '1';
+      console.warn(
+        reuse
+          ? `\n· ${label} ilk deneme başarısız — mevcut sunucuda yeniden deneniyor…\n`
+          : `\n· ${label} ilk deneme başarısız — sunucu kontrol edilip yeniden deneniyor…\n`,
+      );
+      if (!reuse) {
+        const health = await readHealth();
+        if (!health?.ok) {
+          if (restartOnFail) await restartServer(useProductionServer, label);
+          else {
+            console.error(`\n✗ ${label} başarısız (sunucu yanıt vermiyor)\n`);
+            process.exit(result.status ?? 1);
+          }
+        } else if (restartOnFail) {
+          await restartServer(useProductionServer, label);
         }
-      } else if (restartOnFail) {
-        await restartServer(useProductionServer, label);
       }
       result = runOnce();
       if (result.status !== 0) {
@@ -316,7 +353,7 @@ async function main() {
   for (let i = 0; i < apiProtectedBatches.length; i++) {
     const batch = apiProtectedBatches[i];
     await e2e(batch.label, 'e2e/api-protected.spec.ts', batch.grep);
-    if (i < apiProtectedBatches.length - 1) {
+    if (i < apiProtectedBatches.length - 1 && process.env.VERIFY_REUSE_SERVER !== '1') {
       await restartServer(useProductionServer, 'Sunucu (batch arası)');
     }
   }

@@ -4,6 +4,7 @@ import type { Reservation } from '@/lib/types/reservation';
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
 import { bustReadCaches } from '@/lib/server/perf-cache';
+import { earnOnCheckoutReservation } from '@/lib/loyalty/service';
 import { appendAuditLog } from '@/lib/server/audit-log';
 import { getAllReservationsServer, getBusinessDate, init } from '@/lib/server/pms-store';
 
@@ -321,6 +322,20 @@ export async function checkOutReservationServer(
     detail: `${row.guestName}${row.roomNo ? ` · Oda ${row.roomNo}` : ''}`,
   }, row.propertyId);
   bustReadCaches(row.propertyId);
+
+  void earnOnCheckoutReservation({
+    id: row.id,
+    refNo: row.refNo,
+    guestName: row.guestName,
+    email: row.email ?? undefined,
+    phone: row.phone ?? undefined,
+    checkIn: row.checkIn,
+    checkOut: row.checkOut,
+    rate: row.rate,
+    agency: row.agency,
+    propertyId: row.propertyId,
+  }).catch(() => undefined);
+
   return {
     id: row.id,
     refNo: row.refNo,

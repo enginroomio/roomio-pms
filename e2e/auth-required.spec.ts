@@ -61,4 +61,30 @@ test.describe('Auth-required — herkese açık uçlar', () => {
     const j = (await login.json()) as { token?: string };
     expect(j.token).toBeTruthy();
   });
+
+  test('booking ve guest portal tokensiz erişilebilir', async ({ request }) => {
+    const checkIn = '2026-06-25';
+    const checkOut = '2026-06-27';
+    const avail = await request.get(`/api/booking/availability?checkIn=${checkIn}&checkOut=${checkOut}`);
+    expect(avail.ok()).toBeTruthy();
+    const session = await request.post('/api/guest-portal/session', {
+      data: { refNo: 'INVALID', email: 'nobody@test.com' },
+    });
+    expect([404, 400]).toContain(session.status());
+    expect((await request.get('/api/integrations/digital-menu/menu')).ok()).toBeTruthy();
+    expect((await request.get('/api/kiosk/info')).ok()).toBeTruthy();
+    expect((await request.get('/api/spa/catalog')).ok()).toBeTruthy();
+    expect((await request.get('/api/integrations/viofun/catalog')).ok()).toBeTruthy();
+    expect((await request.get('/api/integrations/marina/catalog')).ok()).toBeTruthy();
+    expect((await request.get('/api/integrations/guest-app/info')).ok()).toBeTruthy();
+    expect((await request.get('/api/integrations/fair-events/catalog')).ok()).toBeTruthy();
+    expect((await request.get('/api/integrations/gym/catalog')).ok()).toBeTruthy();
+    expect((await request.get('/api/integrations/website-builder/preview')).ok()).toBeTruthy();
+    expect((await request.get('/api/integrations/hr-portal/info')).ok()).toBeTruthy();
+    expect((await request.get('/api/integrations/inventory/summary')).ok()).toBeTruthy();
+    expect((await request.get('/api/integrations/restaurant-booking/catalog')).ok()).toBeTruthy();
+    expect((await request.get('/api/integrations/carbon/info')).ok()).toBeTruthy();
+    expect((await request.get('/api/integrations/lite-mobile/info')).ok()).toBeTruthy();
+    expect((await request.post('/api/integrations/carbon/quote', { data: { nights: 1 } })).ok()).toBeTruthy();
+  });
 });

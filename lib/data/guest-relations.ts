@@ -181,6 +181,16 @@ export const DEMO_TENNIS: FacilityBooking[] = [
   { id: '1', date: '2026-06-18', time: '17:00', guest: 'David Johnson', roomNo: '502', party: 2, status: 'Onaylı' },
 ];
 
+export const DEMO_SPA: FacilityBooking[] = [
+  { id: '1', date: '2026-06-19', time: '14:00', guest: 'Sophie Martin', roomNo: '415', party: 1, status: 'Onaylı', notes: 'Klasik Masaj (60 dk)' },
+  { id: '2', date: '2026-06-19', time: '16:30', guest: 'John Smith', roomNo: '312', party: 2, status: 'Bekliyor', notes: 'Çift Masajı' },
+];
+
+export const DEMO_GYM: FacilityBooking[] = [
+  { id: '1', date: '2026-06-19', time: '07:00', guest: 'Maria Garcia', roomNo: '205', party: 1, status: 'Onaylı', notes: 'Sabah Yoga' },
+  { id: '2', date: '2026-06-19', time: '18:00', guest: 'David Johnson', roomNo: '502', party: 1, status: 'Bekliyor', notes: 'Spinning' },
+];
+
 export const DEMO_COMPLAINTS: ComplaintItem[] = [
   { id: '1', date: '2026-06-18', roomNo: '108', guest: 'Ahmet Demir', category: 'Klima', description: 'Oda soğutmuyor', priority: 'Acil', status: 'Açık' },
   { id: '2', date: '2026-06-17', roomNo: '415', guest: 'Sophie Martin', category: 'Gürültü', description: 'Koridor gürültüsü', priority: 'Normal', status: 'Çözüldü' },

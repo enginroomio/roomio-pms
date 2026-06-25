@@ -10,6 +10,8 @@ const LINKS = [
   { href: '/reception/arrivals', key: 'reception.tab.arrivals' },
   { href: '/reception/departures', key: 'reception.tab.departures' },
   { href: '/reception/vacant', key: 'reception.tab.vacant' },
+  { href: '/reception/queue', key: 'reception.tab.queue' },
+  { href: '/reception/guest-profile', key: 'reception.tab.guestProfile' },
   { href: '/reception/guest-requests', key: 'reception.tab.guestRequests' },
 ] as const;
 

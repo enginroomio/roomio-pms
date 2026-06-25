@@ -22,6 +22,25 @@ const WARM_PATHS = [
   '/api/folio?reservationId=1',
   '/api/cash',
   '/api/integrations/tesa/encode',
+  '/api/booking/availability?checkIn=2026-06-25&checkOut=2026-06-27',
+  '/api/integrations/hr-portal/info',
+  '/api/integrations/inventory/summary',
+  '/api/integrations/restaurant-booking/catalog',
+  '/api/integrations/carbon/info',
+  '/api/integrations/lite-mobile/info',
+  '/api/integrations/fair-events/catalog',
+  '/api/integrations/gym/catalog',
+  '/api/integrations/website-builder/preview',
+  '/api/integrations/viofun/catalog',
+  '/api/integrations/marina/catalog',
+  '/api/integrations/guest-app/info',
+  '/api/integrations/digital-menu/menu',
+  '/api/loyalty/summary',
+  '/api/loyalty/accounts',
+  '/api/revenue-management/forecast?days=14',
+  '/groups',
+  '/revenue',
+  '/loyalty',
 ];
 
 setup('warm API routes', async ({ request }) => {
@@ -33,7 +52,18 @@ setup('warm API routes', async ({ request }) => {
     }
   }
   // POST rotalarını da derle
-  for (const path of ['/api/egm/identity', '/api/integrations/tesa/encode', '/api/business-date']) {
+  for (const path of [
+    '/api/egm/identity',
+    '/api/integrations/tesa/encode',
+    '/api/business-date',
+    '/api/integrations/carbon/quote',
+    '/api/integrations/restaurant-booking/book',
+    '/api/integrations/fair-events/register',
+    '/api/integrations/gym/book',
+    '/api/loyalty/accounts',
+    '/api/loyalty/earn',
+    '/api/loyalty/redeem',
+  ]) {
     try {
       await request.post(path, { data: {}, timeout: 90_000 });
     } catch {

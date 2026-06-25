@@ -3,8 +3,10 @@ import {
   addGroupMemberServer,
   createReservationGroupServer,
   getGroupAllotmentStatusServer,
+  getGroupBlocksSummaryServer,
   getGroupMembersServer,
   getReservationGroupsServer,
+  releaseGroupBlockServer,
   setGroupAllotmentServer,
 } from '@/lib/server/group-reservations';
 import { getGroupPickupReportServer } from '@/lib/server/group-pickup-report';
@@ -40,6 +42,10 @@ export async function GET(req: Request) {
       }
       return NextResponse.json({ ok: true, report });
     }
+    if (view === 'summary') {
+      const summary = await getGroupBlocksSummaryServer(propertyId);
+      return NextResponse.json({ ok: true, summary });
+    }
     if (groupId && view === 'allotment') {
       const status = await getGroupAllotmentStatusServer(groupId, propertyId);
       if (!status) return NextResponse.json({ error: 'Grup bulunamadı' }, { status: 404 });
@@ -62,18 +68,24 @@ export async function POST(req: Request) {
   if (auth instanceof NextResponse) return auth;
 
   const body = (await req.json()) as {
-    action?: 'create' | 'add_member';
+    action?: 'create' | 'add_member' | 'release';
     name?: string;
     contactName?: string;
     checkIn?: string;
     checkOut?: string;
     roomCount?: number;
     notes?: string;
+    releaseDays?: number;
     groupId?: string;
     member?: Partial<Reservation>;
   };
 
   try {
+    if (body.action === 'release' && body.groupId) {
+      const group = await releaseGroupBlockServer(body.groupId, propertyId, auth.user.name);
+      if (!group) return NextResponse.json({ error: 'Grup bulunamadı' }, { status: 404 });
+      return NextResponse.json({ ok: true, group });
+    }
     if (body.action === 'add_member' && body.groupId && body.member) {
       const m = body.member;
       if (!m.guestName) {
@@ -108,6 +120,7 @@ export async function POST(req: Request) {
       checkOut: body.checkOut,
       roomCount: body.roomCount,
       notes: body.notes,
+      releaseDays: body.releaseDays,
     }, propertyId);
     return NextResponse.json({ ok: true, group });
   } catch (err) {
@@ -126,12 +139,18 @@ export async function PATCH(req: Request) {
   const body = (await req.json()) as {
     groupId?: string;
     allotment?: Record<string, number>;
+    releaseDays?: number;
   };
   if (!body.groupId || !body.allotment) {
     return NextResponse.json({ error: 'groupId ve allotment gerekli' }, { status: 400 });
   }
   try {
-    const group = await setGroupAllotmentServer(body.groupId, body.allotment, propertyId);
+    const group = await setGroupAllotmentServer(
+      body.groupId,
+      body.allotment,
+      propertyId,
+      body.releaseDays,
+    );
     if (!group) return NextResponse.json({ error: 'Grup bulunamadı' }, { status: 404 });
     return NextResponse.json({ ok: true, group });
   } catch (err) {

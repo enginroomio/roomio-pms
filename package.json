@@ -29,6 +29,8 @@
     "test:routes": "node scripts/test-routes.mjs",
     "test:integrations": "node scripts/test-integrations.mjs",
     "test:integrations:live": "node scripts/test-integrations-live.mjs",
+    "test:elektra-modules": "node scripts/test-elektra-modules.mjs",
+    "test:elektra-modules:live": "node scripts/test-elektra-modules-live.mjs",
     "test:faz4": "node scripts/test-faz4-steps.mjs",
     "test:faz5": "node scripts/test-faz5-steps.mjs",
     "test:faz6": "node scripts/test-faz6-steps.mjs",

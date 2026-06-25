@@ -26,9 +26,11 @@ type AllotmentStatus = {
   remaining: Record<string, number>;
   totalAllotted: number;
   totalPickedUp: number;
+  releaseDays?: number;
+  releaseDate?: string;
 };
 
-export function GroupReservationsPanel() {
+export function GroupReservationsPanel({ onChanged }: { onChanged?: () => void }) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [members, setMembers] = useState<Reservation[]>([]);
@@ -45,6 +47,7 @@ export function GroupReservationsPanel() {
     checkIn: '2026-06-20',
     checkOut: '2026-06-22',
     roomCount: 5,
+    releaseDays: 7,
     notes: '',
   });
 
@@ -125,6 +128,7 @@ export function GroupReservationsPanel() {
       setForm((f) => ({ ...f, name: '', contactName: '', notes: '' }));
       await loadGroups();
       if (json.group) setSelectedId(json.group.id);
+      onChanged?.();
     } catch (err) {
       setMsg(err instanceof Error ? err.message : 'Hata');
     } finally {
@@ -165,6 +169,30 @@ export function GroupReservationsPanel() {
       setMsg(`${memberForm.guestName} gruba eklendi`);
       setMemberForm((m) => ({ ...m, guestName: '' }));
       await Promise.all([loadGroups(), loadMembers(selectedId), loadAllotment(selectedId)]);
+      onChanged?.();
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : 'Hata');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function releaseBlock() {
+    if (!selectedId) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await roomioFetch('/api/reservations/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'release', groupId: selectedId }),
+      });
+      if (!res.ok) throw new Error(await parseApiError(res, 'Blok release edilemedi'));
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!json.ok) throw new Error(json.error ?? 'Blok release edilemedi');
+      setMsg('Satılmayan odalar envantere iade edildi');
+      await Promise.all([loadGroups(), loadAllotment(selectedId)]);
+      onChanged?.();
     } catch (err) {
       setMsg(err instanceof Error ? err.message : 'Hata');
     } finally {
@@ -180,13 +208,18 @@ export function GroupReservationsPanel() {
       const res = await roomioFetch('/api/reservations/groups', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groupId: selectedId, allotment: allotmentEdit }),
+        body: JSON.stringify({
+          groupId: selectedId,
+          allotment: allotmentEdit,
+          releaseDays: allotment?.releaseDays,
+        }),
       });
       if (!res.ok) throw new Error(await parseApiError(res, 'Allotment güncellenemedi'));
       const json = (await res.json()) as { ok?: boolean; error?: string };
       if (!json.ok) throw new Error(json.error ?? 'Allotment güncellenemedi');
       setMsg('Allotment kaydedildi');
       await loadAllotment(selectedId);
+      onChanged?.();
     } catch (err) {
       setMsg(err instanceof Error ? err.message : 'Hata');
     } finally {
@@ -224,6 +257,10 @@ export function GroupReservationsPanel() {
           <label className="roomio-field">
             <span>Oda sayısı</span>
             <input type="number" min={1} className="roomio-input" value={form.roomCount} onChange={(e) => setForm({ ...form, roomCount: Number(e.target.value) })} />
+          </label>
+          <label className="roomio-field">
+            <span>Release (gün önce)</span>
+            <input type="number" min={0} max={90} className="roomio-input" value={form.releaseDays} onChange={(e) => setForm({ ...form, releaseDays: Number(e.target.value) })} />
           </label>
         </div>
         <div className="roomio-form-actions" style={{ marginTop: 12 }}>
@@ -275,6 +312,7 @@ export function GroupReservationsPanel() {
             <>
               <p className="roomio-page-desc">
                 Toplam {allotment.totalPickedUp}/{allotment.totalAllotted} oda alındı
+                {allotment.releaseDate ? ` · Release: ${formatDate(allotment.releaseDate)} (${allotment.releaseDays ?? 7} gün önce)` : null}
               </p>
               <div className="roomio-table-wrap" style={{ marginBottom: 16 }}>
                 <table className="roomio-table">
@@ -303,9 +341,18 @@ export function GroupReservationsPanel() {
                   </tbody>
                 </table>
               </div>
-              <Button variant="secondary" disabled={busy} onClick={() => void saveAllotment()}>
-                Allotment kaydet
-              </Button>
+              <div className="roomio-form-actions" style={{ marginTop: 12 }}>
+                <Button variant="secondary" disabled={busy} onClick={() => void saveAllotment()}>
+                  Allotment kaydet
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={busy || selected.status === 'released'}
+                  onClick={() => void releaseBlock()}
+                >
+                  Blok release (envantere iade)
+                </Button>
+              </div>
             </>
           ) : null}
 

@@ -9,7 +9,7 @@ import { propertyIdFromRequest } from '@/lib/server/property-context';
 
 export const dynamic = 'force-dynamic';
 
-const KINDS = new Set<FacilityKind>(['restaurant', 'tennis']);
+const KINDS = new Set<FacilityKind>(['restaurant', 'tennis', 'spa', 'gym']);
 
 export async function GET(req: Request) {
   const auth = await requireApiPermission(req, 'identity.read');
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const kind = searchParams.get('kind') as FacilityKind | null;
   if (!kind || !KINDS.has(kind)) {
-    return NextResponse.json({ error: 'kind=restaurant|tennis gerekli' }, { status: 400 });
+    return NextResponse.json({ error: 'kind=restaurant|tennis|spa|gym gerekli' }, { status: 400 });
   }
   try {
     const bookings = await getFacilityBookingsServer(kind, propertyId);

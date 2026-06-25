@@ -15,7 +15,24 @@ function readActivePort() {
   }
 }
 
-const BASE = process.env.ROOMIO_URL ?? readActivePort() ?? 'http://127.0.0.1:3100';
+async function resolveBaseUrl() {
+  const candidates = [
+    process.env.ROOMIO_URL,
+    readActivePort(),
+    'http://127.0.0.1:3100',
+  ].filter(Boolean);
+  for (const base of candidates) {
+    try {
+      const res = await fetch(`${base}/api/health`, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) return base;
+    } catch {
+      // try next candidate
+    }
+  }
+  return candidates[0] ?? 'http://127.0.0.1:3100';
+}
+
+const BASE = await resolveBaseUrl();
 const TIMEOUT_MS = Number(process.env.ROUTE_TEST_TIMEOUT_MS ?? 30_000);
 
 const ROUTES = [

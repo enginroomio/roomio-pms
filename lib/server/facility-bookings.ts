@@ -1,12 +1,12 @@
 import type { FacilityBooking } from '@/lib/data/guest-relations';
-import { DEMO_RESTAURANT, DEMO_TENNIS } from '@/lib/data/guest-relations';
+import { DEMO_RESTAURANT, DEMO_GYM, DEMO_SPA, DEMO_TENNIS } from '@/lib/data/guest-relations';
 import { appendAuditLog } from '@/lib/server/audit-log';
 import { bustReadCaches } from '@/lib/server/perf-cache';
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
 import { getBusinessDate, init } from '@/lib/server/pms-store';
 
-export type FacilityKind = 'restaurant' | 'tennis';
+export type FacilityKind = 'restaurant' | 'tennis' | 'spa' | 'gym';
 
 function pid(propertyId?: string) {
   return propertyId ?? DEFAULT_PROPERTY_ID;
@@ -44,6 +44,8 @@ export async function seedFacilityBookingsIfEmpty(propertyId?: string): Promise<
   const seeds: { kind: FacilityKind; rows: FacilityBooking[] }[] = [
     { kind: 'restaurant', rows: DEMO_RESTAURANT },
     { kind: 'tennis', rows: DEMO_TENNIS },
+    { kind: 'spa', rows: DEMO_SPA },
+    { kind: 'gym', rows: DEMO_GYM },
   ];
 
   await prisma.facilityBooking.createMany({

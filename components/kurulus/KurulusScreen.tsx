@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   AGENCY_CONTRACTS,
   DEMO_COMPANIES,
@@ -134,7 +136,18 @@ export function KurulusScreen({
   themeFixed?: boolean;
 }) {
   const { t } = useI18n();
+  const router = useRouter();
   const key = screenKey(section, tab);
+
+  useEffect(() => {
+    if (key === 'channel-manager') {
+      router.replace('/settings/integrations/channel-manager');
+    }
+  }, [key, router]);
+
+  if (key === 'channel-manager') {
+    return <PlaceholderScreen title={findKurulusScreenTitle(t, key)} />;
+  }
 
   switch (key) {
     case 'theme':
