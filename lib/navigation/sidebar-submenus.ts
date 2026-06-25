@@ -92,6 +92,24 @@ const REPORT_SAMPLES: Record<string, ReportSample[]> = {
     { id: 'vip', label: 'VIP Raporu' },
     { id: 'reviews', label: 'Yorum Özeti' },
   ],
+  egm: [
+    { id: 'summary', label: 'Kimlik Bildirim Özeti' },
+    { id: 'pending', label: 'Bekleyen Bildirimler' },
+    { id: 'errors', label: 'Hatalı Bildirimler' },
+    { id: 'nationality', label: 'Uyruk Dağılımı' },
+  ],
+  tis: [
+    { id: 'nights', label: 'Günlük Geceleme' },
+    { id: 'arrival-type', label: 'Geliş Tipi Dağılımı' },
+    { id: 'nationality', label: 'Uyruk Bazlı Geceleme' },
+    { id: 'monthly', label: 'Aylık TIS Özeti' },
+  ],
+  tga: [
+    { id: 'segment', label: 'Segment Dağılımı' },
+    { id: 'channel', label: 'Kanal Analizi' },
+    { id: 'direct-ota', label: 'Direct vs OTA' },
+    { id: 'mice', label: 'MICE / Leisure' },
+  ],
 };
 
 const REPORT_FALLBACK: ReportSample[] = [
@@ -244,6 +262,13 @@ export const SIDEBAR_SUBMENU_BY_KEY: Record<string, SidebarSubItem[]> = {
   ],
   'raporlar:AC-Hesap Raporları': reportCategoryItems('muhasebe'),
   'raporlar:MR-Yönetim Raporları': reportCategoryItems('yonetim'),
+  'raporlar:EGM Kimlik Raporları': [
+    ...reportCategoryItems('egm'),
+    sub('EGM Kimlik İşlemleri', '/reservations?tab=egm'),
+    sub('Günlük Polis Kimlik Listesi', '/reception?tab=kimlik'),
+  ],
+  'raporlar:TIS Turizm İstatistik': reportCategoryItems('tis'),
+  'raporlar:TGA Segment & Kanal': reportCategoryItems('tga'),
   'ayarlar:Tema Seç': [
     sub('Standart Tema', '/settings?tab=theme'),
     sub('Koyu Tema', '/settings?tab=theme&theme=dark'),

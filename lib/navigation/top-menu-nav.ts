@@ -10,13 +10,13 @@ export type TopMenuGroup = {
 const GUNSONU_TOP_MENU_ITEMS: SidebarNavItem[] = [
   { id: 'gunsonu-eod-fetch', label: 'Gün Sonu Raporlarını Al', href: '/reports?tab=eod&action=fetch', icon: 'clock', i18nKey: 'sidebar.item.eodFetch' },
   { id: 'gunsonu-eod-close', label: 'Günü Kapat', href: '/reports?tab=eod&action=close', icon: 'clock', i18nKey: 'sidebar.item.eodClose' },
-  { id: 'gunsonu-eod-archive', label: 'Eski Gün Sonu Raporları', href: '/reports?tab=eod&action=archive', icon: 'clock' },
+  { id: 'gunsonu-eod-archive', label: 'Eski Gün Sonu Raporları', href: '/reports?tab=eod&action=archive', icon: 'clock', i18nKey: 'sidebar.item.eodArchive' },
   { id: 'gunsonu-sep-1', label: '', href: '#', icon: 'minus', separator: true },
-  { id: 'gunsonu-backup', label: 'Yedek Al', href: '/reports?tab=eod&action=backup', icon: 'clock' },
+  { id: 'gunsonu-backup', label: 'Yedek Al', href: '/reports?tab=eod&action=backup', icon: 'clock', i18nKey: 'sidebar.item.eodBackup' },
   { id: 'gunsonu-sep-2', label: '', href: '#', icon: 'minus', separator: true },
-  { id: 'gunsonu-room-prices', label: 'Oda Fiyatlarını İşle', href: '/reports?tab=eod&action=room-prices', icon: 'clock' },
-  { id: 'gunsonu-extra-prices', label: 'Ek Fiyatları Bas', href: '/reports?tab=eod&action=extra-prices', icon: 'clock' },
-  { id: 'gunsonu-profile-check', label: 'Misafir Profil Kontrol', href: '/reports?tab=eod&action=profile-check', icon: 'clock' },
+  { id: 'gunsonu-room-prices', label: 'Oda Fiyatlarını İşle', href: '/reports?tab=eod&action=room-prices', icon: 'clock', i18nKey: 'sidebar.item.eodRoomPrices' },
+  { id: 'gunsonu-extra-prices', label: 'Ek Fiyatları Bas', href: '/reports?tab=eod&action=extra-prices', icon: 'clock', i18nKey: 'sidebar.item.eodExtraPrices' },
+  { id: 'gunsonu-profile-check', label: 'Misafir Profil Kontrol', href: '/reports?tab=eod&action=profile-check', icon: 'clock', i18nKey: 'sidebar.item.eodProfileCheck' },
 ];
 
 const TOP_MENU_ITEM_OVERRIDES: Partial<Record<string, SidebarNavItem[]>> = {
@@ -49,18 +49,36 @@ export function topMenuItems(groupId: string): SidebarNavItem[] {
 }
 
 /** Üst menü aktif vurgusu — ana sayfa linki (/) grupları yanlışlıkla aktif göstermesin */
-export function topMenuGroupActive(pathname: string, groupId: string): boolean {
-  return topMenuItems(groupId).some((item) => topMenuNavItemActive(pathname, item));
+export function topMenuGroupActive(pathname: string, groupId: string, search = ''): boolean {
+  return topMenuItems(groupId).some((item) => topMenuNavItemActive(pathname, item, search));
 }
 
-function topMenuNavItemActive(pathname: string, item: SidebarNavItem): boolean {
-  if (item.href) {
-    const base = item.href.split('?')[0];
-    if (base === '/' && pathname === '/') return false;
-    if (base === '/') return pathname === '/';
-    if (pathname === base || pathname.startsWith(`${base}/`)) return true;
+function topMenuNavItemActive(pathname: string, item: SidebarNavItem, search = ''): boolean {
+  if (item.separator) return false;
+
+  if (item.href && item.href !== '#') {
+    const [itemPath, itemQuery = ''] = item.href.split('?');
+    if (itemPath === '/' && pathname === '/') return false;
+    if (pathname !== itemPath && !pathname.startsWith(`${itemPath}/`)) {
+      return item.children?.some((c) => topMenuNavItemActive(pathname, c, search)) ?? false;
+    }
+
+    const current = new URLSearchParams(search.replace(/^\?/, ''));
+    if (itemQuery) {
+      const required = new URLSearchParams(itemQuery);
+      for (const [key, value] of required.entries()) {
+        if (current.get(key) !== value) return false;
+      }
+      return true;
+    }
+
+    // Genel /reports — gün sonu sekmesinde raporlar grubunu aktif gösterme
+    if (itemPath === '/reports' && current.get('tab') === 'eod') return false;
+
+    return true;
   }
-  return item.children?.some((c) => topMenuNavItemActive(pathname, c)) ?? false;
+
+  return item.children?.some((c) => topMenuNavItemActive(pathname, c, search)) ?? false;
 }
 
 export const ICON_RAIL = [

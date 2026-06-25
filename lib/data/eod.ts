@@ -104,4 +104,23 @@ export const CATEGORY_REPORTS: Record<string, { id: string; name: string; format
     { id: 'bnk-revenue', name: 'Banket Gelir', format: 'PDF / Excel' },
     { id: 'bnk-forecast', name: 'Banket Forecast', format: 'Excel' },
   ],
+  egm: [
+    { id: 'egm-summary', name: 'Kimlik Bildirim Özeti', format: 'PDF' },
+    { id: 'egm-pending', name: 'Bekleyen Bildirimler', format: 'PDF / Excel' },
+    { id: 'egm-errors', name: 'Hatalı / Reddedilen', format: 'PDF' },
+    { id: 'egm-nationality', name: 'Uyruk Dağılımı', format: 'PDF / Excel' },
+    { id: 'egm-daily', name: 'Günlük Polis Kimlik Listesi', format: 'PDF' },
+  ],
+  tis: [
+    { id: 'tis-nights', name: 'Günlük Geceleme İstatistiği', format: 'PDF / Excel' },
+    { id: 'tis-arrival', name: 'Geliş Tipi Dağılımı', format: 'PDF' },
+    { id: 'tis-nationality', name: 'Uyruk Bazlı Geceleme', format: 'PDF / Excel' },
+    { id: 'tis-monthly', name: 'Aylık TIS Özeti', format: 'PDF / Excel' },
+  ],
+  tga: [
+    { id: 'tga-segment', name: 'Segment Dağılımı', format: 'PDF / Excel' },
+    { id: 'tga-channel', name: 'Kanal / Kaynak Analizi', format: 'PDF / Excel' },
+    { id: 'tga-direct', name: 'Direct vs OTA', format: 'PDF' },
+    { id: 'tga-mice', name: 'MICE / Leisure Ayrımı', format: 'PDF / Excel' },
+  ],
 };

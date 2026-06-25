@@ -14,7 +14,18 @@ const SIDEBAR_HREF_I18N: Record<string, string> = {
   '/settings?section=lang-reports': 'sidebar.sub.langReports',
   '/settings?section=nationalities': 'nav.kurulus.nationalities',
   '/guest-relations': 'sidebar.sub.guestRelationsHub',
+  '/reports?tab=consolidated': 'reports.tab.consolidated',
+  '/reports?category=egm': 'sidebar.item.egmReports',
+  '/reports?category=tis': 'sidebar.item.tisReports',
+  '/reports?category=tga': 'sidebar.item.tgaReports',
   '/reports?tab=design': 'sidebar.sistem.reportDesign',
+  '/reports?tab=eod&action=fetch': 'sidebar.item.eodFetch',
+  '/reports?tab=eod&action=close': 'sidebar.item.eodClose',
+  '/reports?tab=eod&action=archive': 'sidebar.item.eodArchive',
+  '/reports?tab=eod&action=backup': 'sidebar.item.eodBackup',
+  '/reports?tab=eod&action=room-prices': 'sidebar.item.eodRoomPrices',
+  '/reports?tab=eod&action=extra-prices': 'sidebar.item.eodExtraPrices',
+  '/reports?tab=eod&action=profile-check': 'sidebar.item.eodProfileCheck',
   '/reception/vacant?tab=deposit-collect': 'sidebar.sub.depositCollect',
   '/reception/vacant?tab=deposit-refund': 'sidebar.sub.depositRefund',
   '/reception/vacant?tab=deposit': 'sidebar.sub.depositList',
@@ -67,6 +78,7 @@ const SIDEBAR_HREF_I18N: Record<string, string> = {
 
 export function sidebarHrefI18nKey(href: string): string | undefined {
   if (SIDEBAR_HREF_I18N[href]) return SIDEBAR_HREF_I18N[href];
-  const base = href.split('?')[0];
+  const [base, query] = href.split('?');
+  if (query) return undefined;
   return SIDEBAR_HREF_I18N[base];
 }

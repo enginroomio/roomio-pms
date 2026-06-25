@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight } from 'lucide-react';
@@ -140,6 +140,8 @@ function panelPosition(anchor: HTMLElement): PanelPos {
 
 export function TopMenuNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
   const { t } = useI18n();
   const groupRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -175,7 +177,7 @@ export function TopMenuNav() {
   }, [openId, updatePanelPos]);
 
   function groupActive(groupId: string) {
-    return topMenuGroupActive(pathname, groupId);
+    return topMenuGroupActive(pathname, groupId, search ? `?${search}` : '');
   }
 
   function cancelClose() {
