@@ -2,7 +2,7 @@ import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
 import { getBusinessDate, init } from '@/lib/server/pms-store';
 
-export type AuditModule = 'eod' | 'folio' | 'reception' | 'cash' | 'deposit' | 'reservation' | 'group' | 'settings';
+export type AuditModule = 'eod' | 'folio' | 'reception' | 'cash' | 'deposit' | 'reservation' | 'group' | 'settings' | 'loyalty';
 
 export type AuditEntry = {
   id: string;
