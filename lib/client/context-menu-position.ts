@@ -1,9 +1,19 @@
 import { useLayoutEffect, useState, type RefObject } from 'react';
 
-/** Sağ tık menüsünü viewport içinde tutar */
+export type ContextMenuAnchorY = 'cursor' | 'topBar';
+
+function topBarBottom(): number {
+  if (typeof document === 'undefined') return 8;
+  const bar =
+    document.querySelector('.roomio-top-menu') ?? document.querySelector('.roomio-header--app');
+  return bar ? bar.getBoundingClientRect().bottom : 8;
+}
+
+/** Sağ tık menüsünü viewport içinde tutar; topBar = üst menü çubuğunun altından açılır */
 export function useContextMenuPosition(
   anchor: { x: number; y: number } | null,
   menuRef: RefObject<HTMLElement | null>,
+  anchorY: ContextMenuAnchorY = 'cursor',
 ) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
 
@@ -12,7 +22,7 @@ export function useContextMenuPosition(
     const el = menuRef.current;
     const pad = 8;
     let x = anchor.x;
-    let y = anchor.y;
+    let y = anchorY === 'topBar' ? topBarBottom() : anchor.y;
 
     if (el) {
       const rect = el.getBoundingClientRect();
@@ -27,7 +37,7 @@ export function useContextMenuPosition(
     if (x < pad) x = pad;
     if (y < pad) y = pad;
     setPos({ x, y });
-  }, [anchor?.x, anchor?.y, menuRef]);
+  }, [anchor?.x, anchor?.y, anchorY, menuRef]);
 
   return pos;
 }

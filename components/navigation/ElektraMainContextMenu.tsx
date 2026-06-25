@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight } from 'lucide-react';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { useContextMenuPosition } from '@/lib/client/context-menu-position';
+import { shouldFlipFlyout } from '@/lib/client/flyout-flip';
 import { translateSidebarNavItems } from '@/lib/i18n/kurulus-nav-i18n';
 import { CONTEXT_MENU_GROUPS, contextMenuItems } from '@/lib/navigation/context-menu-nav';
 import type { SidebarNavItem } from '@/lib/navigation/sidebar-nav';
@@ -31,6 +32,41 @@ type Props = {
   onClose: () => void;
 };
 
+function ContextMenuBranch({
+  className,
+  label,
+  children,
+  onClose,
+}: {
+  className?: string;
+  label: React.ReactNode;
+  children: React.ReactNode;
+  onClose?: () => void;
+}) {
+  const branchRef = useRef<HTMLDivElement>(null);
+  const [flip, setFlip] = useState(false);
+
+  const onEnter = () => {
+    if (branchRef.current) setFlip(shouldFlipFlyout(branchRef.current, 280));
+  };
+
+  return (
+    <div
+      ref={branchRef}
+      className={`roomio-ctx-branch${flip ? ' is-flip-left' : ''}${className ? ` ${className}` : ''}`}
+      onMouseEnter={onEnter}
+    >
+      <button type="button" className="roomio-ctx-item roomio-ctx-item--branch" tabIndex={-1}>
+        <span>{label}</span>
+        <ChevronRight size={14} aria-hidden className={flip ? 'roomio-ctx-chevron--flip' : undefined} />
+      </button>
+      <div className="roomio-ctx-flyout" role="menu" onClick={onClose}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function ContextMenuLeaf({
   item,
   onClose,
@@ -44,17 +80,11 @@ function ContextMenuLeaf({
 
   if (item.children?.length) {
     return (
-      <div className="roomio-ctx-branch">
-        <button type="button" className="roomio-ctx-item roomio-ctx-item--branch">
-          <span>{item.label}</span>
-          <ChevronRight size={14} aria-hidden />
-        </button>
-        <div className="roomio-ctx-flyout" role="menu">
-          {item.children.map((child) => (
-            <ContextMenuLeaf key={child.id} item={child} onClose={onClose} />
-          ))}
-        </div>
-      </div>
+      <ContextMenuBranch label={item.label}>
+        {item.children.map((child) => (
+          <ContextMenuLeaf key={child.id} item={child} onClose={onClose} />
+        ))}
+      </ContextMenuBranch>
     );
   }
 
@@ -70,7 +100,7 @@ function ContextMenuLeaf({
 export function ElektraMainContextMenu({ menu, onClose }: Props) {
   const { t } = useI18n();
   const menuRef = useRef<HTMLDivElement>(null);
-  const pos = useContextMenuPosition(menu, menuRef);
+  const pos = useContextMenuPosition(menu, menuRef, 'topBar');
 
   const translatedGroups = useMemo(
     () =>
@@ -120,7 +150,7 @@ export function ElektraMainContextMenu({ menu, onClose }: Props) {
       />
       <div
         ref={menuRef}
-        className="roomio-ctx-menu"
+        className="roomio-ctx-menu roomio-ctx-menu--from-top"
         style={{ left: pos.x, top: pos.y }}
         onContextMenu={(e) => e.preventDefault()}
         role="menu"
@@ -130,17 +160,16 @@ export function ElektraMainContextMenu({ menu, onClose }: Props) {
         {translatedGroups.map((group) => {
           if (!group.items.length) return null;
           return (
-            <div key={group.id} className="roomio-ctx-branch roomio-ctx-branch--group">
-              <button type="button" className="roomio-ctx-item roomio-ctx-item--group">
-                <span>{group.label}</span>
-                <ChevronRight size={14} aria-hidden />
-              </button>
-              <div className="roomio-ctx-flyout roomio-ctx-flyout--group" role="menu">
-                {group.items.map((item) => (
-                  <ContextMenuLeaf key={item.id} item={item} onClose={onClose} />
-                ))}
-              </div>
-            </div>
+            <ContextMenuBranch
+              key={group.id}
+              className="roomio-ctx-branch--group"
+              label={group.label}
+              onClose={onClose}
+            >
+              {group.items.map((item) => (
+                <ContextMenuLeaf key={item.id} item={item} onClose={onClose} />
+              ))}
+            </ContextMenuBranch>
           );
         })}
       </div>

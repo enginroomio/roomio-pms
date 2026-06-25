@@ -28,10 +28,28 @@ async function step1Production() {
     console.log('✓ Health OK');
     console.log(`  database: ${health.body?.checks?.database?.ok ? 'ok' : 'FAIL'}`);
     console.log(`  monitoring: ${health.body?.checks?.monitoring?.detail ?? '—'}`);
+    console.log(`  build: ${health.body?.gitSha ?? '—'} (${health.body?.build?.slice(0, 10) ?? '—'})`);
     saveProductionUrl(RENDER_URL);
     return true;
   }
   console.log(`✗ Health başarısız (${health.reason ?? 'unknown'})`);
+  const auth = health.body?.checks?.auth;
+  if (auth && !auth.ok) {
+    console.log(`  auth: ${auth.detail}`);
+    console.log('\n  Düzeltme (Render Dashboard → roomio-pms → Environment):');
+    console.log('  1. ROOMIO_JWT_SECRET → en az 32 karakter rastgele değer');
+    console.log('     Üret: openssl rand -base64 48');
+    console.log('  2. Manual Deploy → Deploy latest commit');
+  }
+  const db = health.body?.checks?.database;
+  if (db && !db.ok) {
+    console.log(`  database: ${db.detail ?? 'FAIL'}`);
+    console.log('  → DATABASE_URL (PostgreSQL Internal URL) kontrol edin: npm run render:postgres:setup');
+  }
+  if (health.body?.gitSha) {
+    console.log(`\n  Canlı build: ${health.body.gitSha} (${health.body.build?.slice(0, 10) ?? '—'})`);
+    console.log('  Yeni modüller için: git push → Render auto-deploy');
+  }
   console.log('  Render Dashboard → roomio-pms-v2 → Manual Deploy');
   return false;
 }

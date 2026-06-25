@@ -7,12 +7,15 @@ import {
   type MainContextMenuState,
 } from '@/components/navigation/ElektraMainContextMenu';
 
+const IGNORE_SELECTOR =
+  '.roomio-ctx-menu, .roomio-ctx-backdrop, .roomio-hk-room-menu, .roomio-rack-ctx-menu, .roomio-rack-ctx-backdrop, .roomio-top-menu, input, textarea, [contenteditable="true"]';
+
 type Props = {
   children: ReactNode;
 };
 
-/** Ana sayfa — sağ tık: Elektra v5 tam menü (tarayıcı menüsü engellenir) */
-export function HomeScreenShell({ children }: Props) {
+/** Uygulama geneli sağ tık: Elektra ana menü (üst çubuktan açılır) */
+export function AppContextMenuLayer({ children }: Props) {
   const [menu, setMenu] = useState<MainContextMenuState>(null);
 
   const openMainMenu = useCallback((x: number, y: number) => {
@@ -24,13 +27,7 @@ export function HomeScreenShell({ children }: Props) {
   const onContextMenu = useCallback(
     (event: React.MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (
-        target.closest(
-          '.roomio-ctx-menu, .roomio-ctx-backdrop, .roomio-hk-room-menu, .roomio-rack-ctx-menu, .roomio-rack-ctx-backdrop, input, textarea, [contenteditable="true"]',
-        )
-      ) {
-        return;
-      }
+      if (target.closest(IGNORE_SELECTOR)) return;
       event.preventDefault();
       openMainMenu(event.clientX, event.clientY);
     },
@@ -39,7 +36,7 @@ export function HomeScreenShell({ children }: Props) {
 
   return (
     <HomeScreenMenuContext.Provider value={menuApi}>
-      <div className="roomio-home-screen" onContextMenu={onContextMenu}>
+      <div className="roomio-app-screen" onContextMenu={onContextMenu}>
         {children}
         <ElektraMainContextMenu menu={menu} onClose={() => setMenu(null)} />
       </div>

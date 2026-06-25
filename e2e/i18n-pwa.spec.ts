@@ -193,10 +193,11 @@ test.describe('i18n', () => {
   test('sağ tık ana menü İngilizce', async ({ page }) => {
     await page.goto('/');
     await page.getByLabel(/Dil|Language/i).selectOption('en');
-    await page.locator('.roomio-home-screen').click({ button: 'right', position: { x: 200, y: 200 } });
-    await expect(page.getByRole('menu', { name: 'Elektra main menu' })).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('button', { name: 'Reservations' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Front office' })).toBeVisible();
+    await page.locator('.roomio-app-screen').click({ button: 'right', position: { x: 200, y: 200 } });
+    const ctxMenu = page.getByRole('menu', { name: 'Elektra main menu' });
+    await expect(ctxMenu).toBeVisible({ timeout: 8000 });
+    await expect(ctxMenu.getByRole('button', { name: 'Reservations' })).toBeVisible();
+    await expect(ctxMenu.getByRole('button', { name: 'Front office' })).toBeVisible();
   });
 });
 

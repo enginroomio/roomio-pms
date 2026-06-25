@@ -93,24 +93,45 @@
   z-index: 1;
 }
 
+.roomio-ctx-flyout::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -6px;
+  width: 6px;
+  height: 100%;
+}
+
 .roomio-ctx-branch:hover > .roomio-ctx-flyout {
   display: block;
 }
 
-/* Viewport sağ kenarında flyout'u sola aç */
-.roomio-ctx-branch--group:hover > .roomio-ctx-flyout--group {
-  /* JS ile flip edilebilir; basit CSS fallback */
+.roomio-ctx-branch.is-flip-left > .roomio-ctx-flyout {
+  left: auto;
+  right: 100%;
+  margin-left: 0;
+  margin-right: -2px;
+}
+
+.roomio-ctx-branch.is-flip-left > .roomio-ctx-flyout::before {
+  left: auto;
+  right: -6px;
+}
+
+.roomio-ctx-chevron--flip {
+  transform: rotate(180deg);
+}
+
+.roomio-ctx-menu--from-top {
+  border-radius: 0 0 8px 8px;
+  border-top: none;
+  box-shadow:
+    0 16px 40px rgba(15, 23, 42, 0.16),
+    0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
 @media (max-width: 900px) {
   .roomio-ctx-flyout {
-    position: static;
-    display: none;
-    margin-left: 12px;
-    box-shadow: none;
-    border: none;
-    border-left: 2px solid var(--roomio-border);
-    border-radius: 0;
-    max-height: 240px;
+    max-height: min(50vh, 360px);
   }
 }

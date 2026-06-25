@@ -53,9 +53,10 @@ export async function waitForHealth(base, attempts = 40, intervalMs = 5000) {
       if (res.status === 404 && i >= 2) {
         return { ok: false, body: null, reason: 'not_found' };
       }
-      if (res.ok) {
+      if (res.ok || res.status === 503) {
         const body = await res.json().catch(() => ({}));
         if (body.ok === true) return { ok: true, body };
+        if (body.checks) return { ok: false, body, reason: lastStatus ? `http_${lastStatus}` : 'unhealthy' };
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

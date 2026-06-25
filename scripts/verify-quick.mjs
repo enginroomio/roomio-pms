@@ -60,6 +60,7 @@ async function main() {
   const e2eEnv = {
     ROOMIO_URL: BASE,
     PLAYWRIGHT_REUSE_SERVER: '1',
+    PLAYWRIGHT_SKIP_WARM: '1',
     ROOMIO_AUTH_REQUIRED: '0',
   };
 

@@ -14,6 +14,7 @@ import { LicenseBadge } from '@/components/LicenseBadge';
 import { CommandPalette } from '@/components/CommandPalette';
 import { IconRail } from '@/components/IconRail';
 import { TopMenuNav } from '@/components/TopMenuNav';
+import { AppContextMenuLayer } from '@/components/navigation/AppContextMenuLayer';
 import { ShortcutBar } from '@/components/ShortcutBar';
 import { ReleaseNotice } from '@/components/ReleaseNotice';
 import { RoleSwitcher } from '@/components/auth/RoleSwitcher';
@@ -98,7 +99,8 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
         <div className="roomio-app">
           <IconRail />
 
-          <div className="roomio-main">
+          <AppContextMenuLayer>
+            <div className="roomio-main">
             <PwaOfflineBanner />
             <header className="roomio-header roomio-header--app">
               <div className="roomio-header-top">
@@ -140,7 +142,8 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
               </ContentOneScreen>
             </main>
             <ShortcutBar />
-          </div>
+            </div>
+          </AppContextMenuLayer>
         </div>
       </div>
     </div>
