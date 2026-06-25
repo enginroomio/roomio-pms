@@ -5,7 +5,8 @@
  *   RENDER_API_KEY=rnd_xxx npm run render:set-secrets
  *   RENDER_SERVICE_ID=srv_xxx npm run render:set-secrets  (opsiyonel, otomatik aranır)
  */
-import { randomBytes, readFileSync, existsSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { parseEnvFile } from './parse-env-file.mjs';
 
 const API = 'https://api.render.com/v1';
@@ -65,7 +66,7 @@ async function setEnv(serviceId, key, value) {
 
 function loadVapid() {
   if (!existsSync('.env.vapid.generated')) return {};
-  return parseEnvFile(readFileSync('.env.vapid.generated', 'utf8'));
+  return parseEnvFile('.env.vapid.generated');
 }
 
 async function triggerDeploy(serviceId) {

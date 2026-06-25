@@ -3,7 +3,6 @@
  * Production tanı + düzeltme rehberi (sıralı go-live öncesi).
  * Kullanım: npm run render:diagnose
  */
-import { randomBytes } from 'node:crypto';
 import { productionUrl, saveProductionUrl, waitForHealth } from './render-production.mjs';
 
 const BASE = (productionUrl() ?? 'https://www.roomio.web.tr').replace(/\/$/, '');
@@ -31,16 +30,15 @@ if (health.body?.checks) {
 
 const authFail = health.body?.checks?.auth?.ok === false;
 if (authFail) {
-  const secret = randomBytes(48).toString('base64');
-  console.log('\n── JWT secret (Render Environment\'a yapıştırın) ──');
-  console.log(`ROOMIO_JWT_SECRET=${secret}`);
+  console.log('\n── JWT + VAPID (tek dosya) ──');
+  console.log('  npm run render:paste-env');
+  console.log('  → .roomio/render-env-paste.env dosyasını Render Environment\'a yapıştırın');
 }
 
 console.log('\n── Sıradaki adımlar ──');
-console.log('1. Render Dashboard → Environment → ROOMIO_JWT_SECRET kaydet');
-console.log('2. VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY (npm run vapid:gen)');
-console.log('3. git push → auto-deploy veya Manual Deploy');
-console.log('4. npm run render:go-live -- --step 1');
-console.log('5. npm run go-live:verify\n');
+console.log('1. npm run render:paste-env → Render Dashboard → Environment');
+console.log('2. git push main → GHCR + Render auto-deploy (veya Manual Deploy)');
+console.log('3. npm run render:go-live -- --step 1');
+console.log('4. npm run go-live:verify\n');
 
 process.exit(1);

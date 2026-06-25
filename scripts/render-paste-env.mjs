@@ -4,16 +4,14 @@
  * Kullanım: npm run render:paste-env
  */
 import { randomBytes } from 'node:crypto';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseEnvFile } from './parse-env-file.mjs';
 
 const OUT = join(process.cwd(), '.roomio', 'render-env-paste.env');
 
 const jwt = process.env.ROOMIO_JWT_SECRET?.trim() || randomBytes(48).toString('base64');
-const vapid = existsSync('.env.vapid.generated')
-  ? parseEnvFile(readFileSync('.env.vapid.generated', 'utf8'))
-  : {};
+const vapid = existsSync('.env.vapid.generated') ? parseEnvFile('.env.vapid.generated') : {};
 
 const lines = [
   '# Render Dashboard → roomio-pms-v2 → Environment → Add from .env',
