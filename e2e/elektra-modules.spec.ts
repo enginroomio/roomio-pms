@@ -494,8 +494,7 @@ test.describe('Elektra modülleri — UI', () => {
     ] as const;
     for (const name of headings) {
       const heading = page.getByRole('heading', { name, exact: typeof name === 'string' });
-      await heading.scrollIntoViewIfNeeded();
-      await expect(heading).toBeVisible({ timeout: 10_000 });
+      await expect(heading.first()).toBeVisible({ timeout: 10_000 });
     }
   });
 });

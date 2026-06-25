@@ -24,6 +24,6 @@ test.describe('Misafir rollout — adım adım', () => {
 
   test('Adım 5 — Banket rezervasyon', async ({ page }) => {
     await page.goto('/fnb');
-    await expect(page.getByRole('heading', { name: /Banket Rezervasyon/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /Banket Rezervasyon/i }).first()).toBeVisible({ timeout: 15_000 });
   });
 });

@@ -78,7 +78,7 @@ test('housekeeping pano mockup', async ({ page }) => {
 test('room rack F12 sayfası', async ({ page }) => {
   await page.goto('/rooms');
   await expect(page.getByRole('heading', { name: /Room Rack \(F12\)/i }).first()).toBeVisible();
-  await expect(page.getByText('Toplam Oda:')).toBeVisible();
+  await expect(page.getByText('Toplam Oda:').first()).toBeVisible();
 });
 
 test('rezervasyon listesi screen-039', async ({ page }) => {

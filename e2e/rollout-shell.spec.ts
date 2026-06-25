@@ -8,7 +8,7 @@ test.describe('Kabuk rollout — adım adım', () => {
   test('Adım 1 — İkon rayı (Ana, Önbüro, Kat HK…)', async ({ page }) => {
     const rail = page.locator('.roomio-icon-rail');
     await expect(rail).toBeVisible();
-    await expect(rail.getByRole('link', { name: 'Ana' })).toBeVisible();
+    await expect(rail.getByRole('link', { name: 'Ana', exact: true })).toBeVisible();
     await expect(rail.getByRole('link', { name: 'Önbüro' })).toBeVisible();
     await expect(rail.getByRole('link', { name: 'Kat HK' })).toBeVisible();
     await expect(rail.getByRole('link', { name: 'Misafir' })).toBeVisible();
