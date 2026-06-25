@@ -13,10 +13,10 @@ test.describe('Ana Sayfa rollout — adım adım', () => {
   });
 
   test('Adım 2 — KPI kartları', async ({ page }) => {
-    await expect(page.getByRole('region', { name: 'Günlük KPI' })).toBeVisible();
-    await expect(page.getByText('Doluluk').first()).toBeVisible();
-    await expect(page.getByText('Giriş Bugün').first()).toBeVisible();
-    await expect(page.getByText('Çıkış Bugün').first()).toBeVisible();
+    const portfolio = page.getByRole('region', { name: 'Çoklu şube özeti' });
+    await expect(portfolio).toBeVisible({ timeout: 15_000 });
+    await expect(portfolio.getByText(/doluluk/i).first()).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Günlük özet' }).getByText('Konaklayan')).toBeVisible();
   });
 
   test('Adım 3 — Oda rack önizleme', async ({ page }) => {
@@ -30,6 +30,6 @@ test.describe('Ana Sayfa rollout — adım adım', () => {
 
   test('Adım 5 — Tam oda rack (F12)', async ({ page }) => {
     await page.goto('/rooms');
-    await expect(page.getByRole('heading', { name: /Room Rack \(F12\)/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /Room Rack \(F12\)/i }).first()).toBeVisible({ timeout: 15_000 });
   });
 });

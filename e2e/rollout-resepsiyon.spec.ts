@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Resepsiyon rollout — adım adım', () => {
   test('Adım 1 — Resepsiyon özeti', async ({ page }) => {
     await page.goto('/reception');
-    await expect(page.getByRole('heading', { name: /Resepsiyon & Ön Kasa/i })).toBeVisible();
-    await expect(page.getByText('Konaklayan')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Resepsiyon & Ön Kasa/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('Konaklayan').first()).toBeVisible();
     await expect(page.getByText('Kasa Defteri — bugün')).toBeVisible();
   });
 

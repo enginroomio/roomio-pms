@@ -466,30 +466,36 @@ test.describe('Elektra modülleri — UI', () => {
   test('entegrasyon hub — yeni kartlar', async ({ page }) => {
     await page.goto('/settings/integrations');
     await expect(page.getByRole('heading', { name: 'Online Rezervasyon Motoru' })).toBeVisible({ timeout: 15_000 });
-    await page.getByRole('heading', { name: 'Misafir Portalı' }).scrollIntoViewIfNeeded();
-    await expect(page.getByRole('heading', { name: 'Kanal Yöneticisi' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Dinamik Fiyatlandırma' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Misafir Portalı' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /e-Fatura/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'WhatsApp API' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Check-in Kiosk' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Sadakat/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'SPA Yönetimi' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Tur Operatörü' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Viofun' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Misafir Uygulaması/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /AI Asistan/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Marina/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'IK Portal', exact: true })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Tedarik Portalı', exact: true })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Stok Takip' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Restoran Online Rezervasyon' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Sanal POS' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Lite Mobile' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Kalite Yönetimi' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Karbon Dengeleme' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Fuar Otomasyon' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Spor Salonu' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Web Sitesi' })).toBeVisible();
+    const headings = [
+      'Kanal Yöneticisi',
+      'Dinamik Fiyatlandırma',
+      'Misafir Portalı',
+      /e-Fatura/i,
+      'WhatsApp API',
+      'Check-in Kiosk',
+      /Sadakat/i,
+      'SPA Yönetimi',
+      'Tur Operatörü',
+      'Viofun',
+      /Misafir Uygulaması/i,
+      /AI Asistan/i,
+      /Marina/i,
+      'IK Portal',
+      'Tedarik Portalı',
+      'Stok Takip',
+      'Restoran Online Rezervasyon',
+      'Sanal POS',
+      'Lite Mobile',
+      'Kalite Yönetimi',
+      'Karbon Dengeleme',
+      'Fuar Otomasyon',
+      'Spor Salonu',
+      'Web Sitesi',
+    ] as const;
+    for (const name of headings) {
+      const heading = page.getByRole('heading', { name, exact: typeof name === 'string' });
+      await heading.scrollIntoViewIfNeeded();
+      await expect(heading).toBeVisible({ timeout: 10_000 });
+    }
   });
 });

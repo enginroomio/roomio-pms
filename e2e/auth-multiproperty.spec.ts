@@ -48,7 +48,7 @@ test.describe('Çoklu şube', () => {
 
   test('konsolide rapor sekmesi', async ({ page }) => {
     await page.goto('/reports?tab=consolidated');
-    await expect(page.getByRole('heading', { name: /Raporlar/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Konsolide Tesis Raporu/i })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/Konsolide/i).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /CSV indir/i })).toBeVisible();
   });

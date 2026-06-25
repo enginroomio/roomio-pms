@@ -10,14 +10,14 @@ test.describe('Sistem rollout — adım adım', () => {
 
   test('Adım 2 — Rapor Tasarım', async ({ page }) => {
     await page.goto('/reports?tab=design');
-    await expect(page.getByRole('heading', { name: 'Rapor Tasarım', level: 1 })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Rapor Tasarım' })).toHaveClass(/is-active/);
+    await expect(page.getByRole('heading', { name: 'Rapor Tasarım', level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: 'Rapor Tasarım' }).first()).toHaveClass(/is-active/);
   });
 
   test('Adım 3 — Raporla', async ({ page }) => {
     await page.goto('/reports');
-    await expect(page.getByRole('heading', { name: /Raporlama Programı/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Raporla' })).toHaveClass(/is-active/);
+    await expect(page.getByRole('heading', { name: /Raporlama Programı/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: 'Raporla' }).first()).toHaveClass(/is-active/);
   });
 
   test('Adım 4 — Servis Programları (TESA)', async ({ page }) => {

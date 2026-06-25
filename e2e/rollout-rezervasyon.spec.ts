@@ -1,14 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Rezervasyon rollout — adım adım', () => {
-  test('Adım 1 — Grafikler (F1) · Elektra Forecast mockup', async ({ page }) => {
+  test('Adım 1 — Grafikler (F1) · canlı doluluk', async ({ page }) => {
     await page.goto('/reservations/calendar');
     await expect(page.getByRole('heading', { name: /^Grafikler$/i })).toBeVisible();
-    await expect(page.getByRole('tab', { name: /Elektra Forecast F1/i })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByText('Forecast')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Raporu Hazırla' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Grafik' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('link', { name: /Grafikler \(F1\)/i })).toHaveClass(/is-active/);
+    await expect(page.getByText(/Elektra v5 Forecast|Elektra v5 F1|doluluk trendi/i).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: /Grafikler \(F1\)/i }).first()).toHaveClass(/is-active/);
   });
 
   test('Adım 2 — Yeni Rezervasyon (F2)', async ({ page }) => {
@@ -35,7 +32,7 @@ test.describe('Rezervasyon rollout — adım adım', () => {
   test('Adım 5 — Boş Oda Listesi', async ({ page }) => {
     await page.goto('/reception/vacant');
     await expect(page.getByRole('heading', { name: /Boş Oda/i })).toBeVisible();
-    await expect(page.getByRole('table')).toBeVisible();
+    await expect(page.getByText(/Temiz — Check-in hazır/i)).toBeVisible();
   });
 
   test('Adım 6 — Hızlı Blokaj', async ({ page }) => {

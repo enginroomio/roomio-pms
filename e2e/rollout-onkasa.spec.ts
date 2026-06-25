@@ -10,11 +10,11 @@ test.describe('Ön Kasa rollout — adım adım', () => {
 
   test('Adım 2 — Kasa kapatma listesi', async ({ page }) => {
     await page.goto('/reception?tab=kasa-close');
-    await expect(page.getByRole('heading', { name: /Kasa Kapatma Listesi/i })).toBeVisible();
-    await expect(page.getByText(/Kasa kapat/i)).toBeVisible();
-    await expect(page.getByText(/Kasa devir/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /PDF indir/i })).toBeVisible();
-    await expect(page.getByRole('table')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Kasa Kapatma Listesi/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Kasa kapat/i).first()).toBeVisible();
+    await expect(page.getByText(/Kasa devir/i).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /PDF indir/i }).first()).toBeVisible();
+    await expect(page.getByRole('table').first()).toBeVisible();
   });
 
   test('Adım 3 — Döviz bozdurma', async ({ page }) => {

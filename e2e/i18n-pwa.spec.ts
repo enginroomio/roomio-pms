@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('i18n', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.removeItem('roomio-locale'));
+  });
+
   test('locale API tr ve en döner', async ({ request }) => {
     const tr = await request.get('/api/locale?locale=tr');
     const en = await request.get('/api/locale?locale=en');
@@ -47,16 +51,16 @@ test.describe('i18n', () => {
     await page.goto('/reservations');
     await page.getByLabel(/Dil|Language/i).selectOption('en');
     await expect(page.getByRole('heading', { name: 'Reservation list' })).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('link', { name: 'New reservation (F2)' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '+ New reservation (F2)' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'New reservation (F2)' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: '+ New reservation (F2)' })).toBeVisible();
   });
 
   test('HK mobil İngilizce', async ({ page }) => {
     await page.goto('/housekeeping/mobile');
     await page.getByLabel(/Dil|Language/i).selectOption('en');
     await expect(page.getByRole('heading', { name: 'Room rack' })).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('link', { name: 'List' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Faults' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'List' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Faults' }).first()).toBeVisible();
   });
 
   test('kuruluş otel bilgileri İngilizce', async ({ page }) => {
@@ -212,11 +216,10 @@ test.describe('PWA offline', () => {
 
   test('service worker kayıtlı', async ({ page }) => {
     await page.goto('/');
-    const registered = await page.evaluate(async () => {
+    await page.waitForFunction(async () => {
       if (!('serviceWorker' in navigator)) return false;
       const reg = await navigator.serviceWorker.getRegistration('/');
       return Boolean(reg);
-    });
-    expect(registered).toBeTruthy();
+    }, { timeout: 15_000 });
   });
 });

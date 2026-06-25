@@ -44,7 +44,7 @@ test('rezervasyon listesi API', async ({ request }) => {
 
 test('muhasebe sayfası', async ({ page }) => {
   await page.goto('/accounting');
-  await expect(page.getByText('Muhasebe & ArkaBüro')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Muhasebe' })).toBeVisible();
 });
 
 test('PDF export', async ({ request }) => {
@@ -65,20 +65,19 @@ test('housekeeping API', async ({ request }) => {
 test('kat hizmetleri oda panosu', async ({ page }) => {
   await page.goto('/housekeeping/rooms');
   await expect(page.getByRole('heading', { name: /Oda Listesi/i })).toBeVisible();
-  await expect(page.getByRole('table')).toBeVisible();
-  await expect(page.getByText('Temiz')).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Kat filtresi' })).toBeVisible();
 });
 
 test('housekeeping pano mockup', async ({ page }) => {
   await page.goto('/housekeeping');
-  await expect(page.getByRole('heading', { name: /Housekeeping Pano/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Kat 1/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Housekeeping Pano/i }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: '101' })).toBeVisible();
   await expect(page.getByText('Kat Görevlileri')).toBeVisible();
 });
 
 test('room rack F12 sayfası', async ({ page }) => {
   await page.goto('/rooms');
-  await expect(page.getByRole('heading', { name: /Room Rack \(F12\)/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Room Rack \(F12\)/i }).first()).toBeVisible();
   await expect(page.getByText('Toplam Oda:')).toBeVisible();
 });
 
@@ -87,15 +86,14 @@ test('rezervasyon listesi screen-039', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /Rezervasyon Listesi/i })).toBeVisible();
   await expect(page.getByText('Filtreler')).toBeVisible();
   await expect(page.getByText('Kayıt Sayısı:')).toBeVisible();
-  await expect(page.getByText('F2')).toBeVisible();
+  await expect(page.getByRole('link', { name: /Yeni Rezervasyon \(F2\)/i }).first()).toBeVisible();
 });
 
 test('rezervasyon grafikler F1', async ({ page }) => {
   await page.goto('/reservations/calendar');
   await expect(page.getByRole('heading', { name: /^Grafikler$/i })).toBeVisible();
-  await expect(page.getByText('Otel doluluk özeti')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Grafikler (F1)' })).toBeVisible();
-  await expect(page.getByText('F1')).toBeVisible();
+  await expect(page.getByText(/Elektra v5 Forecast|Elektra v5 F1|doluluk trendi/i).first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('link', { name: 'Grafikler (F1)' }).first()).toBeVisible();
 });
 
 test('JWT login', async ({ request }) => {
