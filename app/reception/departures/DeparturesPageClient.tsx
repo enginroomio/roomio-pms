@@ -21,13 +21,18 @@ export default function DeparturesPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
+  const roomFilter = searchParams.get('room')?.trim() ?? '';
   const { reservations, loading, error, reload } = useReservations();
   const departureIds = useMemo(
     () => reservations.filter((r) => r.status === 'CHECKED_IN').map((r) => r.id),
     [reservations],
   );
   const { balances, error: folioError, reload: reloadFolio } = useFolioBalances(departureIds);
-  const departures = useMemo(() => getTodayDepartures(reservations, undefined, balances), [reservations, balances]);
+  const departures = useMemo(() => {
+    const all = getTodayDepartures(reservations, undefined, balances);
+    if (!roomFilter) return all;
+    return all.filter((g) => g.roomNo === roomFilter);
+  }, [reservations, balances, roomFilter]);
   const [doneId, setDoneId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -102,7 +107,13 @@ export default function DeparturesPageClient() {
       }
     >
       <ReceptionTabs />
-      <ReceptionLoading loading={loading} error={error} folioError={folioError} />
+      {roomFilter ? (
+        <p className="roomio-page-desc" role="status">
+          Oda filtresi: <strong>{roomFilter}</strong>
+          {' · '}
+          <Link href="/reception/departures">Filtreyi kaldır</Link>
+        </p>
+      ) : null}
       {msg ? (
         <p className={`roomio-page-desc${msg.includes('başarısız') || msg.includes('yetkiniz') || msg.includes('Oturum') ? ' roomio-text-warn' : ''}`} role="status">
           {msg}

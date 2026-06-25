@@ -37,10 +37,19 @@ export function DashboardBoard({
   const { hkMap, applyUpdate } = useLiveHkMap(initialHkMap);
   const [savingRoom, setSavingRoom] = useState<string | null>(null);
   const [roomMenu, setRoomMenu] = useState<HkRoomMenuState>(null);
+  const [rackStatus, setRackStatus] = useState<string | null>(null);
 
   const { openMenu: openPmsMenu, menuNode: pmsMenuNode } = useRoomRackContextMenu({
     reservations,
     businessDate,
+    onSelectCell: (cell) => {
+      const guest = cell.guestName ?? 'Boş';
+      const suffix = cell.room.suffix;
+      const corridor = suffix <= 9 ? 'Sol' : 'Sağ';
+      setRackStatus(
+        `${cell.room.roomNo} ${cell.state.toUpperCase()} · ${cell.room.typeShort} · ${guest} · ${cell.room.floor}. kat ${corridor} (${suffix})`,
+      );
+    },
   });
 
   const alerts = useMemo(
@@ -82,6 +91,11 @@ export function DashboardBoard({
             onRoomContextMenu={openRoomMenu}
             onRoomPmsContextMenu={openPmsMenu}
           />
+          {rackStatus ? (
+            <div className="roomio-dashboard-rack-status" aria-live="polite">
+              {rackStatus}
+            </div>
+          ) : null}
         </div>
         <DailyMovements arrivals={arrivals} departures={departures} alerts={alerts} />
       </div>

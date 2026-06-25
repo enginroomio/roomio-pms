@@ -118,14 +118,20 @@ function reservationToFormValues(r: Reservation): FormValues {
 
 type Props = {
   existing?: Reservation;
+  seed?: { fixRoomNo?: string; checkIn?: string };
 };
 
-export function ReservationFormWizard({ existing }: Props) {
+export function ReservationFormWizard({ existing, seed }: Props) {
   const isEdit = Boolean(existing);
   const router = useRouter();
   const [layout, setLayout] = useState<FormLayout | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
-  const [values, setValues] = useState<FormValues>(() => (existing ? reservationToFormValues(existing) : DEFAULTS));
+  const [values, setValues] = useState<FormValues>(() => {
+    const base = existing ? reservationToFormValues(existing) : { ...DEFAULTS };
+    if (seed?.fixRoomNo) base.fixRoomNo = seed.fixRoomNo;
+    if (seed?.checkIn) base.checkIn = seed.checkIn;
+    return base;
+  });
   const [taxRules, setTaxRules] = useState<TaxRule[]>([]);
   const [fx, setFx] = useState<ExchangeRateSnapshot | null>(null);
   const [fxLoading, setFxLoading] = useState(false);

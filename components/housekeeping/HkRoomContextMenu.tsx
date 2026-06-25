@@ -88,7 +88,7 @@ export function HkRoomContextMenu({ menu, savingRoom, onSelect, onCompleteFault,
                 type="button"
                 role="menuitem"
                 className={`roomio-hk-room-menu__item roomio-hk-room-menu__item--${status.toLowerCase()}${active ? ' is-current' : ''}`}
-                disabled={saving || active}
+                disabled={saving}
                 onClick={() => onSelect(menu.roomNo, status)}
               >
                 <span>{HK_MENU_LABELS[status]}</span>

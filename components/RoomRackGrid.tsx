@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Clock, Hand, User, Wrench } from 'lucide-react';
 import { getActiveFloors, countTotalRooms } from '@/lib/rooms/room-config';
 import { buildRackCells, countRackByState, getRoomTypesList } from '@/lib/rooms/inventory';
@@ -23,6 +23,13 @@ import { PROPERTY } from '@/lib/navigation';
 import { HK_STATUS_LABELS } from '@/lib/types/room';
 import { useHomeScreenMenu } from '@/components/HomeScreenMenuContext';
 import { handleRackCellContextMenu, rackContextMenuHint } from '@/lib/client/rack-context-menu';
+import {
+  rackFloorKey,
+  reorderRackCells,
+  sortRackCells,
+} from '@/lib/client/rack-preferences';
+import { RACK_DISPLAY_EVENT, type RackDisplayAction } from '@/lib/client/rack-display-actions';
+import { useRackPreferences } from '@/lib/client/use-rack-preferences';
 import { RackElektraToolbar, RackStatsFooter } from '@/components/rack/RackElektraToolbar';
 
 type Props = {
@@ -83,6 +90,10 @@ function RackPreviewCell({
   ctx,
   hkInteractive,
   savingRoom,
+  previewDetail,
+  dragDrop,
+  fixPositions,
+  onReorder,
   onRoomContextMenu,
   onRoomPmsContextMenu,
 }: {
@@ -90,6 +101,10 @@ function RackPreviewCell({
   ctx: RackDisplayContext;
   hkInteractive?: boolean;
   savingRoom?: string | null;
+  previewDetail?: boolean;
+  dragDrop?: boolean;
+  fixPositions?: boolean;
+  onReorder?: (fromRoomNo: string, toRoomNo: string) => void;
   onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
   onRoomPmsContextMenu?: (cell: RackCell, event: React.MouseEvent) => void;
 }) {
@@ -97,11 +112,28 @@ function RackPreviewCell({
   const display = getRackDisplay(cell, ctx);
   const saving = savingRoom === cell.room.roomNo;
   const hint = rackContextMenuHint(Boolean(homeMenu), hkInteractive);
+  const canDrag = Boolean(dragDrop && !fixPositions && onReorder);
 
   return (
     <button
       type="button"
-      className={`roomio-nr-cell roomio-nr-cell--preview${hkInteractive ? ' roomio-nr-cell--hk-interactive' : ''}${saving ? ' is-saving' : ''}`}
+      className={`roomio-nr-cell roomio-nr-cell--preview${hkInteractive ? ' roomio-nr-cell--hk-interactive' : ''}${saving ? ' is-saving' : ''}${canDrag ? ' is-draggable' : ''}`}
+      draggable={canDrag}
+      onDragStart={(event) => {
+        if (!canDrag) return;
+        event.dataTransfer.setData('text/plain', cell.room.roomNo);
+        event.dataTransfer.effectAllowed = 'move';
+      }}
+      onDragOver={(event) => {
+        if (!canDrag) return;
+        event.preventDefault();
+      }}
+      onDrop={(event) => {
+        if (!canDrag) return;
+        event.preventDefault();
+        const from = event.dataTransfer.getData('text/plain');
+        if (from) onReorder?.(from, cell.room.roomNo);
+      }}
       style={{
         background: display.color,
         color: display.text,
@@ -126,8 +158,8 @@ function RackPreviewCell({
         ) : null}
       </span>
       <span className="roomio-nr-cell-status">{display.label}</span>
-      {display.sub ? <span className="roomio-nr-cell-guest">{display.sub}</span> : null}
-      {display.time ? <span className="roomio-nr-cell-time">{display.time}</span> : null}
+      {previewDetail && display.sub ? <span className="roomio-nr-cell-guest">{display.sub}</span> : null}
+      {previewDetail && display.time ? <span className="roomio-nr-cell-time">{display.time}</span> : null}
     </button>
   );
 }
@@ -139,6 +171,9 @@ function RackCellButton({
   ctx,
   elektra = false,
   hkInteractive,
+  dragDrop,
+  fixPositions,
+  onReorder,
   onRoomContextMenu,
   onRoomPmsContextMenu,
 }: {
@@ -148,17 +183,37 @@ function RackCellButton({
   ctx: RackDisplayContext;
   elektra?: boolean;
   hkInteractive?: boolean;
+  dragDrop?: boolean;
+  fixPositions?: boolean;
+  onReorder?: (fromRoomNo: string, toRoomNo: string) => void;
   onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
   onRoomPmsContextMenu?: (cell: RackCell, event: React.MouseEvent) => void;
 }) {
   const homeMenu = useHomeScreenMenu();
   const display = getRackDisplay(cell, ctx);
   const hint = rackContextMenuHint(Boolean(homeMenu), hkInteractive);
+  const canDrag = Boolean(dragDrop && !fixPositions && onReorder);
 
   return (
     <button
       type="button"
-      className={`roomio-nr-cell${selected ? ' is-selected' : ''}${elektra ? ' roomio-nr-cell--elektra' : ''}`}
+      className={`roomio-nr-cell${selected ? ' is-selected' : ''}${elektra ? ' roomio-nr-cell--elektra' : ''}${canDrag ? ' is-draggable' : ''}`}
+      draggable={canDrag}
+      onDragStart={(event) => {
+        if (!canDrag) return;
+        event.dataTransfer.setData('text/plain', cell.room.roomNo);
+        event.dataTransfer.effectAllowed = 'move';
+      }}
+      onDragOver={(event) => {
+        if (!canDrag) return;
+        event.preventDefault();
+      }}
+      onDrop={(event) => {
+        if (!canDrag) return;
+        event.preventDefault();
+        const from = event.dataTransfer.getData('text/plain');
+        if (from) onReorder?.(from, cell.room.roomNo);
+      }}
       style={{
         background: display.color,
         color: display.text,
@@ -217,6 +272,7 @@ export function RoomRackGrid({
 }: Props) {
   const inventoryVersion = useInventoryVersion();
   const { activeProperty } = useProperty();
+  const { prefs, update: updateRackPrefs } = useRackPreferences();
   const totalRooms = activeProperty?.totalRooms ?? countTotalRooms();
   const reservations = reservationsProp ?? (preview ? DEMO_RESERVATIONS : []);
   const businessDate = businessDateProp ?? PROPERTY.businessDate;
@@ -233,10 +289,41 @@ export function RoomRackGrid({
   const [occupiedOnly, setOccupiedOnly] = useState(false);
   const [cleanOnly, setCleanOnly] = useState(false);
   const [showMaintenance, setShowMaintenance] = useState(true);
-  const [viewMode, setViewMode] = useState<'roomNo' | 'type'>('roomNo');
   const [selected, setSelected] = useState<RackCell | null>(null);
   const [columns, setColumns] = useState(17);
   const [autoFit, setAutoFit] = useState(true);
+  const { floorBg, previewDetail, viewMode, dragDrop, fixPositions, cellOrder } = prefs;
+
+  const reorderFloor = useCallback(
+    (floorKey: string, roomNos: string[], fromRoomNo: string, toRoomNo: string) => {
+      const base = cellOrder[floorKey]?.length ? cellOrder[floorKey] : roomNos;
+      const next = reorderRackCells(base, fromRoomNo, toRoomNo);
+      updateRackPrefs({ cellOrder: { ...cellOrder, [floorKey]: next } });
+    },
+    [cellOrder, updateRackPrefs],
+  );
+
+  useEffect(() => {
+    const onDisplayAction = (event: Event) => {
+      const action = (event as CustomEvent<RackDisplayAction>).detail;
+      if (action.type === 'clearSort') {
+        setStateFilter('all');
+        setTypeFilter('all');
+        setLocationFilter('all');
+        setOccupiedOnly(false);
+        setCleanOnly(false);
+        setFloor('all');
+      }
+      if (action.type === 'roomCoordinates') {
+        const cell = buildRackCells(undefined, reservations, businessDate, hkMap).find(
+          (c) => c.room.roomNo === action.roomNo,
+        );
+        if (cell) setSelected(cell);
+      }
+    };
+    window.addEventListener(RACK_DISPLAY_EVENT, onDisplayAction);
+    return () => window.removeEventListener(RACK_DISPLAY_EVENT, onDisplayAction);
+  }, [reservations, businessDate, hkMap, setFloor]);
 
   useEffect(() => {
     if (!focusRoomNo) return;
@@ -282,12 +369,15 @@ export function RoomRackGrid({
     [counts, totalRooms],
   );
 
-  const renderGrid = (sectionCells: RackCell[], keyPrefix = '') => (
+  const renderGrid = (sectionCells: RackCell[], floorKey: string, keyPrefix = '') => {
+    const roomNos = sectionCells.map((c) => c.room.roomNo);
+    const ordered = sortRackCells(sectionCells, cellOrder[floorKey]);
+    return (
     <div
-      className={`roomio-nr-grid${autoFit ? '' : ' roomio-nr-grid--fixed'}${elektra ? ' roomio-nr-grid--elektra' : ''}`}
+      className={`roomio-nr-grid${autoFit ? '' : ' roomio-nr-grid--fixed'}${elektra ? ' roomio-nr-grid--elektra' : ''}${dragDrop ? ' roomio-nr-grid--drag-mode' : ''}`}
       style={gridStyle}
     >
-      {sectionCells.map((cell) => (
+      {ordered.map((cell) => (
         <RackCellButton
           key={`${keyPrefix}${cell.room.roomNo}`}
           cell={cell}
@@ -296,12 +386,16 @@ export function RoomRackGrid({
           ctx={displayCtx}
           elektra={elektra}
           hkInteractive={hkInteractive}
+          dragDrop={dragDrop}
+          fixPositions={fixPositions}
+          onReorder={(from, to) => reorderFloor(floorKey, roomNos, from, to)}
           onRoomContextMenu={onRoomContextMenu}
           onRoomPmsContextMenu={onRoomPmsContextMenu}
         />
       ))}
     </div>
   );
+  };
 
   if (preview) {
     const sections = getActiveFloors().map(({ floor: f }) => ({
@@ -326,8 +420,15 @@ export function RoomRackGrid({
             </span>
           ))}
         </div>
-        <div className="roomio-nr-board">
-          {visibleSections.map((section) => (
+        <div
+          className={`roomio-nr-board${dragDrop ? ' roomio-nr-board--drag' : ''}${fixPositions ? ' roomio-nr-board--fixed-pos' : ''}`}
+          style={{ background: floorBg }}
+        >
+          {visibleSections.map((section) => {
+            const floorKey = rackFloorKey(section.floor);
+            const roomNos = section.cells.map((c) => c.room.roomNo);
+            const ordered = sortRackCells(section.cells, cellOrder[floorKey]);
+            return (
             <section
               key={section.floor}
               className={`roomio-nr-floor${soloFloor ? ' roomio-nr-floor--solo' : ''}`}
@@ -337,25 +438,30 @@ export function RoomRackGrid({
                 <span className="roomio-nr-floor-meta">{section.cells.length} oda</span>
               </div>
               <div
-                className="roomio-nr-grid roomio-nr-grid--preview"
+                className={`roomio-nr-grid roomio-nr-grid--preview${dragDrop ? ' roomio-nr-grid--drag-mode' : ''}`}
                 style={{
-                  '--roomio-nr-cols': section.cells.length,
+                  '--roomio-nr-cols': ordered.length,
                 } as React.CSSProperties}
               >
-                {section.cells.map((cell) => (
+                {ordered.map((cell) => (
                   <RackPreviewCell
                     key={cell.room.roomNo}
                     cell={cell}
                     ctx={displayCtx}
                     hkInteractive={hkInteractive}
                     savingRoom={savingRoom}
+                    previewDetail={previewDetail}
+                    dragDrop={dragDrop}
+                    fixPositions={fixPositions}
+                    onReorder={(from, to) => reorderFloor(floorKey, roomNos, from, to)}
                     onRoomContextMenu={onRoomContextMenu}
                     onRoomPmsContextMenu={onRoomPmsContextMenu}
                   />
                 ))}
               </div>
             </section>
-          ))}
+          );
+          })}
         </div>
       </div>
     );
@@ -369,7 +475,7 @@ export function RoomRackGrid({
           floor={floor}
           onFloorChange={setFloor}
           viewMode={viewMode}
-          onViewModeChange={setViewMode}
+          onViewModeChange={(mode) => updateRackPrefs({ viewMode: mode })}
           cleanOnly={cleanOnly}
           onCleanOnlyChange={setCleanOnly}
           showMaintenance={showMaintenance}
@@ -430,7 +536,10 @@ export function RoomRackGrid({
       </div>
       ) : null}
 
-      <div className="roomio-nr-board">
+      <div
+        className={`roomio-nr-board${dragDrop ? ' roomio-nr-board--drag' : ''}${fixPositions ? ' roomio-nr-board--fixed-pos' : ''}`}
+        style={{ background: floorBg }}
+      >
         <div className="roomio-nr-summary">
           {floor === 'all'
             ? `Tüm katlar — ${totalVisible} / ${totalRooms} oda görünüyor · 5 kat bölümü`
@@ -444,11 +553,11 @@ export function RoomRackGrid({
                 <span className="roomio-nr-floor-title">{elektra ? `${section.floor}. KAT` : `${section.floor}. Kat ›`}</span>
                 <span className="roomio-nr-floor-meta">{section.cells.length} oda</span>
               </div>
-              {renderGrid(section.cells, `${section.floor}-`)}
+              {renderGrid(section.cells, rackFloorKey(section.floor), `${section.floor}-`)}
             </section>
           ))
         ) : (
-          renderGrid(singleCells)
+          renderGrid(singleCells, rackFloorKey(typeof floor === 'number' ? floor : 'all'))
         )}
       </div>
 

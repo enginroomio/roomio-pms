@@ -1,11 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ChevronRight } from 'lucide-react';
 import { useContextMenuPosition } from '@/lib/client/context-menu-position';
+import { shouldFlipFlyout } from '@/lib/client/flyout-flip';
+import { RACK_FLOOR_COLORS } from '@/lib/client/rack-display-actions';
+import type { RackPreferences } from '@/lib/client/rack-preferences';
 import type { RackCell } from '@/lib/types/room';
 import type { Reservation } from '@/lib/types/reservation';
+import { resolveCheckInInfoHref } from '@/lib/client/room-rack-reservation';
 
 export type RoomContextMenuState = {
   cell: RackCell;
@@ -19,18 +24,64 @@ export type RoomMenuAction =
   | { type: 'checkInInfo' }
   | { type: 'checkIn' }
   | { type: 'checkOut' }
-  | { type: 'folio' }
   | { type: 'setStatus'; status: 'CLEAN' | 'DIRTY' | 'OOO' | 'OOS' }
+  | { type: 'floorColor'; color?: string }
+  | { type: 'changeView' }
+  | { type: 'clearSort' }
+  | { type: 'toggleDragDrop' }
+  | { type: 'fixPositions' }
+  | { type: 'roomCoordinates' }
   | { type: 'rackInfo' };
 
 type Props = {
   menu: RoomContextMenuState;
   busy?: boolean;
+  rackPrefs: Pick<RackPreferences, 'dragDrop' | 'fixPositions' | 'floorBg' | 'viewMode'>;
   onAction: (action: RoomMenuAction) => void;
   onClose: () => void;
 };
 
-export function RoomContextMenu({ menu, busy, onAction, onClose }: Props) {
+function FloorColorBranch({
+  current,
+  onPick,
+}: {
+  current: string;
+  onPick: (color: string) => void;
+}) {
+  const branchRef = useRef<HTMLDivElement>(null);
+  const [flip, setFlip] = useState(false);
+
+  return (
+    <div
+      ref={branchRef}
+      className={`roomio-rack-ctx-branch${flip ? ' is-flip-left' : ''}`}
+      onMouseEnter={() => {
+        if (branchRef.current) setFlip(shouldFlipFlyout(branchRef.current, 120));
+      }}
+    >
+      <button type="button" className="roomio-rack-ctx-item roomio-rack-ctx-item--branch" tabIndex={-1}>
+        <span>Zemin Rengini Seç</span>
+        <ChevronRight size={12} aria-hidden />
+      </button>
+      <div className="roomio-rack-ctx-flyout" role="menu">
+        {RACK_FLOOR_COLORS.map((color) => (
+          <button
+            key={color}
+            type="button"
+            className={`roomio-rack-ctx-item roomio-rack-ctx-item--swatch${current === color ? ' is-active' : ''}`}
+            role="menuitem"
+            onClick={() => onPick(color)}
+          >
+            <span className="roomio-rack-ctx-swatch" style={{ background: color }} aria-hidden />
+            {color}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function RoomContextMenu({ menu, busy, rackPrefs, onAction, onClose }: Props) {
   const menuRef = useRef<HTMLDivElement>(null);
   const pos = useContextMenuPosition(menu, menuRef);
 
@@ -59,8 +110,7 @@ export function RoomContextMenu({ menu, busy, onAction, onClose }: Props) {
   if (!menu) return null;
 
   const { cell, inHouse, arrival } = menu;
-  const canCheckIn = Boolean(arrival && !inHouse);
-  const canCheckOut = Boolean(inHouse);
+  const checkInInfoHref = resolveCheckInInfoHref(cell, inHouse, arrival);
 
   function run(action: RoomMenuAction) {
     if (busy) return;
@@ -76,43 +126,21 @@ export function RoomContextMenu({ menu, busy, onAction, onClose }: Props) {
       />
       <div
         ref={menuRef}
-        className="roomio-rack-ctx-menu"
+        className="roomio-rack-ctx-menu roomio-rack-ctx-menu--elektra"
         style={{ left: pos.x, top: pos.y }}
         onContextMenu={(e) => e.preventDefault()}
         role="menu"
         aria-label={`Oda ${cell.room.roomNo} işlemleri`}
       >
-        <div className="roomio-rack-ctx-title">
-          Oda {cell.room.roomNo}
-          <span>{cell.room.typeShort} · {cell.guestName ?? 'Boş'}</span>
-        </div>
-
-        {inHouse ? (
-          <Link
-            href={`/reception/guest/${inHouse.id}`}
-            className="roomio-rack-ctx-item"
-            role="menuitem"
-            onClick={onClose}
-          >
-            CheckIn Bilgileri
-          </Link>
-        ) : (
-          <button
-            type="button"
-            className="roomio-rack-ctx-item"
-            role="menuitem"
-            disabled={!arrival}
-            onClick={() => run({ type: 'checkInInfo' })}
-          >
-            CheckIn Bilgileri
-          </button>
-        )}
+        <Link href={checkInInfoHref} className="roomio-rack-ctx-item" role="menuitem" onClick={onClose}>
+          CheckIn Bilgileri
+        </Link>
 
         <button
           type="button"
           className="roomio-rack-ctx-item"
           role="menuitem"
-          disabled={!canCheckIn || busy}
+          disabled={busy}
           onClick={() => run({ type: 'checkIn' })}
         >
           Check In Yap
@@ -121,22 +149,10 @@ export function RoomContextMenu({ menu, busy, onAction, onClose }: Props) {
           type="button"
           className="roomio-rack-ctx-item"
           role="menuitem"
-          disabled={!canCheckOut || busy}
+          disabled={busy}
           onClick={() => run({ type: 'checkOut' })}
         >
-          Check Out Yap
-        </button>
-
-        <div className="roomio-rack-ctx-sep" />
-
-        <button
-          type="button"
-          className="roomio-rack-ctx-item"
-          role="menuitem"
-          disabled={!inHouse || busy}
-          onClick={() => run({ type: 'folio' })}
-        >
-          Folyo / Tahsilat
+          Check Out yap
         </button>
 
         <div className="roomio-rack-ctx-sep" />
@@ -166,7 +182,7 @@ export function RoomContextMenu({ menu, busy, onAction, onClose }: Props) {
           disabled={busy}
           onClick={() => run({ type: 'setStatus', status: 'OOO' })}
         >
-          Arızalı Olarak Göster
+          Arizalli Olarak Göster
         </button>
         <button
           type="button"
@@ -175,14 +191,60 @@ export function RoomContextMenu({ menu, busy, onAction, onClose }: Props) {
           disabled={busy}
           onClick={() => run({ type: 'setStatus', status: 'OOS' })}
         >
-          Kullanıma Kapalı Göster
+          Kullanima Kapali Göster
         </button>
 
         <div className="roomio-rack-ctx-sep" />
 
-        <Link href="/rooms" className="roomio-rack-ctx-item" role="menuitem" onClick={onClose}>
-          Room Rack (F12)
-        </Link>
+        <FloorColorBranch
+          current={rackPrefs.floorBg}
+          onPick={(color) => run({ type: 'floorColor', color })}
+        />
+        <button
+          type="button"
+          className="roomio-rack-ctx-item"
+          role="menuitem"
+          onClick={() => run({ type: 'changeView' })}
+        >
+          Görünümü Degistir ({rackPrefs.viewMode === 'roomNo' ? 'oda no' : 'tip'})
+        </button>
+        <button
+          type="button"
+          className="roomio-rack-ctx-item"
+          role="menuitem"
+          onClick={() => run({ type: 'clearSort' })}
+        >
+          Siralamayi Kaldir
+        </button>
+
+        <div className="roomio-rack-ctx-sep" />
+
+        <button
+          type="button"
+          className={`roomio-rack-ctx-item${rackPrefs.dragDrop ? ' is-checked' : ''}`}
+          role="menuitemcheckbox"
+          aria-checked={rackPrefs.dragDrop}
+          onClick={() => run({ type: 'toggleDragDrop' })}
+        >
+          {rackPrefs.dragDrop ? 'Sürükle Bırak Pasif' : 'Sürükle Bırak Aktif'}
+        </button>
+        <button
+          type="button"
+          className={`roomio-rack-ctx-item${rackPrefs.fixPositions ? ' is-checked' : ''}`}
+          role="menuitemcheckbox"
+          aria-checked={rackPrefs.fixPositions}
+          onClick={() => run({ type: 'fixPositions' })}
+        >
+          {rackPrefs.fixPositions ? 'Yerleri Serbest Bırak' : 'Yerleri Sabitle'}
+        </button>
+        <button
+          type="button"
+          className="roomio-rack-ctx-item"
+          role="menuitem"
+          onClick={() => run({ type: 'roomCoordinates' })}
+        >
+          Oda Koordinatlari
+        </button>
         <button
           type="button"
           className="roomio-rack-ctx-item"

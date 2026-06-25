@@ -43,6 +43,11 @@ export function RoomsPageClient({ initial }: { initial: import('@/lib/server/das
   const [reason, setReason] = useState('');
   const [focusRoom, setFocusRoom] = useState<string | null>(null);
 
+  useEffect(() => {
+    const focus = searchParams.get('focus');
+    if (focus) setFocusRoom(focus);
+  }, [searchParams]);
+
   const refreshRack = () => {
     setRefreshKey((k) => k + 1);
     void pullFromServer();

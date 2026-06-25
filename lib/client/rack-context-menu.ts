@@ -8,7 +8,7 @@ type RackContextHandlers = {
   onRoomPmsContextMenu?: (cell: RackCell, event: React.MouseEvent) => void;
 };
 
-/** Ana sayfa: sağ tık menü · Ctrl+oda işlemleri · Shift+HK. /rooms: sağ tık oda işlemleri */
+/** Ana sayfa rack: sağ tık oda menüsü · Ctrl+ana menü · Shift+HK */
 export function handleRackCellContextMenu(
   event: React.MouseEvent,
   cell: RackCell,
@@ -19,29 +19,29 @@ export function handleRackCellContextMenu(
 
   const mod = event.ctrlKey || event.metaKey;
 
-  if (homeMenu && !event.shiftKey && !mod) {
-    homeMenu.openMainMenu(event.clientX, event.clientY);
-    return;
-  }
-
-  if (onRoomPmsContextMenu && (mod || !homeMenu)) {
-    onRoomPmsContextMenu(cell, event);
-    return;
-  }
-
   if (onRoomContextMenu && event.shiftKey) {
     onRoomContextMenu(cell.room.roomNo, event);
     return;
   }
 
-  if (!homeMenu && hkInteractive && onRoomContextMenu) {
+  if (homeMenu && mod) {
+    homeMenu.openMainMenu(event.clientX, event.clientY);
+    return;
+  }
+
+  if (onRoomPmsContextMenu) {
+    onRoomPmsContextMenu(cell, event);
+    return;
+  }
+
+  if (onRoomContextMenu && hkInteractive) {
     onRoomContextMenu(cell.room.roomNo, event);
   }
 }
 
 export function rackContextMenuHint(homeMenu: boolean, hkInteractive?: boolean): string {
   if (homeMenu) {
-    return ' · Sağ tık: menü · Ctrl+sağ tık: oda · Shift+sağ tık: HK';
+    return ' · Sağ tık: oda · Ctrl+sağ tık: menü · Shift+sağ tık: HK';
   }
   if (hkInteractive) return ' · Sağ tık: oda işlemleri · Shift+sağ tık: HK';
   return ' · Sağ tık: oda işlemleri';

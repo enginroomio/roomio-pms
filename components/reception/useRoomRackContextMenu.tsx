@@ -1,19 +1,26 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   RoomContextMenu,
   type RoomContextMenuState,
   type RoomMenuAction,
 } from '@/components/reception/RoomContextMenu';
+import { RackRoomCoordinatesDialog } from '@/components/reception/RackRoomCoordinatesDialog';
 import { patchHkRoomFields } from '@/lib/client/hk-patch';
 import { roomioFetch } from '@/lib/client/api';
 import { parseApiError } from '@/lib/client/api-errors';
+import { dispatchRackDisplayAction } from '@/lib/client/rack-display-actions';
+import { updateRackPreferences } from '@/lib/client/rack-preferences';
+import { useRackPreferences } from '@/lib/client/use-rack-preferences';
 import {
   getCheckInCandidate,
   getInHouseReservation,
+  resolveCheckOutHref,
+  resolveWalkInCheckInHref,
 } from '@/lib/client/room-rack-reservation';
+import type { RackDisplayContext } from '@/lib/rooms/rack-display';
 import type { RackCell, RoomHkStatus } from '@/lib/types/room';
 import type { Reservation } from '@/lib/types/reservation';
 
@@ -27,6 +34,7 @@ const HK_STATUS_ACTION: Record<'CLEAN' | 'DIRTY' | 'OOO' | 'OOS', RoomHkStatus> 
 type Options = {
   reservations: Reservation[];
   businessDate: string;
+  displayCtx?: RackDisplayContext;
   onRefresh?: () => void;
   onSelectCell?: (cell: RackCell) => void;
 };
@@ -34,12 +42,20 @@ type Options = {
 export function useRoomRackContextMenu({
   reservations,
   businessDate,
+  displayCtx,
   onRefresh,
   onSelectCell,
 }: Options) {
   const router = useRouter();
+  const { prefs } = useRackPreferences();
   const [menu, setMenu] = useState<RoomContextMenuState>(null);
+  const [coordsCell, setCoordsCell] = useState<RackCell | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const rackDisplayCtx = useMemo(
+    () => displayCtx ?? { businessDate, reservations },
+    [displayCtx, businessDate, reservations],
+  );
 
   const openMenu = useCallback(
     (cell: RackCell, event: React.MouseEvent) => {
@@ -67,21 +83,65 @@ export function useRoomRackContextMenu({
         return;
       }
 
-      if (action.type === 'checkInInfo') {
-        const target = menu.arrival ?? menu.inHouse;
-        if (target) {
-          router.push(`/reception/guest/${target.id}`);
-          closeMenu();
-        }
+      if (action.type === 'roomCoordinates') {
+        onSelectCell?.(menu.cell);
+        setCoordsCell(menu.cell);
+        closeMenu();
         return;
       }
 
-      if (action.type === 'folio') {
-        if (menu.inHouse) {
-          router.push(`/reception/guest/${menu.inHouse.id}?tab=folio`);
-          closeMenu();
-        }
+      if (action.type === 'floorColor') {
+        if (action.color) updateRackPreferences({ floorBg: action.color });
+        else dispatchRackDisplayAction({ type: 'floorColor' });
+        closeMenu();
         return;
+      }
+
+      if (action.type === 'changeView') {
+        const nextView = prefs.viewMode === 'roomNo' ? 'type' : 'roomNo';
+        updateRackPreferences({
+          viewMode: nextView,
+          previewDetail: !prefs.previewDetail,
+        });
+        closeMenu();
+        return;
+      }
+
+      if (action.type === 'clearSort') {
+        updateRackPreferences({ cellOrder: {} });
+        dispatchRackDisplayAction({ type: 'clearSort' });
+        closeMenu();
+        return;
+      }
+
+      if (action.type === 'toggleDragDrop') {
+        updateRackPreferences({ dragDrop: !prefs.dragDrop });
+        closeMenu();
+        return;
+      }
+
+      if (action.type === 'fixPositions') {
+        updateRackPreferences({ fixPositions: !prefs.fixPositions });
+        closeMenu();
+        return;
+      }
+
+      if (action.type === 'checkIn') {
+        const walkInHref = resolveWalkInCheckInHref(menu.cell, menu.arrival, businessDate);
+        if (walkInHref) {
+          router.push(walkInHref);
+          closeMenu();
+          return;
+        }
+      }
+
+      if (action.type === 'checkOut') {
+        const departHref = resolveCheckOutHref(menu.inHouse, menu.cell.room.roomNo);
+        if (departHref) {
+          router.push(departHref);
+          closeMenu();
+          return;
+        }
       }
 
       setBusy(true);
@@ -146,11 +206,24 @@ export function useRoomRackContextMenu({
         setBusy(false);
       }
     },
-    [menu, closeMenu, onRefresh, onSelectCell, router],
+    [menu, closeMenu, onRefresh, onSelectCell, router, businessDate, prefs],
   );
 
   const menuNode = (
-    <RoomContextMenu menu={menu} busy={busy} onAction={(a) => void handleAction(a)} onClose={closeMenu} />
+    <>
+      <RoomContextMenu
+        menu={menu}
+        busy={busy}
+        rackPrefs={prefs}
+        onAction={(a) => void handleAction(a)}
+        onClose={closeMenu}
+      />
+      <RackRoomCoordinatesDialog
+        cell={coordsCell}
+        ctx={rackDisplayCtx}
+        onClose={() => setCoordsCell(null)}
+      />
+    </>
   );
 
   return { openMenu, menuNode, closeMenu };
