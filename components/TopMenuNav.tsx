@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight } from 'lucide-react';
-import { TOP_MENU_GROUPS, topMenuItems } from '@/lib/navigation/top-menu-nav';
+import { TOP_MENU_GROUPS, topMenuGroupActive, topMenuItems } from '@/lib/navigation/top-menu-nav';
 import { navItemActive, type SidebarNavItem } from '@/lib/navigation/sidebar-nav';
 import { translateSidebarNavItems } from '@/lib/i18n/kurulus-nav-i18n';
 import { useI18n } from '@/components/i18n/I18nProvider';
@@ -95,6 +95,10 @@ function TopMenuCascadePanel({
   const translated = useMemo(() => translateSidebarNavItems(items, t), [items, t]);
   const columns = useMemo(() => buildColumns(translated, path), [translated, path]);
 
+  useEffect(() => {
+    setPath([]);
+  }, [items]);
+
   const onEnter = (item: SidebarNavItem, colIndex: number) => {
     setPath((prev) => {
       const next = prev.slice(0, colIndex);
@@ -171,7 +175,7 @@ export function TopMenuNav() {
   }, [openId, updatePanelPos]);
 
   function groupActive(groupId: string) {
-    return topMenuItems(groupId).some((item) => navItemActive(pathname, item));
+    return topMenuGroupActive(pathname, groupId);
   }
 
   function cancelClose() {
@@ -202,6 +206,7 @@ export function TopMenuNav() {
             onMouseLeave={scheduleClose}
           >
             <TopMenuCascadePanel
+              key={openGroup.id}
               items={topMenuItems(openGroup.id)}
               pathname={pathname}
               onClose={() => setOpenId(null)}

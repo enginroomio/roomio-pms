@@ -6,6 +6,23 @@ export type TopMenuGroup = {
   sectionIds: string[];
 };
 
+/** Üst menüde gösterilecek sadeleştirilmiş Gün Sonu listesi (rapor menüsüyle çakışmasın) */
+const GUNSONU_TOP_MENU_ITEMS: SidebarNavItem[] = [
+  { id: 'gunsonu-eod-fetch', label: 'Gün Sonu Raporlarını Al', href: '/reports?tab=eod&action=fetch', icon: 'clock', i18nKey: 'sidebar.item.eodFetch' },
+  { id: 'gunsonu-eod-close', label: 'Günü Kapat', href: '/reports?tab=eod&action=close', icon: 'clock', i18nKey: 'sidebar.item.eodClose' },
+  { id: 'gunsonu-eod-archive', label: 'Eski Gün Sonu Raporları', href: '/reports?tab=eod&action=archive', icon: 'clock' },
+  { id: 'gunsonu-sep-1', label: '', href: '#', icon: 'minus', separator: true },
+  { id: 'gunsonu-backup', label: 'Yedek Al', href: '/reports?tab=eod&action=backup', icon: 'clock' },
+  { id: 'gunsonu-sep-2', label: '', href: '#', icon: 'minus', separator: true },
+  { id: 'gunsonu-room-prices', label: 'Oda Fiyatlarını İşle', href: '/reports?tab=eod&action=room-prices', icon: 'clock' },
+  { id: 'gunsonu-extra-prices', label: 'Ek Fiyatları Bas', href: '/reports?tab=eod&action=extra-prices', icon: 'clock' },
+  { id: 'gunsonu-profile-check', label: 'Misafir Profil Kontrol', href: '/reports?tab=eod&action=profile-check', icon: 'clock' },
+];
+
+const TOP_MENU_ITEM_OVERRIDES: Partial<Record<string, SidebarNavItem[]>> = {
+  gunsonu: GUNSONU_TOP_MENU_ITEMS,
+};
+
 export const TOP_MENU_GROUPS: TopMenuGroup[] = [
   { id: 'sistem', label: 'Sistem', sectionIds: ['sistem', 'ayarlar'] },
   { id: 'rezervasyon', label: 'Rezervasyon', sectionIds: ['rezervasyon'] },
@@ -18,6 +35,9 @@ export const TOP_MENU_GROUPS: TopMenuGroup[] = [
 ];
 
 export function topMenuItems(groupId: string): SidebarNavItem[] {
+  const override = TOP_MENU_ITEM_OVERRIDES[groupId];
+  if (override) return override;
+
   const group = TOP_MENU_GROUPS.find((g) => g.id === groupId);
   if (!group) return [];
   const items: SidebarNavItem[] = [];
@@ -26,6 +46,21 @@ export function topMenuItems(groupId: string): SidebarNavItem[] {
     if (section) items.push(...section.items);
   }
   return items;
+}
+
+/** Üst menü aktif vurgusu — ana sayfa linki (/) grupları yanlışlıkla aktif göstermesin */
+export function topMenuGroupActive(pathname: string, groupId: string): boolean {
+  return topMenuItems(groupId).some((item) => topMenuNavItemActive(pathname, item));
+}
+
+function topMenuNavItemActive(pathname: string, item: SidebarNavItem): boolean {
+  if (item.href) {
+    const base = item.href.split('?')[0];
+    if (base === '/' && pathname === '/') return false;
+    if (base === '/') return pathname === '/';
+    if (pathname === base || pathname.startsWith(`${base}/`)) return true;
+  }
+  return item.children?.some((c) => topMenuNavItemActive(pathname, c)) ?? false;
 }
 
 export const ICON_RAIL = [
