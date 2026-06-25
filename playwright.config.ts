@@ -14,6 +14,7 @@ export default defineConfig({
   use: {
     baseURL: e2eBaseUrl,
     trace: 'on-first-retry',
+    locale: 'tr-TR',
   },
   projects: [
     ...(skipWarm
@@ -21,7 +22,7 @@ export default defineConfig({
       : [{ name: 'setup', testMatch: /warm-routes\.setup\.ts/ }]),
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], locale: 'tr-TR' },
       ...(skipWarm ? {} : { dependencies: ['setup'] }),
     },
   ],

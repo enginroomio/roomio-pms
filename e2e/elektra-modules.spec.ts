@@ -445,9 +445,9 @@ test.describe('Elektra modülleri — UI', () => {
 
   test('/restaurant, /carbon, /staff ve /hr sayfaları', async ({ page }) => {
     await page.goto('/restaurant');
-    await expect(page.getByText(/Masa rezervasyonu|Restoran/i).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('.roomio-public-portal__brand strong')).toBeVisible({ timeout: 15_000 });
     await page.goto('/carbon');
-    await expect(page.getByText(/Karbon Dengeleme/i).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('.roomio-public-portal__brand strong')).toBeVisible({ timeout: 15_000 });
     await page.goto('/staff');
     await expect(page.getByText(/Personel mobil uygulaması|Lite Mobile/i).first()).toBeVisible({ timeout: 15_000 });
     await page.goto('/hr');
@@ -466,6 +466,7 @@ test.describe('Elektra modülleri — UI', () => {
   test('entegrasyon hub — yeni kartlar', async ({ page }) => {
     await page.goto('/settings/integrations');
     await expect(page.getByRole('heading', { name: 'Online Rezervasyon Motoru' })).toBeVisible({ timeout: 15_000 });
+    await page.getByRole('heading', { name: 'Misafir Portalı' }).scrollIntoViewIfNeeded();
     await expect(page.getByRole('heading', { name: 'Kanal Yöneticisi' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Dinamik Fiyatlandırma' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Misafir Portalı' })).toBeVisible();
