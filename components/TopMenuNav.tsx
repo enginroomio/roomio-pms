@@ -34,12 +34,14 @@ function CascadeRow({
   path,
   pathname,
   onEnter,
+  onClose,
 }: {
   item: SidebarNavItem;
   colIndex: number;
   path: string[];
   pathname: string;
   onEnter: (item: SidebarNavItem, colIndex: number) => void;
+  onClose: () => void;
 }) {
   if (item.separator) {
     return <div className="roomio-top-menu__sep" role="separator" />;
@@ -56,7 +58,7 @@ function CascadeRow({
         onMouseEnter={() => onEnter(item, colIndex)}
       >
         {item.href && item.href !== '#' ? (
-          <Link href={item.href} className="roomio-top-menu__row-label">
+          <Link href={item.href} className="roomio-top-menu__row-label" onClick={onClose}>
             {item.label}
           </Link>
         ) : (
@@ -72,6 +74,7 @@ function CascadeRow({
       href={item.href ?? '#'}
       className={`roomio-top-menu__row roomio-top-menu__row--link${active ? ' is-active' : ''}`}
       onMouseEnter={() => onEnter(item, colIndex)}
+      onClick={onClose}
     >
       <span className="roomio-top-menu__row-label">{item.label}</span>
     </Link>
@@ -104,7 +107,6 @@ function TopMenuCascadePanel({
     <div
       className="roomio-top-menu__cascade"
       onMouseLeave={() => setPath([])}
-      onClick={onClose}
     >
       {columns.map((colItems, colIndex) => (
         <div key={`col-${colIndex}-${path.slice(0, colIndex).join('/')}`} className="roomio-top-menu__col">
@@ -116,6 +118,7 @@ function TopMenuCascadePanel({
               path={path}
               pathname={pathname}
               onEnter={onEnter}
+              onClose={onClose}
             />
           ))}
         </div>
@@ -180,7 +183,7 @@ export function TopMenuNav() {
 
   function scheduleClose() {
     cancelClose();
-    closeTimer.current = setTimeout(() => setOpenId(null), 120);
+    closeTimer.current = setTimeout(() => setOpenId(null), 200);
   }
 
   function openGroupMenu(groupId: string) {
