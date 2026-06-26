@@ -151,6 +151,24 @@ Sunucu çalışırken:
 ROOMIO_URL=http://127.0.0.1:3100 npm run test:routes
 ```
 
+### Rollout E2E (tüm modüller)
+
+Chromium gerekir (`npx playwright install chromium`). Script kendi dev sunucusunu başlatır:
+
+```bash
+npm run verify:rollout        # 10 rollout spec (shell → sistem)
+npm run verify:menu-params    # 8 menu-params spec (122 URL)
+```
+
+Mevcut sunucuya karşı (ör. `npm run dev -p 3141`):
+
+```bash
+PLAYWRIGHT_REUSE_SERVER=1 VERIFY_PORT=3141 npm run verify:rollout
+PLAYWRIGHT_REUSE_SERVER=1 VERIFY_PORT=3141 npm run verify:menu-params
+```
+
+Tam zincir: `npm run verify:pipeline` (rollout + menu-params dahil; CI için `npm run verify:ci`).
+
 ---
 
 ## Demo bilgileri
