@@ -50,17 +50,11 @@ import { ThemeScreen } from '@/components/theme/ThemeScreen';
 import type { ThemeMode } from '@/components/theme/ThemeProvider';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { findKurulusScreenTitle } from '@/lib/i18n/kurulus-nav-i18n';
-import { kurulusExternalRedirect, normalizeKurulusSection } from '@/lib/navigation/menu-route-params';
+import { kurulusExternalRedirect } from '@/lib/navigation/menu-route-params';
+import { resolveKurulusScreenKey } from '@/lib/navigation/kurulus-screen';
 
 function screenKey(section: string | null, tab: string | null): string {
-  const sec = normalizeKurulusSection(section);
-  if (tab === 'theme') return 'theme';
-  if (tab === 'password') return 'password';
-  if (tab === 'room-types') return 'room-types';
-  if (tab === 'rooms') return 'rooms';
-  if (tab === 'floors') return 'floors';
-  if (sec) return sec;
-  return 'otel-bilgileri';
+  return resolveKurulusScreenKey(section, tab);
 }
 
 function KurulusToolbar({ title, actions }: { title: string; actions?: React.ReactNode }) {

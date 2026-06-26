@@ -7,7 +7,8 @@ import { Download, Plus, Shield, Wifi } from 'lucide-react';
 import { Hotspot5651BridgePanel } from '@/components/compliance/Hotspot5651BridgePanel';
 import { Hotspot5651DevicesPanel } from '@/components/compliance/Hotspot5651DevicesPanel';
 import { Hotspot5651AutomationPanel } from '@/components/compliance/Hotspot5651AutomationPanel';
-import { ModuleLayout } from '@/components/ModuleLayout';
+import { SistemModuleLayout } from '@/components/sistem/SistemModuleLayout';
+import { SistemIntegrationActions } from '@/components/sistem/SistemIntegrationActions';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
 import {
@@ -140,19 +141,15 @@ function Hotspot5651PageInner() {
     { id: 'config', label: 'Genel' },
   ];
 
+  const menuSearch = urlTab && urlTab !== 'overview' ? `?tab=${urlTab}` : '';
+
   return (
-    <ModuleLayout
-      breadcrumb="Sistem › Uyumluluk › 5651 Hotspot"
+    <SistemModuleLayout
+      segment={['Entegrasyonlar', '5651 Hotspot']}
       title="5651 Hotspot Loglama"
       description={`MikroTik ${config.mikrotik.model} + UniFi AP — 5651/BTK uyumlu misafir WiFi loglama.`}
-      sideTitle="Uyumluluk"
-      menuSearch=""
-      actions={
-        <div className="roomio-quick-actions">
-          <Button variant="ghost" href="/settings/integrations">Entegrasyonlar</Button>
-          <Button variant="ghost" href="/settings/integrations/tesa">TESA</Button>
-        </div>
-      }
+      menuSearch={menuSearch}
+      actions={<SistemIntegrationActions />}
     >
       <div className="roomio-tabs">
         {tabs.map((t) => (
@@ -307,7 +304,7 @@ function Hotspot5651PageInner() {
       <p className="roomio-page-desc" style={{ marginTop: 16 }}>
         <Link href="/settings/integrations/tesa">TESA</Link> · <Link href="/settings/privacy">KVKK</Link>
       </p>
-    </ModuleLayout>
+    </SistemModuleLayout>
   );
 }
 

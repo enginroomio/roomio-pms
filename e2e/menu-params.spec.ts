@@ -35,6 +35,17 @@ const MENU_ROUTES: { path: string; heading: RegExp | string }[] = [
   { path: '/settings?section=lang-forms', heading: /Form Metin/i },
   { path: '/tools/sistem?tab=sql', heading: /SQL/i },
   { path: '/rooms?filter=closed', heading: /Kapalı Oda|KAPALI/i },
+  // Sistem — raporlar ve entegrasyonlar
+  { path: '/reports', heading: /Raporlama Programı|Raporlar/i },
+  { path: '/reports?tab=design', heading: /Rapor Tasarım/i },
+  { path: '/reports?tab=user', heading: /Kullanıcı Tanımlı Raporlar/i },
+  { path: '/settings/integrations', heading: /Servis Programları/i },
+  { path: '/settings/integrations/tesa', heading: /TESA/i },
+  { path: '/settings/integrations/pbx', heading: /Grandstream/i },
+  { path: '/settings?section=users', heading: /Kullanıcı Tanımları/i },
+  { path: '/settings?section=rate-plans', heading: /Fiyat/i },
+  { path: '/settings?tab=room-types', heading: /Oda Tip/i },
+  { path: '/settings?section=inventory', heading: /Ürün/i },
 ];
 
 test.describe('Menü URL parametreleri', () => {

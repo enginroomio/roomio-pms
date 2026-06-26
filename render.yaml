@@ -32,6 +32,12 @@ services:
         value: /tmp/hotspot-5651.enc
       - key: ROOMIO_JWT_SECRET
         generateValue: true
+      - key: ROOMIO_AUTH_REQUIRED
+        value: "1"
+      - key: ROOMIO_DEMO_AUTH
+        value: "0"
+      - key: ROOMIO_SKIP_DEMO_SEED
+        value: "1"
       - key: VAPID_PUBLIC_KEY
         sync: false
       - key: VAPID_PRIVATE_KEY

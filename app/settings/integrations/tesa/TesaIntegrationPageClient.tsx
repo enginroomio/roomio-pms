@@ -3,12 +3,26 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { PageHeader } from '@/components/PageHeader';
 import { FormActions, FormField, FormGrid, FormSection, Input, Textarea } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { TesaModulesPanel } from '@/components/settings/SettingsHubPanels';
+import { SistemIntegrationActions } from '@/components/sistem/SistemIntegrationActions';
+import { SistemModuleLayout } from '@/components/sistem/SistemModuleLayout';
 import { roomioFetch } from '@/lib/client/api';
 import { DEFAULT_TESA_CONFIG, TESA_DEFAULTS, type TesaConfig } from '@/lib/integrations/tesa/types';
+
+function TesaTabs({ active }: { active: 'connection' | 'modules' }) {
+  return (
+    <nav className="roomio-tabs" aria-label="TESA modülleri">
+      <Link href="/settings/integrations/tesa" className={`roomio-tab${active === 'connection' ? ' is-active' : ''}`}>
+        Bağlantı
+      </Link>
+      <Link href="/settings/integrations/tesa?tab=modules" className={`roomio-tab${active === 'modules' ? ' is-active' : ''}`}>
+        Ek modüller
+      </Link>
+    </nav>
+  );
+}
 
 export default function TesaIntegrationPageClient() {
   const searchParams = useSearchParams();
@@ -41,37 +55,28 @@ export default function TesaIntegrationPageClient() {
 
   if (tab === 'modules') {
     return (
-      <PageHeader
-        breadcrumb="Ayarlar › TESA › Ek Modüller"
+      <SistemModuleLayout
+        segment={['Entegrasyonlar', 'TESA Kapı Kartı', 'Ek Modüller']}
         title="Ek Modüller"
         description="TESA Hospitality opsiyonel modül listesi"
-        actions={
-          <>
-            <Button variant="secondary" href="/settings/integrations/tesa">Kapı ayarları</Button>
-            <Button variant="ghost" href="/settings/integrations">← Entegrasyonlar</Button>
-          </>
-        }
+        menuSearch="?tab=modules"
+        actions={<SistemIntegrationActions />}
       >
-        <nav className="roomio-tabs">
-          <Link href="/settings/integrations/tesa" className="roomio-tab">Bağlantı</Link>
-          <Link href="/settings/integrations/tesa?tab=modules" className="roomio-tab is-active">Ek modüller</Link>
-        </nav>
+        <TesaTabs active="modules" />
         <TesaModulesPanel />
-      </PageHeader>
+      </SistemModuleLayout>
     );
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > TESA Hospitality"
+    <SistemModuleLayout
+      segment={['Entegrasyonlar', 'TESA Kapı Kartı']}
       title="TESA Hospitality 7.04.03"
       description="HT24 Industry Standard Protocol — PMS Service TCP (varsayılan port 7779)."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
+      menuSearch=""
+      actions={<SistemIntegrationActions />}
     >
-      <nav className="roomio-tabs" style={{ marginBottom: 16 }}>
-        <Link href="/settings/integrations/tesa" className="roomio-tab is-active">Bağlantı</Link>
-        <Link href="/settings/integrations/tesa?tab=modules" className="roomio-tab">Ek modüller</Link>
-      </nav>
+      <TesaTabs active="connection" />
       <FormSection title="Bağlantı">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -119,6 +124,6 @@ export default function TesaIntegrationPageClient() {
           }}
         />
       </FormSection>
-    </PageHeader>
+    </SistemModuleLayout>
   );
 }

@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { Anchor, Banknote, Bot, Building2, ClipboardCheck, Cloud, CreditCard, Dumbbell, Gamepad2, Headphones, Leaf, MessageCircle, Monitor, Package, Plane, ScanLine, ShoppingCart, Smartphone, Sparkles, Star, Ticket, Trophy, Truck, UtensilsCrossed, Users, FileText, Globe2, KeyRound, Phone, QrCode, Shield, TrendingUp, Wifi } from 'lucide-react';
-import { ModuleLayout } from '@/components/ModuleLayout';
-import { Button } from '@/components/ui';
+import { SistemModuleLayout } from '@/components/sistem/SistemModuleLayout';
+import { SistemIntegrationActions } from '@/components/sistem/SistemIntegrationActions';
 
 const INTEGRATIONS = [
   {
@@ -329,12 +329,12 @@ const ORDERED_INTEGRATIONS = [
 
 export default function IntegrationsHubPage() {
   return (
-    <ModuleLayout
-      breadcrumb="Sistem › Entegrasyonlar"
+    <SistemModuleLayout
+      segment="Entegrasyonlar"
       title="Servis Programları & Entegrasyonlar"
       description="TESA kapı sistemi, Grandstream santral, 5651 hotspot uyumluluğu ve yasal modüller."
-      sideTitle="Entegrasyon"
-      actions={<Button variant="ghost" href="/settings">← Kuruluş</Button>}
+      menuSearch=""
+      actions={<SistemIntegrationActions />}
     >
       <div className="roomio-integration-grid">
         {ORDERED_INTEGRATIONS.map((item) => {
@@ -361,9 +361,7 @@ export default function IntegrationsHubPage() {
         <Link href="/settings/integrations/tesa">TESA ayarları</Link>
         {' · '}
         <Link href="/settings/integrations/pbx">Grandstream santral</Link>
-        {' · '}
-        <Link href="/settings/integrations/pbx">Grandstream santral</Link>
       </p>
-    </ModuleLayout>
+    </SistemModuleLayout>
   );
 }

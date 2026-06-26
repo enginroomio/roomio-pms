@@ -72,7 +72,10 @@ export function isSistemMenuContext(pathname: string, search = ''): boolean {
   const path = pathname.split('?')[0];
   const params = new URLSearchParams(search.replace(/^\?/, ''));
 
-  if (path.startsWith('/tools/sistem')) return true;
+  if (path.startsWith('/tools/sistem') || path.startsWith('/tools/deploy')) return true;
+
+  if (path.startsWith('/settings/integrations') || path.startsWith('/settings/compliance')) return true;
+  if (path.startsWith('/settings/privacy') || path.startsWith('/settings/licensing')) return true;
 
   if (path.startsWith('/settings')) {
     if (params.get('hub') === 'sistem') return true;
@@ -138,12 +141,10 @@ export function moduleMenuForPath(pathname: string, search = ''): ModuleNavItem[
     }));
   }
 
-  if (path.startsWith('/settings/compliance') || path.startsWith('/settings/integrations')) {
-    return COMPLIANCE_MODULE_MENU;
-  }
   if (isSistemMenuContext(path, qs)) {
     return SISTEM_MODULE_MENU;
   }
+
   if (path.startsWith('/settings') || path.startsWith('/tools/license')) {
     return KURULUS_MODULE_MENU;
   }

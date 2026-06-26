@@ -54,11 +54,21 @@ console.log('\n7. URL kaydet + test:');
 console.log(`   ROOMIO_PRODUCTION_URL=${expected} npm run test:render`);
 
 if (prod) {
-  console.log(`\n── Mevcut production URL: ${prod} ──`);
-  const health = await waitForHealth(prod, 12, 5000);
-  console.log(`${health.ok ? '✓' : '✗'} Health — ${prod}/api/health`);
+  let activeUrl = prod;
+  console.log(`\n── Mevcut production URL: ${activeUrl} ──`);
+  let health = await waitForHealth(activeUrl, 12, 5000);
+  if (!health.ok && !activeUrl.includes('onrender.com')) {
+    const fallback = expected;
+    console.log(`\nℹ Kayıtlı URL yanıt vermiyor (${activeUrl}) — Render varsayılan deneniyor: ${fallback}`);
+    health = await waitForHealth(fallback, 12, 5000);
+    if (health.ok) {
+      saveProductionUrl(fallback);
+      activeUrl = fallback;
+    }
+  }
+  console.log(`${health.ok ? '✓' : '✗'} Health — ${activeUrl}/api/health`);
   if (health.ok) {
-    saveProductionUrl(prod);
+    saveProductionUrl(activeUrl);
     console.log('\n✅ Render production ayakta');
     process.exit(0);
   }

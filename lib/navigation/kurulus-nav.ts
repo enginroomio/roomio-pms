@@ -15,6 +15,15 @@ export const KURULUS_ODA_TANIMLARI: KurulusNavEntry[] = [
   { id: 'oda-kat', label: 'Kat Tanımları', href: '/settings?tab=floors' },
 ];
 
+export const KONTRAT_NAV: KurulusNavEntry[] = [
+  { id: 'rate-plans', label: 'Fiyat Listeleri', href: '/settings?section=rate-plans' },
+  { id: 'agencies', label: 'Acenta Kontratları', href: '/settings?section=agencies' },
+  { id: 'kontrat-markets', label: 'Market / Segment', href: '/settings?section=markets' },
+  { id: 'extras', label: 'Standart Ek Fiyatlar', href: '/settings?section=extras' },
+];
+
+export const KONTRAT_TABS = KONTRAT_NAV.map(({ label, href }) => ({ label, href }));
+
 export const KURULUS_NAV: KurulusNavEntry[] = [
   { id: 'otel-bilgileri', label: 'Otel Bilgileri', href: '/settings' },
   { id: 'demo-data', label: 'Rezervasyon Demo Data Yarat', href: '/settings?section=demo-data' },
@@ -49,19 +58,20 @@ export const KURULUS_NAV: KurulusNavEntry[] = [
   { id: 'departments', label: 'Departman Tanımları', href: '/settings?section=departments', shortcut: 'Ctrl+Alt+D' },
   { id: 'meal-plans', label: 'Pansiyon Tanımları', href: '/settings?section=meal-plans' },
   { id: 'meal-prices', label: 'Pansiyon Fiyatlarını Tanımlama', href: '/settings?section=meal-prices' },
+  { id: 'sep-kontrat', label: '', href: '#', separator: true },
+  {
+    id: 'kontrat',
+    label: 'Kontrat & Fiyat',
+    href: '/settings?section=rate-plans',
+    children: KONTRAT_NAV,
+  },
   { id: 'sep-5', label: '', href: '#', separator: true },
   { id: 'theme', label: 'Tema & Ekran Kataloğu', href: '/settings?tab=theme' },
   { id: 'pro-hub', label: 'Profesyonel PMS Merkezi', href: '/tools/pro' },
   { id: 'warehouse', label: 'Depo Tanımları', href: '/settings?section=warehouse' },
+  { id: 'inventory', label: 'Ürün Kartları', href: '/settings?section=inventory' },
   { id: 'currencies', label: 'Döviz Tanımları', href: '/settings?section=currencies' },
   { id: 'tax-rules', label: 'Vergi Oranları', href: '/settings?section=tax-rules' },
   { id: 'nationalities', label: 'Uyruk Tanımları', href: '/settings?section=nationalities' },
   { id: 'fiscal', label: 'Yazarkasa Tanımları', href: '/settings?section=fiscal' },
-];
-
-export const KONTRAT_TABS = [
-  { label: 'Fiyat Listeleri', href: '/settings?section=rate-plans' },
-  { label: 'Acenta Kontratları', href: '/settings?section=agencies' },
-  { label: 'Market / Segment', href: '/settings?section=markets' },
-  { label: 'Standart Ek Fiyatlar', href: '/settings?section=extras' },
 ];
