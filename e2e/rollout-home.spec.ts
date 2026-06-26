@@ -17,7 +17,7 @@ test.describe('Ana Sayfa rollout — adım adım', () => {
     const summary = page.getByRole('region', { name: 'Günlük özet' });
     await expect(summary).toBeVisible({ timeout: 15_000 });
     await expect(summary.getByText(/Konaklayan/i)).toBeVisible();
-    await expect(summary.getByText(/%\d+/).first()).toBeVisible();
+    await expect(summary.locator('.roomio-welcome-insight__value').first()).toBeVisible();
     const kpi = page.getByRole('region', { name: 'Günlük KPI' });
     if (await kpi.isVisible().catch(() => false)) {
       await expect(kpi.getByText('Doluluk')).toBeVisible();
