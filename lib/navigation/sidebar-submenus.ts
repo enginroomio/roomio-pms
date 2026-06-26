@@ -160,6 +160,13 @@ export const SIDEBAR_SUBMENU_BY_KEY: Record<string, SidebarSubItem[]> = {
     sub('Sistem Hub', '/settings?hub=sistem'),
     ...fromKurulus(KURULUS_NAV),
   ],
+  'sistem:Sistem Merkezi': [
+    sub('Sistem Merkezi', '/tools/sistem'),
+    sub('SQL Mesaj', '/tools/sistem?tab=sql'),
+    sub('Production Deploy', '/tools/deploy'),
+    sub('KVKK & Gizlilik', '/settings/privacy'),
+    sub('Lisanslama', '/settings/licensing'),
+  ],
   'sistem:Raporla': [
     sub('Raporlama Programı', '/reports'),
     sub('Özel Raporlar', '/reports?tab=special'),

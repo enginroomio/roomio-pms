@@ -36,20 +36,60 @@ export function kurulusModuleMenuForUser(
   return [];
 }
 
+/** Üst SİSTEM menüsü ile aynı sıra — yan menü ve rollout testleriyle hizalı */
 export const SISTEM_MODULE_MENU: ModuleNavItem[] = [
-  { id: 'sistem-hub', label: 'Sistem Merkezi', href: '/tools/sistem' },
   { id: 'kurulus', label: 'Kuruluş', href: '/settings?hub=sistem' },
+  { id: 'sistem-hub', label: 'Sistem Merkezi', href: '/tools/sistem' },
   { id: 'rapor-design', label: 'Rapor Tasarım', href: '/reports?tab=design' },
   { id: 'raporla', label: 'Raporla', href: '/reports' },
   { id: 'user-reports', label: 'Kullanıcı Tanımlı Raporlar', href: '/reports?tab=user' },
   { id: 'sep-1', label: '', href: '#', separator: true },
   { id: 'servis', label: 'Servis Programları', href: '/settings/integrations' },
+  { id: '5651', label: '5651 Hotspot Loglama', href: '/settings/compliance/5651' },
   { id: 'tesa', label: 'TESA Kapı Kartı', href: '/settings/integrations/tesa' },
   { id: 'pbx', label: 'Grandstream Santral', href: '/settings/integrations/pbx' },
-  { id: '5651', label: '5651 Hotspot', href: '/settings/compliance/5651' },
   { id: 'dil', label: 'Dil Tanımları', href: '/settings?section=language' },
   { id: 'forms', label: 'Form Tasarım Listesi', href: '/reports?tab=forms' },
+  { id: 'sep-2', label: '', href: '#', separator: true },
+  { id: 'sql', label: 'SQL Mesaj', href: '/tools/sistem?tab=sql' },
 ];
+
+const SISTEM_SETTINGS_SECTIONS = new Set([
+  'language',
+  'lang-forms',
+  'lang-menus',
+  'lang-reports',
+  'nationalities',
+  'sync',
+  'pbx-calls',
+  'pbx-lookup',
+]);
+
+const SISTEM_REPORT_TABS = new Set(['design', 'forms', 'user', 'special', 'daily', 'management']);
+
+/** Yan menüde SİSTEM modül ağacını göster */
+export function isSistemMenuContext(pathname: string, search = ''): boolean {
+  const path = pathname.split('?')[0];
+  const params = new URLSearchParams(search.replace(/^\?/, ''));
+
+  if (path.startsWith('/tools/sistem')) return true;
+
+  if (path.startsWith('/settings')) {
+    if (params.get('hub') === 'sistem') return true;
+    const section = params.get('section');
+    return Boolean(section && SISTEM_SETTINGS_SECTIONS.has(section));
+  }
+
+  if (path.startsWith('/reports')) {
+    if (params.get('hub') === 'raporlar' || params.get('hub') === 'gunsonu') return false;
+    if (params.get('category') || params.get('report')) return false;
+    const tab = params.get('tab');
+    if (!tab) return true;
+    return SISTEM_REPORT_TABS.has(tab);
+  }
+
+  return false;
+}
 
 export const COMPLIANCE_MODULE_MENU: ModuleNavItem[] = [
   { id: 'hub', label: 'Entegrasyonlar', href: '/settings/integrations' },
@@ -101,11 +141,11 @@ export function moduleMenuForPath(pathname: string, search = ''): ModuleNavItem[
   if (path.startsWith('/settings/compliance') || path.startsWith('/settings/integrations')) {
     return COMPLIANCE_MODULE_MENU;
   }
+  if (isSistemMenuContext(path, qs)) {
+    return SISTEM_MODULE_MENU;
+  }
   if (path.startsWith('/settings') || path.startsWith('/tools/license')) {
     return KURULUS_MODULE_MENU;
-  }
-  if (path.startsWith('/reports') && (qs.includes('tab=design') || qs.includes('tab=forms'))) {
-    return SISTEM_MODULE_MENU;
   }
 
   if (path.startsWith('/reception') || path.startsWith('/guest-relations/info-rack')) {

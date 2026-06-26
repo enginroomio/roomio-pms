@@ -8,7 +8,11 @@ import { useSession } from '@/components/auth/SessionProvider';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { canAccessRoute, hasPermission } from '@/lib/auth/roles';
 import { findKurulusNavTitle, translateKurulusModuleMenu } from '@/lib/i18n/kurulus-nav-i18n';
-import { kurulusModuleMenuForUser } from '@/lib/navigation/module-menus';
+import {
+  isSistemMenuContext,
+  kurulusModuleMenuForUser,
+  SISTEM_MODULE_MENU,
+} from '@/lib/navigation/module-menus';
 import { Button } from '@/components/ui';
 import type { ThemeMode } from '@/components/theme/ThemeProvider';
 import { AyarlarHubPanel } from '@/components/settings/AyarlarHubPanel';
@@ -75,6 +79,9 @@ export function SettingsPageClient({
     () => translateKurulusModuleMenu(kurulusModuleMenuForUser(user), t),
     [user, t],
   );
+  const sistemContext = isSistemMenuContext('/settings', menuSearch);
+  const sideMenu = sistemContext ? SISTEM_MODULE_MENU : kurulusMenu;
+  const sideNavTitle = sistemContext ? 'Sistem' : t('nav.settings.sideTitle');
 
   useEffect(() => {
     const action = searchParams.get('action');
@@ -102,11 +109,11 @@ export function SettingsPageClient({
     return (
       <ModuleLayout
         breadcrumb="Sistem"
-        title="Sistem ve Kuruluş"
+        title="Sistem Merkezi"
         description="Kuruluş tanımları, rapor tasarım, entegrasyonlar ve uyumluluk."
-        sideTitle={t('nav.settings.sideTitle')}
+        sideTitle="Sistem"
         menuSearch="?hub=sistem"
-        menuItems={kurulusMenu}
+        menuItems={SISTEM_MODULE_MENU}
       >
         <SistemHubPanel />
       </ModuleLayout>
@@ -192,12 +199,12 @@ export function SettingsPageClient({
 
   return (
     <ModuleLayout
-      breadcrumb={t('nav.settings.breadcrumb')}
-      title={t('nav.settings.title')}
+      breadcrumb={sistemContext ? 'Sistem' : t('nav.settings.breadcrumb')}
+      title={title}
       description={t('nav.settings.description')}
-      sideTitle={t('nav.settings.sideTitle')}
+      sideTitle={sideNavTitle}
       menuSearch={menuSearch}
-      menuItems={kurulusMenu}
+      menuItems={sideMenu}
     >
       <div className="roomio-kurulus-meta">
         <span className="roomio-badge">{t('nav.settings.badge')}</span>

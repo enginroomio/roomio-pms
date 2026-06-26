@@ -46,6 +46,8 @@ export function ReservationsPageClient() {
   }
 
   const isListView = !tab;
+  const showListLoading = isListView && loading;
+  const showListError = isListView && error;
   const title = tab === 'availability'
     ? showPrices
       ? 'Oda Müsaitlik (Fiyatlı)'
@@ -89,9 +91,9 @@ export function ReservationsPageClient() {
     >
       <ReservationModuleTabs compact={isListView} />
 
-      {loading ? (
+      {showListLoading ? (
         <p className="roomio-page-desc">{t('reservations.loadingList')}</p>
-      ) : error ? (
+      ) : showListError ? (
         <p className="roomio-page-desc roomio-text-warn">{error}</p>
       ) : tab === 'availability' ? (
         <AvailabilityCalendar showPrices={showPrices} />

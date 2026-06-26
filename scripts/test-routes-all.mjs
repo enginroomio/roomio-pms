@@ -6,7 +6,7 @@
 import { spawnSync } from 'node:child_process';
 import { ROUTES } from './test-routes.mjs';
 
-const BATCH = Number(process.env.ROUTE_TEST_BATCH_SIZE ?? 40);
+const BATCH = Number(process.env.ROUTE_TEST_BATCH_SIZE ?? 25);
 const env = { ...process.env, ROUTE_TEST_WARMUP: process.env.ROUTE_TEST_WARMUP ?? '0' };
 const total = ROUTES.length;
 let failed = 0;

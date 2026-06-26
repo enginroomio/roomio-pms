@@ -64,7 +64,7 @@ export function reportsCategoryFromReportSlug(report: string | null): string | n
   if (slug.includes('transfer') || slug.includes('room-change')) return 'gunluk';
   if (slug.includes('forecast') || slug.includes('doluluk')) return 'forecast';
   if (slug.includes('rez') || slug.includes('reservation')) return 'rezervasyon';
-  if (slug.includes('hk') || slug.includes('kat')) return 'kathizmetleri';
+  if (slug.includes('hk') || slug.includes('kat') || slug.includes('enerji') || slug.includes('demirbas')) return 'kathizmetleri';
   if (slug.includes('egm') || slug.includes('kbs')) return 'egm';
   if (slug.includes('gelir') || slug.includes('revenue')) return 'gelir';
   return 'yonetim';
