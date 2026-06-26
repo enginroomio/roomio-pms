@@ -11,7 +11,7 @@
     "dev:watch": "next dev -p 3100 -H 127.0.0.1",
     "dev:poll": "WATCHPACK_POLLING=true next dev -p 3100 -H 127.0.0.1",
     "build": "next build",
-    "postbuild": "node scripts/write-release-manifest.mjs",
+    "postbuild": "node scripts/write-release-manifest.mjs && node scripts/sync-standalone-assets.mjs",
     "start": "node scripts/roomio-restart.mjs --quick --no-test",
     "start:safe": "node scripts/roomio-restart.mjs --force",
     "fix3100": "bash scripts/fix-3100.sh",

@@ -16,8 +16,15 @@ function readActivePort() {
 }
 
 async function resolveBaseUrl() {
-  const candidates = [process.env.ROOMIO_URL, readActivePort(), 'http://127.0.0.1:3100'].filter(Boolean);
+  const candidates = [
+    process.env.ROOMIO_URL,
+    'http://127.0.0.1:3100',
+    readActivePort(),
+  ].filter(Boolean);
+  const seen = new Set();
   for (const base of candidates) {
+    if (seen.has(base)) continue;
+    seen.add(base);
     try {
       const res = await fetch(`${base}/api/health`, { signal: AbortSignal.timeout(8000) });
       if (res.ok) return base;
@@ -25,7 +32,7 @@ async function resolveBaseUrl() {
       // try next
     }
   }
-  return candidates[0] ?? 'http://127.0.0.1:3100';
+  return 'http://127.0.0.1:3100';
 }
 
 const BASE = await resolveBaseUrl();
