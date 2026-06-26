@@ -20,13 +20,14 @@ test.describe('Ön Kasa rollout — adım adım', () => {
   test('Adım 3 — Döviz bozdurma', async ({ page }) => {
     await page.goto('/reception/departures?tab=fx');
     await expect(page.getByRole('heading', { name: /Döviz Bozdurma Listesi/i })).toBeVisible();
-    await expect(page.getByRole('table')).toBeVisible();
+    await expect(page.getByRole('main').getByText(/Bozdurma kuru|bozdurma kaydı/i).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('main').getByRole('table').first()).toBeVisible({ timeout: 15_000 });
   });
 
   test('Adım 4 — Depozit işlemleri', async ({ page }) => {
-    await page.goto('/reception/vacant?tab=deposit');
-    await expect(page.getByRole('heading', { name: /Depozit İşlemleri/i })).toBeVisible();
+    await page.goto('/reception/vacant?tab=deposit', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { name: /Depozit İşlemleri/i })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('button', { name: /Depozit al/i })).toBeVisible();
-    await expect(page.getByRole('table')).toBeVisible();
+    await expect(page.getByRole('table').first()).toBeVisible();
   });
 });

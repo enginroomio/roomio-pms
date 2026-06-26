@@ -53,19 +53,20 @@ function killPort() {
   spawnSync(`lsof -ti :${PORT} 2>/dev/null | xargs kill -9 2>/dev/null; true`, { shell: true, stdio: 'ignore' });
 }
 
-async function waitHealth(maxMs = 120_000) {
+async function waitHealth(maxMs = 180_000) {
   const start = Date.now();
   while (Date.now() - start < maxMs) {
     try {
       const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(8000) });
-      if (res.ok) {
-        const j = await res.json();
-        if (j.ok) return true;
-      }
+      if (!res.ok) throw new Error(`health ${res.status}`);
+      const j = await res.json();
+      if (!j.ok) throw new Error('health not ok');
+      const home = await fetch(`${BASE}/`, { signal: AbortSignal.timeout(15_000) });
+      if (home.ok) return true;
     } catch {
       /* retry */
     }
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 2000));
   }
   return false;
 }
@@ -107,7 +108,7 @@ async function main() {
 
   for (const spec of ROLLOUT_SPECS) {
     const label = `E2E — ${spec.replace('e2e/', '').replace('.spec.ts', '')}`;
-    run(label, 'npm', ['run', 'test:e2e', '--', spec], e2eEnv);
+    run(label, 'npx', ['playwright', 'test', '--config=playwright.rollout.config.ts', spec], e2eEnv);
   }
 
   if (server) {

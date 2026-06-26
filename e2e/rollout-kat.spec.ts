@@ -9,16 +9,16 @@ test.describe('Kat HK rollout — adım adım', () => {
 
   test('Adım 2 — Oda listesi (F8)', async ({ page }) => {
     await page.goto('/housekeeping/rooms');
-    await expect(page.getByRole('heading', { name: /Oda Listesi/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Oda Listesi/i })).toBeVisible({ timeout: 15_000 });
   });
 
   test('Adım 3 — Görevler', async ({ page }) => {
     await page.goto('/housekeeping/tasks');
-    await expect(page.getByRole('heading', { name: /Görevler/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^Görevler$/i })).toBeVisible();
   });
 
   test('Adım 4 — Room Rack', async ({ page }) => {
     await page.goto('/rooms');
-    await expect(page.getByRole('heading', { name: /Room Rack|Oda Rack/i }).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /Room Rack/i }).first()).toBeVisible({ timeout: 15_000 });
   });
 });

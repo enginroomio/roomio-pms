@@ -4,15 +4,39 @@ export type DemoRole = 'admin' | 'fo_manager' | 'reception' | 'hk' | 'accounting
 
 /** Demo mode picks role from localStorage when no JWT is stored. */
 export async function useDemoRole(page: Page, role: DemoRole = 'admin') {
+  await page.context().clearCookies();
   await page.addInitScript((r: string) => {
     localStorage.setItem('roomio-demo-role', r);
+    localStorage.setItem('roomio-locale', 'tr');
     localStorage.removeItem('roomio-token');
   }, role);
 }
 
-export async function waitForDemoSession(page: Page) {
-  await page.waitForResponse(
-    (res) => res.url().includes('/api/auth/session') && res.ok(),
-    { timeout: 15_000 },
-  );
+/** Oturum API yanıtını tetikle (goto sonrası kullanım için). */
+export async function waitForDemoSession(page: Page, role: DemoRole = 'admin') {
+  await Promise.all([
+    page.waitForResponse(
+      (res) => res.url().includes('/api/auth/session') && res.ok(),
+      { timeout: 15_000 },
+    ),
+    page.evaluate(
+      (r) => fetch(`/api/auth/session?role=${r}`, { credentials: 'include' }),
+      role,
+    ),
+  ]);
+}
+
+/** Demo rolü ayarla, sayfaya git; yan menünün hazır olmasını bekle. */
+export async function gotoWithDemo(page: Page, url: string, role: DemoRole = 'admin') {
+  await useDemoRole(page, role);
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90_000 });
+  await page.locator('.roomio-module-side__link, .roomio-module-side__branch').first().waitFor({
+    state: 'visible',
+    timeout: 60_000,
+  });
+}
+
+/** Demo rolü + ilk sayfa yüklemesi (hub testleri için). */
+export async function bootstrapDemoPage(page: Page, role: DemoRole = 'admin', url = '/') {
+  await gotoWithDemo(page, url, role);
 }

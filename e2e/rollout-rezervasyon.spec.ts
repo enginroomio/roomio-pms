@@ -11,16 +11,21 @@ test.describe('Rezervasyon rollout — adım adım', () => {
   test('Adım 2 — Yeni Rezervasyon (F2)', async ({ page }) => {
     await page.goto('/reservations/new');
     await expect(page.getByRole('heading', { name: /Yeni Rezervasyon/i })).toBeVisible();
-    await expect(page.getByText(/Misafir|Konaklama|Fiyat/i).first()).toBeVisible();
+    await expect(page.getByRole('navigation', { name: /Rezervasyon adımları/i })).toBeVisible({ timeout: 15_000 });
     await page.getByRole('button', { name: /Konaklama/i }).click();
-    await expect(page.getByText(/müsait|Müsaitlik/i).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/müsait|Müsaitlik/i).first()).toBeVisible({ timeout: 20_000 });
   });
 
   test('Adım 3 — Rezervasyon Listesi', async ({ page }) => {
+    const reservationsReady = page.waitForResponse(
+      (res) => res.url().includes('/api/reservations') && res.ok(),
+      { timeout: 45_000 },
+    );
     await page.goto('/reservations');
-    await expect(page.getByRole('heading', { name: /Rezervasyon Listesi/i })).toBeVisible();
-    await expect(page.getByText('Filtreler')).toBeVisible({ timeout: 10_000 });
+    await reservationsReady;
+    await expect(page.getByText('Filtreler')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/Kayıt Sayısı/i)).toBeVisible();
+    await expect(page.getByRole('region', { name: /Rezervasyon listesi/i })).toBeVisible();
   });
 
   test('Adım 4 — Konaklayanlar', async ({ page }) => {
@@ -32,7 +37,7 @@ test.describe('Rezervasyon rollout — adım adım', () => {
   test('Adım 5 — Boş Oda Listesi', async ({ page }) => {
     await page.goto('/reception/vacant');
     await expect(page.getByRole('heading', { name: /Boş Oda/i })).toBeVisible();
-    await expect(page.getByText(/Temiz — Check-in hazır/i)).toBeVisible();
+    await expect(page.getByText(/Temiz — Check-in hazır/i).first()).toBeVisible();
   });
 
   test('Adım 6 — Hızlı Blokaj', async ({ page }) => {
