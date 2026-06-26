@@ -42,6 +42,17 @@ const WARM_PATHS = [
   '/api/reservations/groups?view=summary',
   '/groups',
   '/tools/deploy',
+  '/carbon',
+  '/staff',
+  '/hr',
+  '/fair',
+  '/gym',
+  '/hotel',
+  '/settings/integrations/egm',
+  '/settings/integrations/carbon',
+  '/tools/rollout',
+  '/tools/theme',
+  '/tools/pro',
 ];
 
 setup('warm API routes', async ({ request }) => {

@@ -287,17 +287,21 @@ input {
   display: flex;
   align-items: stretch;
   max-height: min(72vh, 680px);
+  overflow: hidden;
 }
 
 .roomio-top-menu__col {
   flex: 0 0 auto;
   min-width: 220px;
   max-width: 300px;
+  min-height: 0;
   max-height: min(72vh, 680px);
   overflow-x: hidden;
   overflow-y: auto;
   padding: 6px;
   border-right: 1px solid var(--roomio-border);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .roomio-top-menu__col:last-child {

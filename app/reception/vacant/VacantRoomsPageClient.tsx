@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { ReceptionTabs } from '@/components/ReceptionTabs';
 import { Button } from '@/components/ui';
 import { ReceptionLoading } from '@/components/reception/ReceptionLoading';
-import { DepositPanel } from '@/components/reception/DepositPanel';
+import { ReceptionSubTabContent, receptionSubTabMeta } from '@/components/reception/ReceptionSubTabContent';
 import { useReservations } from '@/lib/client/use-reservations';
 import { getVacantRooms } from '@/lib/data/reception';
 
@@ -19,11 +19,12 @@ export default function VacantRoomsPageClient() {
   const clean = vacantRooms.filter((r) => r.status === 'CLEAN');
   const dirty = vacantRooms.filter((r) => r.status === 'DIRTY');
 
-  if (tab === 'deposit') {
+  if (tab === 'deposit' || tab === 'deposit-collect' || tab === 'deposit-refund') {
+    const meta = receptionSubTabMeta(tab === 'deposit' ? 'deposit' : tab);
     return (
-      <PageHeader breadcrumb="Ön Kasa > Depozit" title="Depozit İşlemleri" description="Misafir depozit alma, iade ve mahsup — kasa defteri ile entegre.">
+      <PageHeader breadcrumb={`Ön Kasa > ${meta.title}`} title={meta.title} description={meta.description}>
         <ReceptionTabs />
-        <DepositPanel />
+        <ReceptionSubTabContent tab={tab} />
         <div className="roomio-form-actions" style={{ marginTop: 16 }}>
           <Button href="/reception/vacant">← Boş odalara dön</Button>
         </div>

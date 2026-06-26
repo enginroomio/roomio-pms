@@ -51,11 +51,16 @@ async function ensureDemoUsers(): Promise<boolean> {
 }
 
 async function performSeed(): Promise<boolean> {
+  if (process.env.ROOMIO_SKIP_DEMO_SEED === '1') return false;
+
   const count = await prisma.property.count();
   if (count > 0) return false;
 
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
   const now = new Date().toISOString().slice(0, 10);
+  const forceAdminPwdChange =
+    process.env.ROOMIO_FORCE_ADMIN_PASSWORD_CHANGE === '1'
+    || (process.env.NODE_ENV === 'production' && process.env.ROOMIO_DEMO_AUTH !== '1');
 
   try {
     await prisma.$transaction([
@@ -72,7 +77,11 @@ async function performSeed(): Promise<boolean> {
       ],
     }),
     prisma.user.createMany({
-      data: DEMO_USERS.map((u) => ({ ...u, passwordHash: hash })),
+      data: DEMO_USERS.map((u) => ({
+        ...u,
+        passwordHash: hash,
+        mustChangePassword: u.role === 'admin' && forceAdminPwdChange,
+      })),
     }),
     prisma.reservation.createMany({
       data: DEMO_RESERVATIONS.map((r) => ({
@@ -96,6 +105,7 @@ async function performSeed(): Promise<boolean> {
         status: r.status,
         createdAt: r.createdAt,
         notes: r.notes ?? null,
+        extraData: r.extraData ? JSON.stringify(r.extraData) : null,
       })),
     }),
     prisma.roomBlock.createMany({
@@ -119,7 +129,7 @@ async function performSeed(): Promise<boolean> {
     prisma.identityNotification.createMany({
       data: [
         {
-          id: 'id-1', propertyId: PROP_IST, reservationId: '11', refNo: 'RSV-2026-0152',
+          id: 'id-1', propertyId: PROP_IST, reservationId: 'rez-08', refNo: '8',
           guestName: 'Marco Rossi', firstName: 'Marco', lastName: 'Rossi',
           roomNo: '118', nationality: 'IT', idNo: 'YA1234567', idType: 'PASSPORT',
           birthDate: '1985-03-12', birthPlace: 'Roma', gender: 'E',
@@ -128,7 +138,7 @@ async function performSeed(): Promise<boolean> {
           sentAt: '2026-06-18 15:02', egmRef: 'EGM-DEMO-001', createdAt: '2026-06-18 14:55',
         },
         {
-          id: 'id-2', propertyId: PROP_IST, reservationId: '10', refNo: 'RSV-2026-0151',
+          id: 'id-2', propertyId: PROP_IST, reservationId: 'rez-07', refNo: '7',
           guestName: 'Zeynep Ak', firstName: 'Zeynep', lastName: 'Ak',
           roomNo: '215', nationality: 'TR', idNo: '12345678901', idType: 'TCKN',
           birthDate: '1992-07-08', birthPlace: 'İstanbul', gender: 'K',

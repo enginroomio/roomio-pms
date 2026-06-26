@@ -8,19 +8,27 @@ import { propertyIdFromRequest } from '@/lib/server/property-context';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
-  const auth = await requireApiAnyPermission(req, ['eod.close', 'reports.export']);
+  const auth = await requireApiAnyPermission(req, ['eod.close', 'reports.export', 'settings.admin']);
   if (auth instanceof NextResponse) return auth;
 
   const propertyId = propertyIdFromRequest(req);
   const { searchParams } = new URL(req.url);
-  const businessDate = searchParams.get('businessDate') ?? (await getBusinessDate(propertyId));
+  const businessDate = searchParams.get('businessDate') ?? undefined;
   const module = searchParams.get('module') ?? undefined;
+  const limit = Number(searchParams.get('limit') ?? '200');
   const format = searchParams.get('format');
 
   try {
-    const logs = await getAuditLogsServer(propertyId, { businessDate, module });
+    const logs = await getAuditLogsServer(propertyId, {
+      businessDate,
+      module,
+      limit: Number.isFinite(limit) ? limit : 200,
+    });
 
     if (format === 'pdf') {
+      if (!businessDate) {
+        return NextResponse.json({ error: 'businessDate required for pdf' }, { status: 400 });
+      }
       await init();
       const hotel = (await getProperty(propertyId))?.name ?? 'Hotel';
       const pdf = await buildNightAuditPdfKit({

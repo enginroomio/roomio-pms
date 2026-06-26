@@ -279,6 +279,14 @@ const INTEGRATIONS = [
     status: 'Yeni',
   },
   {
+    id: 'egm',
+    title: 'EGM / KBS Kimlik Bildirimi',
+    description: 'Konaklama kimlik bildirimi — check-in, rezervasyon ve 5651 uyumu.',
+    href: '/settings/integrations/egm',
+    icon: ScanLine,
+    status: 'Aktif',
+  },
+  {
     id: 'tesa',
     title: 'TESA Hospitality 7.04.03',
     description: 'HT24 PMS Service — oda kartı encode, check-out ve kopya kart (TCP 7779).',
@@ -312,6 +320,13 @@ const INTEGRATIONS = [
   },
 ];
 
+const CORE_INTEGRATION_IDS = new Set(['egm', 'tesa', 'pbx', '5651']);
+
+const ORDERED_INTEGRATIONS = [
+  ...INTEGRATIONS.filter((item) => CORE_INTEGRATION_IDS.has(item.id)),
+  ...INTEGRATIONS.filter((item) => !CORE_INTEGRATION_IDS.has(item.id)),
+];
+
 export default function IntegrationsHubPage() {
   return (
     <ModuleLayout
@@ -322,7 +337,7 @@ export default function IntegrationsHubPage() {
       actions={<Button variant="ghost" href="/settings">← Kuruluş</Button>}
     >
       <div className="roomio-integration-grid">
-        {INTEGRATIONS.map((item) => {
+        {ORDERED_INTEGRATIONS.map((item) => {
           const Icon = item.icon;
           return (
             <Link key={item.id} href={item.href} className="roomio-integration-card">
@@ -344,6 +359,10 @@ export default function IntegrationsHubPage() {
         <Link href="/tools/rollout?phase=sistem">Rollout test</Link>
         {' · '}
         <Link href="/settings/integrations/tesa">TESA ayarları</Link>
+        {' · '}
+        <Link href="/settings/integrations/pbx">Grandstream santral</Link>
+        {' · '}
+        <Link href="/settings/integrations/pbx">Grandstream santral</Link>
       </p>
     </ModuleLayout>
   );

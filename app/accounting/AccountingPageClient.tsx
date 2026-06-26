@@ -9,7 +9,16 @@ import { roomioFetch } from '@/lib/client/api';
 import { formatMoney } from '@/lib/data/reservations';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { AccountingFiscalPanel } from '@/components/accounting/AccountingFiscalPanel';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  BankCardsPanel,
+  BudgetPanel,
+  CariCardsPanel,
+  CariPaymentsPanel,
+  ProformaInvoicesPanel,
+} from '@/components/accounting/BackOfficePanels';
+import { ArkaBuroHubPanel } from '@/components/accounting/ArkaBuroHubPanel';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { normalizeAccountingTab } from '@/lib/navigation/menu-route-params';
 
 type Invoice = {
   id: string;
@@ -48,7 +57,22 @@ const INVOICE_TYPES = ['konaklama', 'ekstra', 'banket'] as const;
 export default function AccountingPageClient() {
   const { t } = useI18n();
   const searchParams = useSearchParams();
-  const tab = searchParams.get('tab') ?? 'invoices';
+  const hub = searchParams.get('hub');
+  const rawTab = searchParams.get('tab');
+  const tab = normalizeAccountingTab(rawTab);
+  const budgetView = rawTab?.startsWith('budget') ? rawTab : null;
+  const isProforma = rawTab === 'proforma';
+  const isCariCards = rawTab === 'cari';
+  const isCariPayments = rawTab === 'cari-payments';
+  const isBankCards = rawTab === 'bank-cards';
+  const menuSearch = useMemo(() => {
+    const params = new URLSearchParams();
+    if (hub) params.set('hub', hub);
+    if (rawTab) params.set('tab', rawTab);
+    if (searchParams.get('new') === '1') params.set('new', '1');
+    const qs = params.toString();
+    return qs ? `?${qs}` : '';
+  }, [hub, rawTab, searchParams]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [stock, setStock] = useState<StockItem[]>([]);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
@@ -86,6 +110,13 @@ export default function AccountingPageClient() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get('new') === '1' && tab === 'invoices') {
+      setEditingInvoiceId(null);
+      setShowInvoiceForm(true);
+    }
+  }, [searchParams, tab]);
 
   async function stockMove(id: string, type: 'in' | 'out') {
     await roomioFetch('/api/inventory/stock', {
@@ -230,12 +261,35 @@ export default function AccountingPageClient() {
 
   const total = invoices.reduce((s, i) => s + i.amount, 0);
 
+  if (hub === 'arkaburo' && !rawTab) {
+    return (
+      <ModuleLayout
+        breadcrumb="ArkaBüro"
+        title="Arka Büro"
+        description="Fatura, cari, bütçe ve yönetim raporları."
+        sideTitle="Arka Büro"
+        menuSearch="?hub=arkaburo"
+      >
+        <ArkaBuroHubPanel />
+      </ModuleLayout>
+    );
+  }
+
+  const pageTitle =
+    isProforma ? 'Proforma Fatura Listesi'
+      : isCariCards ? 'Cari Kartlar'
+        : isCariPayments ? 'Cari Ödemeler'
+          : isBankCards ? 'Kasa — Banka Kartları'
+            : budgetView ? (budgetView === 'budget-hotel' ? 'Otel Bütçe Değer' : budgetView === 'budget-dept' ? 'Departman Bütçe' : budgetView === 'budget-values' ? 'Bütçe Değerleri' : 'Bütçe Girişleri')
+              : t('accounting.title');
+
   return (
     <ModuleLayout
       breadcrumb="ArkaBüro › Muhasebe"
-      title={t('accounting.title')}
+      title={pageTitle}
       description="Prisma DB — fatura, cari, stok CRUD."
       sideTitle={t('accounting.title')}
+      menuSearch={menuSearch}
     >
       <nav className="roomio-tabs">
         {tabs.map((t) => (
@@ -264,7 +318,9 @@ export default function AccountingPageClient() {
         </div>
       </div>
 
-      {tab === 'invoices' ? (
+      {isProforma ? <ProformaInvoicesPanel invoices={invoices} /> : null}
+
+      {tab === 'invoices' && !isProforma ? (
         <div className="roomio-card roomio-table-wrap" style={{ marginTop: 16 }}>
           <div className="roomio-card-head-row">
             <h2 className="roomio-card-title">{t('accounting.invoiceList')}</h2>
@@ -363,7 +419,14 @@ export default function AccountingPageClient() {
         </div>
       ) : null}
 
-      {tab === 'ledger' ? (
+      {isCariCards ? <CariCardsPanel /> : null}
+      {isCariPayments ? <CariPaymentsPanel /> : null}
+      {budgetView ? (
+        <BudgetPanel view={budgetView as 'budget' | 'budget-values' | 'budget-hotel' | 'budget-dept'} />
+      ) : null}
+      {isBankCards ? <BankCardsPanel /> : null}
+
+      {tab === 'ledger' && !isCariCards && !isCariPayments && !budgetView ? (
         <div className="roomio-card roomio-table-wrap" style={{ marginTop: 16 }}>
           <div className="roomio-card-head-row">
             <h2 className="roomio-card-title">Cari defter hareketleri</h2>
@@ -473,7 +536,7 @@ export default function AccountingPageClient() {
         </div>
       ) : null}
 
-      {tab === 'fiscal' ? <AccountingFiscalPanel /> : null}
+      {tab === 'fiscal' && !isBankCards ? <AccountingFiscalPanel /> : null}
     </ModuleLayout>
   );
 }

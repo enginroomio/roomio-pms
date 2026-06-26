@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { roomioFetch } from '@/lib/client/api';
@@ -17,7 +17,7 @@ type IdentityRow = {
   sentAt?: string;
 };
 
-export function KimlikBildirimPanel() {
+export function KimlikBildirimPanel({ variant = 'list' }: { variant?: 'list' | 'new' }) {
   const [rows, setRows] = useState<IdentityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [guestName, setGuestName] = useState('');
@@ -88,11 +88,31 @@ export function KimlikBildirimPanel() {
     }
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+  const displayRows = useMemo(() => {
+    if (variant !== 'new') return rows;
+    return rows.filter((r) => r.status === 'pending' || r.checkIn === today);
+  }, [rows, variant, today]);
+
   return (
     <div className="roomio-detail-grid" style={{ marginTop: 16 }}>
+      {variant === 'new' ? (
+        <div className="roomio-card" style={{ padding: 16, gridColumn: '1 / -1' }}>
+          <h2 className="roomio-card-title">Yeni kimlik bildirim akışı</h2>
+          <p className="roomio-page-desc" style={{ marginTop: 8 }}>
+            Check-in sırasında kimlik okuyucu ile otomatik doldurma veya aşağıdaki form ile manuel kayıt.
+            Bekleyen kayıtlar tek tıkla polis sistemine gönderilir.
+          </p>
+          <div className="roomio-form-actions" style={{ marginTop: 12 }}>
+            <Button variant="secondary" href="/reception/queue">Check-in kuyruğu</Button>
+            <Button variant="ghost" href="/settings/integrations/id-reader">Kimlik okuyucu ayarları</Button>
+            <Button variant="ghost" href="/reception?tab=kimlik">Klasik liste</Button>
+          </div>
+        </div>
+      ) : null}
       <PermissionGate permission="identity.notify">
         <div className="roomio-card">
-          <h2 className="roomio-card-title">Yeni kimlik bildirimi</h2>
+          <h2 className="roomio-card-title">{variant === 'new' ? 'Hızlı kimlik kaydı' : 'Yeni kimlik bildirimi'}</h2>
           {msg ? (
             <p className={`roomio-page-desc${msg.includes('başarısız') || msg.includes('yüklenemedi') || msg.includes('yetkiniz') || msg.includes('Oturum') ? ' roomio-text-warn' : ''}`} role="status">
               {msg}
@@ -112,7 +132,9 @@ export function KimlikBildirimPanel() {
 
       <div className="roomio-card roomio-table-wrap">
         <div className="roomio-kurulus-toolbar">
-          <h2 className="roomio-card-title">Günlük polis kimlik bildirim listesi</h2>
+          <h2 className="roomio-card-title">
+            {variant === 'new' ? 'Bekleyen bildirimler' : 'Günlük polis kimlik bildirim listesi'}
+          </h2>
           <Button variant="secondary" disabled={loading} onClick={() => void load()}>
             {loading ? 'Yükleniyor…' : 'Yenile'}
           </Button>
@@ -122,10 +144,10 @@ export function KimlikBildirimPanel() {
             <tr><th>Oda</th><th>Misafir</th><th>Uyruk</th><th>Kimlik</th><th>Durum</th><th /></tr>
           </thead>
           <tbody>
-            {!loading && rows.length === 0 ? (
+            {!loading && displayRows.length === 0 ? (
               <tr><td colSpan={6} className="roomio-table-empty">Kayıt yok.</td></tr>
             ) : (
-              rows.map((row) => (
+              displayRows.map((row) => (
                 <tr key={row.id}>
                   <td><strong>{row.roomNo}</strong></td>
                   <td>{row.guestName}</td>

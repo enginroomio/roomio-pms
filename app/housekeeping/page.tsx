@@ -1,19 +1,13 @@
-import { PageHeader } from '@/components/PageHeader';
-import { HousekeepingTabs } from '@/components/HousekeepingTabs';
-import { HousekeepingHubClient } from '@/components/housekeeping/HousekeepingScreens';
+import { Suspense } from 'react';
+import { HousekeepingPageClient } from './HousekeepingPageClient';
 import { getHousekeepingBoardServer } from '@/lib/server/housekeeping-service';
 
 export default async function HousekeepingHubPage() {
   const board = await getHousekeepingBoardServer();
 
   return (
-    <PageHeader
-      breadcrumb="Kat Hizmetleri"
-      title="Housekeeping Pano"
-      description="Mockup pms-menu-05-kat-hk — kat sekmeleri, mini grid, görevli paneli."
-    >
-      <HousekeepingTabs />
-      <HousekeepingHubClient initialBoard={board} />
-    </PageHeader>
+    <Suspense fallback={<div className="roomio-page-desc" style={{ padding: 24 }}>Kat hizmetleri yükleniyor…</div>}>
+      <HousekeepingPageClient initialBoard={board} />
+    </Suspense>
   );
 }

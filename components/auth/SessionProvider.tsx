@@ -7,12 +7,14 @@ import { getDemoSession } from '@/lib/auth/roles';
 type SessionContextValue = {
   user: SessionUser;
   setRole: (role: Role) => void;
-  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string; mustChangePassword?: boolean }>;
   logout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
   loading: boolean;
   authenticated: boolean;
   authRequired: boolean;
   demoAuth: boolean;
+  mustChangePassword: boolean;
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -26,6 +28,7 @@ type ApiUser = {
   role: Role;
   roleLabel: string;
   permissions: Permission[];
+  mustChangePassword?: boolean;
 };
 
 function toSessionUser(u: ApiUser): SessionUser {
@@ -43,6 +46,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [authenticated, setAuthenticated] = useState(false);
   const [authRequired, setAuthRequired] = useState(false);
   const [demoAuth, setDemoAuth] = useState(false);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -66,6 +70,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       if (j.user) {
         setUser(toSessionUser(j.user));
         setAuthenticated(Boolean(j.authenticated));
+        setMustChangePassword(Boolean(j.user.mustChangePassword));
       }
     } finally {
       setLoading(false);
@@ -92,13 +97,19 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    const j = (await r.json()) as { ok?: boolean; token?: string; user?: ApiUser; error?: string };
+    const j = (await r.json()) as {
+      ok?: boolean;
+      token?: string;
+      user?: ApiUser;
+      error?: string;
+    };
     if (!r.ok || !j.user) return { ok: false, error: j.error ?? 'Giriş başarısız' };
     if (j.token) localStorage.setItem(TOKEN_STORAGE, j.token);
     localStorage.removeItem(ROLE_STORAGE);
     setUser(toSessionUser(j.user));
     setAuthenticated(true);
-    return { ok: true };
+    setMustChangePassword(Boolean(j.user.mustChangePassword));
+    return { ok: true, mustChangePassword: j.user.mustChangePassword };
   }
 
   async function logout() {
@@ -116,12 +127,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setAuthenticated(false);
+    setMustChangePassword(false);
     window.location.href = '/login';
   }
 
   return (
     <SessionContext.Provider
-      value={{ user, setRole, login, logout, loading, authenticated, authRequired, demoAuth }}
+      value={{
+        user,
+        setRole,
+        login,
+        logout,
+        refreshSession: refresh,
+        loading,
+        authenticated,
+        authRequired,
+        demoAuth,
+        mustChangePassword,
+      }}
     >
       {children}
     </SessionContext.Provider>

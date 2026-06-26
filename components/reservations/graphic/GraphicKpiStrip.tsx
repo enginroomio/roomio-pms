@@ -1,7 +1,7 @@
-import { BarChart3, BedDouble, CalendarRange, Percent, TrendingUp } from 'lucide-react';
+import { BarChart3, BedDouble, CalendarRange, Percent, TrendingUp, Users } from 'lucide-react';
 import type { GraphicKpi } from '@/lib/reservations/graphic-calendar';
 
-const ICONS = [Percent, BedDouble, CalendarRange, BedDouble, TrendingUp];
+const ICONS = [Percent, BedDouble, CalendarRange, Users, TrendingUp];
 
 type Props = {
   items: GraphicKpi[];

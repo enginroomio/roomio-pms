@@ -21,6 +21,7 @@ import { seedDepositsIfEmpty } from '@/lib/server/cash-deposit';
 import { seedRatePlansIfEmpty } from '@/lib/server/rate-plans';
 import { seedRateCalendarIfEmpty } from '@/lib/server/rate-calendar';
 import { appendAuditLog } from '@/lib/server/audit-log';
+import { upsertGuestIdentityArchive } from '@/lib/server/guest-identity-archive';
 
 export type IdentityNotification = {
   id: string;
@@ -299,6 +300,10 @@ export async function init(): Promise<void> {
     const { syncPropertyTotalRoomsServer } = await import('@/lib/server/property-room-inventory');
     await syncPropertyTotalRoomsServer();
     await seedUserParamsIfEmpty();
+    if (process.env.NODE_ENV !== 'production') {
+      const { ensureReservationListDemo } = await import('@/lib/server/reservation-demo');
+      await ensureReservationListDemo();
+    }
     if (shouldRunProductionInit()) {
       const { migratePushSubscriptionsFromFile } = await import('@/lib/server/push-store');
       await migratePushSubscriptionsFromFile();
@@ -650,6 +655,24 @@ export async function upsertEgmIdentity(form: EgmIdentityForm, propertyId?: stri
           createdAt: now,
         },
       });
+
+  if (form.idNo?.trim()) {
+    await upsertGuestIdentityArchive(prop, {
+      guestName,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      nationality: form.nationality,
+      idNo: form.idNo,
+      idType: form.idType,
+      birthDate: form.birthDate,
+      birthPlace: form.birthPlace,
+      gender: form.gender,
+      fatherName: form.fatherName,
+      motherName: form.motherName,
+      lastStay: form.checkOut ?? form.checkIn,
+      reservationId: form.reservationId,
+    }).catch(() => undefined);
+  }
 
   return toEgmRecord(mapIdentityRow(row));
 }

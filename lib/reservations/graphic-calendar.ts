@@ -15,6 +15,9 @@ export type GraphicCalendarDay = {
   totalBooked: number;
   totalRooms: number;
   occupancyPct: number;
+  totalPax: number;
+  totalPaxCapacity: number;
+  paxOccupancyPct: number;
 };
 
 export type GraphicKpi = {
@@ -30,10 +33,14 @@ export type ChartPoint = {
   label: string;
   value: number;
   priorValue: number;
+  paxValue: number;
+  priorPaxValue: number;
   booked: number;
   available: number;
   priorBooked: number;
   priorAvailable: number;
+  totalPax: number;
+  totalPaxCapacity: number;
   isForecast: boolean;
 };
 
@@ -51,6 +58,10 @@ export type ForecastBar = {
   occupied: number;
   empty: number;
   totalRooms: number;
+  pax: number;
+  paxCapacity: number;
+  roomOccPct: number;
+  paxOccPct: number;
 };
 
 export function buildForecastBars(matrix: GraphicCalendarDay[]): ForecastBar[] {
@@ -59,6 +70,9 @@ export function buildForecastBars(matrix: GraphicCalendarDay[]): ForecastBar[] {
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const wd = FORECAST_WEEKDAYS[(d.getDay() + 6) % 7];
+    const pax = day.totalPax ?? Math.round(day.totalBooked * 2.1);
+    const paxCapacity = day.totalPaxCapacity ?? Math.max(1, day.totalRooms * 2);
+    const paxOccPct = day.paxOccupancyPct ?? (paxCapacity > 0 ? Math.round((pax / paxCapacity) * 100) : 0);
     return {
       day: index + 1,
       label: `${dd}/${mm} ${wd}`,
@@ -66,22 +80,40 @@ export function buildForecastBars(matrix: GraphicCalendarDay[]): ForecastBar[] {
       occupied: day.totalBooked,
       empty: day.totalAvail,
       totalRooms: day.totalRooms,
+      pax,
+      paxCapacity,
+      roomOccPct: day.occupancyPct,
+      paxOccPct: paxOccPct,
     };
   });
 }
 
 export function forecastSummary(matrix: GraphicCalendarDay[]) {
   if (matrix.length === 0) {
-    return { booked: 0, capacity: 0, occupancyPct: 0, revenue: 0 };
+    return {
+      booked: 0,
+      capacity: 0,
+      occupancyPct: 0,
+      revenue: 0,
+      totalPax: 0,
+      paxCapacity: 0,
+      paxOccupancyPct: 0,
+      avgPaxPerRoom: 0,
+    };
   }
   const booked = matrix.reduce((s, d) => s + d.totalBooked, 0);
   const capacity = matrix.reduce((s, d) => s + d.totalRooms, 0);
   const occupancyPct = capacity > 0 ? Math.round((booked / capacity) * 1000) / 10 : 0;
+  const totalPax = matrix.reduce((s, d) => s + (d.totalPax ?? 0), 0);
+  const paxCapacity = matrix.reduce((s, d) => s + (d.totalPaxCapacity ?? 0), 0);
+  const paxOccupancyPct =
+    paxCapacity > 0 ? Math.round((totalPax / paxCapacity) * 1000) / 10 : 0;
   const revenue = matrix.reduce((s, day) => {
     const dayRev = day.cells.reduce((acc, c) => acc + typeBaseRate(c.type) * c.booked, 0);
     return s + dayRev;
   }, 0);
-  return { booked, capacity, occupancyPct, revenue };
+  const avgPaxPerRoom = booked > 0 ? Math.round((totalPax / booked) * 10) / 10 : 0;
+  return { booked, capacity, occupancyPct, revenue, totalPax, paxCapacity, paxOccupancyPct, avgPaxPerRoom };
 }
 
 export function formatForecastDate(iso: string) {
@@ -250,8 +282,13 @@ export function filterMatrixByRoomType(matrix: GraphicCalendarDay[], roomType: s
         totalAvail: 0,
         totalRooms: 0,
         occupancyPct: 0,
+        totalPax: 0,
+        totalPaxCapacity: 0,
+        paxOccupancyPct: 0,
       };
     }
+    const paxRatio = day.totalBooked > 0 ? cell.booked / day.totalBooked : 0;
+    const paxCapRatio = day.totalRooms > 0 ? cell.total / day.totalRooms : 0;
     return {
       date: day.date,
       cells: [cell],
@@ -259,6 +296,12 @@ export function filterMatrixByRoomType(matrix: GraphicCalendarDay[], roomType: s
       totalAvail: cell.available,
       totalRooms: cell.total,
       occupancyPct: cell.occupancyPct,
+      totalPax: Math.round((day.totalPax ?? 0) * paxRatio),
+      totalPaxCapacity: Math.round((day.totalPaxCapacity ?? 0) * paxCapRatio),
+      paxOccupancyPct:
+        (day.totalPaxCapacity ?? 0) * paxCapRatio > 0
+          ? Math.round((((day.totalPax ?? 0) * paxRatio) / ((day.totalPaxCapacity ?? 0) * paxCapRatio)) * 100)
+          : 0,
     };
   });
 }
@@ -515,21 +558,73 @@ export function priorYearOccupancy(pct: number, index: number): number {
   return Math.max(0, Math.min(100, Math.round(pct * 0.88 + swing)));
 }
 
+function dayPaxOccupancy(day: GraphicCalendarDay): number {
+  if (day.paxOccupancyPct != null) return day.paxOccupancyPct;
+  const pax = day.totalPax ?? Math.round(day.totalBooked * 2.1);
+  const cap = day.totalPaxCapacity ?? Math.max(1, day.totalRooms * 2);
+  return cap > 0 ? Math.round((pax / cap) * 100) : 0;
+}
+
 export function buildChartPoints(matrix: GraphicCalendarDay[], businessDate: string): ChartPoint[] {
   return matrix.map((day, index) => {
     const priorOcc = priorYearOccupancy(day.occupancyPct, index);
+    const paxOcc = dayPaxOccupancy(day);
+    const priorPaxOcc = priorYearOccupancy(paxOcc, index + 2);
     const priorBooked = Math.round(day.totalBooked * (priorOcc / Math.max(1, day.occupancyPct)));
     const priorAvailable = Math.max(0, day.totalRooms - priorBooked);
+    const totalPax = day.totalPax ?? Math.round(day.totalBooked * 2.1);
+    const totalPaxCapacity = day.totalPaxCapacity ?? Math.max(1, day.totalRooms * 2);
     return {
       date: day.date,
       label: formatGraphicDay(day.date),
       value: day.occupancyPct,
       priorValue: priorOcc,
+      paxValue: paxOcc,
+      priorPaxValue: priorPaxOcc,
       booked: day.totalBooked,
       available: day.totalAvail,
       priorBooked,
       priorAvailable,
+      totalPax,
+      totalPaxCapacity,
       isForecast: day.date > businessDate,
+    };
+  });
+}
+
+/** Statik önizleme — tema / tasarım seçici */
+export function buildDemoGraphicMatrix(from: string, days: number): GraphicCalendarDay[] {
+  return Array.from({ length: days }, (_, i) => {
+    const date = shiftIsoDate(from, i);
+    const totalRooms = 77;
+    const totalBooked = 8 + (i % 3 === 0 ? 1 : 0);
+    const totalAvail = totalRooms - totalBooked - (i % 5 === 0 ? 1 : 0);
+    const occupancyPct = Math.round((totalBooked / totalRooms) * 100);
+    const totalPaxCapacity = totalRooms * 2;
+    const totalPax = Math.round(totalBooked * (1.8 + (i % 4) * 0.15));
+    const paxOccupancyPct = Math.round((totalPax / totalPaxCapacity) * 100);
+    const cells = GRAPHIC_ROOM_TYPES.map((type, ti) => {
+      const total = Math.max(4, Math.round(totalRooms / GRAPHIC_ROOM_TYPES.length));
+      const booked = Math.min(total, Math.max(0, Math.round(totalBooked / GRAPHIC_ROOM_TYPES.length) + (ti % 2)));
+      const available = Math.max(0, total - booked);
+      return {
+        type,
+        booked,
+        available,
+        total,
+        occupancyPct: total > 0 ? Math.round((booked / total) * 100) : 0,
+      };
+    });
+    return {
+      date,
+      cells,
+      totalAvail,
+      totalBooked,
+      totalRooms,
+      occupancyPct,
+      totalPax,
+      totalPaxCapacity,
+      paxOccupancyPct,
     };
   });
 }
@@ -555,7 +650,9 @@ export function buildGraphicKpis(matrix: GraphicCalendarDay[]): GraphicKpi[] {
     },
     0,
   );
-  const roomCapacityNights = matrix.reduce((s, d) => s + d.totalRooms, 0);
+  const avgPaxOcc = matrix.reduce((s, d) => s + dayPaxOccupancy(d), 0) / matrix.length;
+  const priorAvgPaxOcc =
+    matrix.reduce((s, d, i) => s + priorYearOccupancy(dayPaxOccupancy(d), i + 2), 0) / matrix.length;
   const revPar = matrix.reduce((s, d) => {
     const avgRate =
       d.cells.reduce((acc, c) => acc + typeBaseRate(c.type) * c.booked, 0) / Math.max(1, d.totalBooked);
@@ -588,11 +685,11 @@ export function buildGraphicKpis(matrix: GraphicCalendarDay[]): GraphicKpi[] {
       deltaPct: delta(availableNights, priorAvailable),
     },
     {
-      label: 'Toplam Kapasite',
-      value: roomCapacityNights.toLocaleString('tr-TR'),
+      label: 'Kişi Doluluğu',
+      value: formatPercent(avgPaxOcc),
       priorLabel: 'Geçen yıl',
-      priorValue: roomCapacityNights.toLocaleString('tr-TR'),
-      deltaPct: 0,
+      priorValue: formatPercent(priorAvgPaxOcc),
+      deltaPct: delta(avgPaxOcc, priorAvgPaxOcc),
     },
     {
       label: 'RevPAR (tahmini)',

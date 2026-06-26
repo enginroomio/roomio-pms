@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
-import type { GuestArchiveEntry } from '@/lib/egm/guest-archive';
+import { applyGuestArchiveEntry, type GuestArchiveListItem } from '@/lib/client/guest-archive-apply';
 import { archiveToFormValues } from '@/lib/egm/guest-archive';
 import {
   EGM_GENDER_LABELS,
@@ -22,11 +22,13 @@ type Props = {
   values: FormSlice;
   onChange: (patch: Record<string, string | number>) => void;
   refNo?: string;
+  /** Yeni rezervasyon sihirbazı — tek ekrana sığan yoğun düzen */
+  compact?: boolean;
 };
 
-export function EgmIdentityFormPanel({ values, onChange, refNo }: Props) {
-  const [results, setResults] = useState<GuestArchiveEntry[]>([]);
-  const [selectedArchive, setSelectedArchive] = useState<GuestArchiveEntry | null>(null);
+export function EgmIdentityFormPanel({ values, onChange, refNo, compact = false }: Props) {
+  const [results, setResults] = useState<GuestArchiveListItem[]>([]);
+  const [selectedArchive, setSelectedArchive] = useState<GuestArchiveListItem | null>(null);
   const [searching, setSearching] = useState(false);
   const [appliedId, setAppliedId] = useState<string | null>(null);
 
@@ -76,7 +78,7 @@ export function EgmIdentityFormPanel({ values, onChange, refNo }: Props) {
     }
     setSearching(true);
     const res = await roomioFetch(`/api/guests/archive?${q.toString()}`);
-    const j = (await res.json()) as { results?: GuestArchiveEntry[] };
+    const j = (await res.json()) as { results?: GuestArchiveListItem[] };
     setResults(j.results ?? []);
     setSearching(false);
   }, [guestName, values.email, values.idNo, values.phone]);
@@ -86,17 +88,22 @@ export function EgmIdentityFormPanel({ values, onChange, refNo }: Props) {
     return () => clearTimeout(t);
   }, [searchArchive]);
 
+  const applyArchive = useCallback(
+    async (archiveId: string) => {
+      const entry = await applyGuestArchiveEntry(archiveId);
+      if (!entry) return;
+      onChange(archiveToFormValues(entry));
+      setSelectedArchive(entry);
+      setAppliedId(archiveId);
+    },
+    [onChange],
+  );
+
   useEffect(() => {
     if (results.length === 1 && !appliedId && !values.birthDate) {
-      applyArchive(results[0]!);
+      void applyArchive(results[0]!.id);
     }
-  }, [results, appliedId, values.birthDate]);
-
-  function applyArchive(entry: GuestArchiveEntry) {
-    onChange(archiveToFormValues(entry));
-    setSelectedArchive(entry);
-    setAppliedId(entry.id);
-  }
+  }, [results, appliedId, values.birthDate, applyArchive]);
 
   function setField(key: string, val: string) {
     onChange({ [key]: val });
@@ -107,23 +114,31 @@ export function EgmIdentityFormPanel({ values, onChange, refNo }: Props) {
   }
 
   return (
-    <div className="roomio-egm-panel">
+    <div className={`roomio-egm-panel${compact ? ' roomio-egm-panel--compact' : ''}`}>
       <div className="roomio-egm-panel__head">
         <div>
           <p className="roomio-egm-drawer__eyebrow">EGM / KBS Kimlik Bildirimi</p>
-          <p className="roomio-page-desc" style={{ margin: '4px 0 0' }}>
-            Rezervasyon kaydı sırasında kimlik bilgisi girilir veya arşivden otomatik gelir.
-            {refNo ? ` · ${refNo}` : ''}
-          </p>
+          {!compact ? (
+            <p className="roomio-page-desc" style={{ margin: '4px 0 0' }}>
+              Rezervasyon kaydı sırasında kimlik bilgisi girilir veya arşivden otomatik gelir.
+              {refNo ? ` · ${refNo}` : ''}
+            </p>
+          ) : (
+            <p className="roomio-egm-panel__ref">{refNo ? `Rez. ${refNo}` : 'Kimlik bildirimi'}</p>
+          )}
         </div>
-        <EgmStatusBadge status={egmStatus} />
+        <EgmStatusBadge status={egmStatus} compact />
       </div>
 
       {selectedArchive ? (
         <div className="roomio-egm-archive-banner roomio-egm-archive-banner--applied">
-          <strong>Arşivden yüklendi:</strong> {selectedArchive.guestName}
-          {' · '}{selectedArchive.visits} konaklama · Son: {selectedArchive.lastStay}
-          {' · '}{selectedArchive.source === 'egm' ? 'EGM kaydı' : 'Misafir arşivi'}
+          <strong>Arşiv:</strong> {selectedArchive.guestName}
+          {!compact ? (
+            <>
+              {' · '}{selectedArchive.visits} konaklama · Son: {selectedArchive.lastStay}
+              {' · '}{selectedArchive.source === 'egm' ? 'EGM kaydı' : 'Misafir arşivi'}
+            </>
+          ) : null}
           <button type="button" className="roomio-link" style={{ marginLeft: 8 }} onClick={() => { setSelectedArchive(null); setAppliedId(null); }}>
             Temizle
           </button>
@@ -132,16 +147,16 @@ export function EgmIdentityFormPanel({ values, onChange, refNo }: Props) {
 
       {results.length > 0 && !selectedArchive ? (
         <div className="roomio-egm-archive-list roomio-card">
-          <p className="roomio-card-title" style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>
-            Misafir arşivi {searching ? '(aranıyor…)' : `(${results.length} eşleşme)`}
+          <p className="roomio-card-title roomio-egm-archive-list__title">
+            Misafir arşivi {searching ? '(aranıyor…)' : `(${results.length})`}
           </p>
           <ul className="roomio-egm-archive-items">
             {results.map((entry) => (
               <li key={entry.id}>
-                <button type="button" className="roomio-egm-archive-item" onClick={() => applyArchive(entry)}>
+                <button type="button" className="roomio-egm-archive-item" onClick={() => void applyArchive(entry.id)}>
                   <strong>{entry.guestName}</strong>
-                  <span>{entry.nationality} · {entry.idNo.slice(0, 4)}*** · {entry.visits} konaklama</span>
-                  <span className="roomio-text-muted">Son: {entry.lastStay}</span>
+                  <span>{entry.nationality} · {entry.idNoMasked ?? entry.idNo} · {entry.visits} konaklama</span>
+                  {!compact ? <span className="roomio-text-muted">Son: {entry.lastStay}</span> : null}
                 </button>
               </li>
             ))}
@@ -150,35 +165,29 @@ export function EgmIdentityFormPanel({ values, onChange, refNo }: Props) {
       ) : null}
 
       {missing.length > 0 ? (
-        <div className="roomio-alert roomio-alert--warn" style={{ marginTop: 12 }}>
-          Eksik EGM alanları: {missing.join(', ')}
-        </div>
+        <p className={`roomio-egm-panel__status roomio-egm-panel__status--warn${compact ? ' roomio-egm-panel__status--compact' : ''}`}>
+          Eksik: {missing.join(', ')}
+        </p>
       ) : (
-        <div className="roomio-alert roomio-alert--success" style={{ marginTop: 12, padding: '8px 12px' }}>
-          {EGM_STATUS_LABELS.ready} — kayıt sonrası EGM&apos;ye gönderilebilir.
-        </div>
+        <p className={`roomio-egm-panel__status roomio-egm-panel__status--ok${compact ? ' roomio-egm-panel__status--compact' : ''}`}>
+          {EGM_STATUS_LABELS.ready} — kayıt sonrası gönderilebilir.
+        </p>
       )}
 
-      <section className="roomio-egm-section" style={{ marginTop: 16 }}>
-        <h3>Temel bilgiler</h3>
-        <div className="roomio-form-grid roomio-form-grid--2">
+      <section className="roomio-egm-section">
+        {!compact ? <h3>Temel bilgiler</h3> : null}
+        <div className={`roomio-form-grid ${compact ? 'roomio-form-grid--3 roomio-rez-new-wizard__fields' : 'roomio-form-grid--2'}`}>
           <label className="roomio-field"><span>Ad *</span><input className="roomio-input" value={firstName} onChange={(e) => setField('firstName', e.target.value)} /></label>
           <label className="roomio-field"><span>Soyad *</span><input className="roomio-input" value={lastName} onChange={(e) => setField('lastName', e.target.value)} /></label>
           <label className="roomio-field"><span>Uyruk *</span><input className="roomio-input" value={String(values.nationality ?? 'TR')} onChange={(e) => setField('nationality', e.target.value)} /></label>
-          <label className="roomio-field"><span>Oda no (varsa)</span><input className="roomio-input" value={String(values.fixRoomNo ?? '')} onChange={(e) => setField('fixRoomNo', e.target.value)} placeholder="Check-in öncesi boş kalabilir" /></label>
-        </div>
-      </section>
-
-      <section className="roomio-egm-section">
-        <h3>Kimlik bilgileri (EGM)</h3>
-        <div className="roomio-form-grid roomio-form-grid--2">
+          <label className="roomio-field"><span>Oda no</span><input className="roomio-input" value={String(values.fixRoomNo ?? '')} onChange={(e) => setField('fixRoomNo', e.target.value)} placeholder={compact ? 'Opsiyonel' : 'Check-in öncesi boş kalabilir'} /></label>
           <label className="roomio-field">
             <span>Belge tipi</span>
             <select className="roomio-select" value={String(values.idType ?? 'TCKN')} onChange={(e) => setField('idType', e.target.value)}>
               {Object.entries(EGM_ID_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </label>
-          <label className="roomio-field"><span>Kimlik / pasaport no *</span><input className="roomio-input" value={String(values.idNo ?? '')} onChange={(e) => setField('idNo', e.target.value)} /></label>
+          <label className="roomio-field"><span>Kimlik no *</span><input className="roomio-input" value={String(values.idNo ?? '')} onChange={(e) => setField('idNo', e.target.value)} /></label>
           <label className="roomio-field"><span>Doğum tarihi *</span><input className="roomio-input" type="date" value={String(values.birthDate ?? '')} onChange={(e) => setField('birthDate', e.target.value)} /></label>
           <label className="roomio-field"><span>Doğum yeri *</span><input className="roomio-input" value={String(values.birthPlace ?? '')} onChange={(e) => setField('birthPlace', e.target.value)} /></label>
           <label className="roomio-field">
@@ -189,15 +198,17 @@ export function EgmIdentityFormPanel({ values, onChange, refNo }: Props) {
             </select>
           </label>
           <label className="roomio-field"><span>Baba adı *</span><input className="roomio-input" value={String(values.fatherName ?? '')} onChange={(e) => setField('fatherName', e.target.value)} /></label>
-          <label className="roomio-field roomio-field--full"><span>Anne adı *</span><input className="roomio-input" value={String(values.motherName ?? '')} onChange={(e) => setField('motherName', e.target.value)} /></label>
+          <label className="roomio-field"><span>Anne adı *</span><input className="roomio-input" value={String(values.motherName ?? '')} onChange={(e) => setField('motherName', e.target.value)} /></label>
         </div>
       </section>
 
-      <div className="roomio-form-actions" style={{ marginTop: 8 }}>
-        <Button variant="secondary" onClick={() => void searchArchive()} disabled={searching}>
-          {searching ? 'Aranıyor…' : 'Arşivi yeniden ara'}
-        </Button>
-      </div>
+      {!compact ? (
+        <div className="roomio-form-actions" style={{ marginTop: 8 }}>
+          <Button variant="secondary" onClick={() => void searchArchive()} disabled={searching}>
+            {searching ? 'Aranıyor…' : 'Arşivi yeniden ara'}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

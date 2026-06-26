@@ -15,11 +15,11 @@ const EMPTY_FORM = {
   priority: 'Normal' as ComplaintItem['priority'],
 };
 
-export function GuestComplaintsPanel() {
+export function GuestComplaintsPanel({ autoOpenForm = false }: { autoOpenForm?: boolean } = {}) {
   const { t } = useI18n();
   const [complaints, setComplaints] = useState<ComplaintItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(autoOpenForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
@@ -37,6 +37,10 @@ export function GuestComplaintsPanel() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (autoOpenForm) setShowForm(true);
+  }, [autoOpenForm]);
 
   function startEdit(item: ComplaintItem) {
     setEditingId(item.id);

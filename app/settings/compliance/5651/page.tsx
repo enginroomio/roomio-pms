@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Download, Plus, Shield, Wifi } from 'lucide-react';
 import { Hotspot5651BridgePanel } from '@/components/compliance/Hotspot5651BridgePanel';
 import { Hotspot5651DevicesPanel } from '@/components/compliance/Hotspot5651DevicesPanel';
@@ -39,13 +40,21 @@ function formatBytes(n: number): string {
   return `${(n / 1_000_000).toFixed(1)} MB`;
 }
 
-export default function Hotspot5651Page() {
+function Hotspot5651PageInner() {
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get('tab');
   const [tab, setTab] = useState<Tab>('overview');
   const [config, setConfig] = useState<Hotspot5651Config>(DEFAULT_HOTSPOT_5651_CONFIG);
   const [logs, setLogs] = useState<HotspotSessionLog[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [saved, setSaved] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (urlTab === 'devices' || urlTab === 'logs' || urlTab === 'bridge' || urlTab === 'config' || urlTab === 'overview') {
+      setTab(urlTab);
+    }
+  }, [urlTab]);
 
   useEffect(() => {
     void Promise.all([
@@ -147,9 +156,13 @@ export default function Hotspot5651Page() {
     >
       <div className="roomio-tabs">
         {tabs.map((t) => (
-          <button key={t.id} type="button" className={`roomio-tab${tab === t.id ? ' is-active' : ''}`} onClick={() => setTab(t.id)}>
+          <Link
+            key={t.id}
+            href={t.id === 'overview' ? '/settings/compliance/5651' : `/settings/compliance/5651?tab=${t.id}`}
+            className={`roomio-tab${tab === t.id ? ' is-active' : ''}`}
+          >
             {t.label}
-          </button>
+          </Link>
         ))}
       </div>
 
@@ -295,5 +308,13 @@ export default function Hotspot5651Page() {
         <Link href="/settings/integrations/tesa">TESA</Link> · <Link href="/settings/privacy">KVKK</Link>
       </p>
     </ModuleLayout>
+  );
+}
+
+export default function Hotspot5651Page() {
+  return (
+    <Suspense fallback={<div className="roomio-page-desc">Yükleniyor…</div>}>
+      <Hotspot5651PageInner />
+    </Suspense>
   );
 }

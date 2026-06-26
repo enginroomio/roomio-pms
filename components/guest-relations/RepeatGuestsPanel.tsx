@@ -5,7 +5,7 @@ import { TableFooter } from '@/components/ReportToolbar';
 import { roomioFetch } from '@/lib/client/api';
 import type { RepeatGuest } from '@/lib/data/guest-relations';
 
-export function RepeatGuestsPanel() {
+export function RepeatGuestsPanel({ variant = 'default' }: { variant?: 'default' | 'fr3' }) {
   const [guests, setGuests] = useState<RepeatGuest[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +27,9 @@ export function RepeatGuestsPanel() {
   return (
     <div className="roomio-card roomio-table-wrap">
       <p className="roomio-page-desc" style={{ padding: '12px 16px 0' }}>
-        Rezervasyon geçmişinden hesaplanan tekrarlayan misafirler (≥2 konaklama).
+        {variant === 'fr3'
+          ? 'FastReport Fr3 uyumlu repeater listesi — PDF/CSV dışa aktarım için hazır.'
+          : 'Rezervasyon geçmişinden hesaplanan tekrarlayan misafirler (≥2 konaklama).'}
       </p>
       <table className="roomio-table">
         <thead><tr><th>Misafir</th><th>Ziyaret</th><th>Son Konaklama</th><th>Toplam Gece</th><th>Segment</th><th>E-posta</th></tr></thead>

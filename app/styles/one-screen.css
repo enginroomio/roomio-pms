@@ -69,3 +69,219 @@
   flex: 1;
   min-height: 0;
 }
+
+/* Liste / tablo sayfaları — ölçek yok, dikey kaydırma (Konaklama PMS) */
+.roomio-one-screen-fit__body--scroll {
+  overflow: visible;
+}
+
+.roomio-one-screen-fit__body--scroll .roomio-page-stack {
+  flex: 0 1 auto;
+  min-height: min-content;
+  overflow: visible;
+}
+
+.roomio-one-screen-fit__body--scroll .roomio-page-stack > *:not(.roomio-page-header) {
+  flex: 0 1 auto;
+  min-height: min-content;
+  overflow: visible;
+}
+
+.roomio-one-screen-fit:has(.roomio-one-screen-fit__body--scroll) {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Rezervasyon listesi — tablo kalan yüksekliği doldurur, iç scroll */
+.roomio-one-screen-fit:has(.roomio-page-stack--rez-list) {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.roomio-one-screen-fit:has(.roomio-page-stack--rez-list) .roomio-one-screen-fit__body--scroll {
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+}
+
+.roomio-one-screen-fit__body--scroll .roomio-page-stack--rez-list {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 4px;
+}
+
+.roomio-one-screen-fit__body--scroll .roomio-page-stack--rez-list > .roomio-rez-tabs {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  overflow: visible;
+  min-height: 0;
+}
+
+.roomio-one-screen-fit__body--scroll .roomio-page-stack--rez-list > .roomio-rez-list {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.roomio-one-screen-fit__body--scroll .roomio-page-stack--rez-list .roomio-rez-tabs--compact {
+  flex-shrink: 0;
+  margin-bottom: 0;
+  gap: 3px;
+  padding-bottom: 0;
+}
+
+.roomio-page-stack--rez-list .roomio-rez-tabs--compact .roomio-rez-tab {
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  line-height: 1.15;
+  border-radius: 5px;
+}
+
+.roomio-page-stack--rez-list .roomio-page-header {
+  margin-bottom: 0;
+}
+
+.roomio-page-stack--rez-list .roomio-page-title {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.roomio-page-stack--rez-list .roomio-breadcrumb {
+  font-size: 0.72rem;
+  margin-bottom: 2px;
+}
+
+/* Grafikler F1 — tek ekran tam görünüm */
+.roomio-one-screen-fit:has(.roomio-page-stack--grafik-f1) {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.roomio-one-screen-fit:has(.roomio-page-stack--grafik-f1) .roomio-one-screen-fit__body--scroll {
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+}
+
+.roomio-one-screen-fit__body--scroll .roomio-page-stack--grafik-f1 {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 4px;
+}
+
+.roomio-one-screen-fit__body--scroll .roomio-page-stack--grafik-f1 > *:not(.roomio-page-header) {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.roomio-page-stack--grafik-f1 .roomio-page-header {
+  margin-bottom: 0;
+}
+
+.roomio-page-stack--grafik-f1 .roomio-page-title {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.roomio-page-stack--grafik-f1 .roomio-page-desc {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+}
+
+.roomio-page-stack--grafik-f1 .roomio-breadcrumb {
+  font-size: 0.72rem;
+  margin-bottom: 2px;
+}
+
+/* Rezervasyon düzenle — tek ekrana ölçekle */
+.roomio-one-screen-fit__body--page .roomio-page-stack--rez-edit {
+  flex: 1;
+  min-height: 0;
+  gap: 4px;
+}
+
+.roomio-page-stack--rez-edit .roomio-page-header {
+  margin-bottom: 0;
+}
+
+.roomio-page-stack--rez-edit .roomio-page-title {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.roomio-page-stack--rez-edit .roomio-page-desc {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+}
+
+.roomio-page-stack--rez-edit .roomio-breadcrumb {
+  font-size: 0.72rem;
+  margin-bottom: 2px;
+}
+
+.roomio-page-stack--rez-edit > .roomio-rez-edit-screen {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Yeni rezervasyon — tek ekran sihirbaz */
+.roomio-one-screen-fit:has(.roomio-page-stack--rez-new) {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.roomio-one-screen-fit:has(.roomio-page-stack--rez-new) .roomio-one-screen-fit__body--page {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.roomio-one-screen-fit__body--page .roomio-page-stack--rez-new {
+  flex: 1;
+  min-height: 0;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.roomio-page-stack--rez-new .roomio-page-header {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.roomio-page-stack--rez-new .roomio-page-title {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.roomio-page-stack--rez-new .roomio-page-desc {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+}
+
+.roomio-page-stack--rez-new .roomio-breadcrumb {
+  font-size: 0.72rem;
+  margin-bottom: 2px;
+}
+
+.roomio-page-stack--rez-new > .roomio-rez-new-wizard {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ROLE_LABELS, type Role } from '@/lib/auth/roles';
 import { listUsers } from '@/lib/server/pms-store';
-import { updateUserAdminServer } from '@/lib/server/users-admin';
+import { updateUserAdminServer, createUserAdmin, adminResetUserPassword } from '@/lib/server/users-admin';
 import { requireApiAnyPermission, requireApiPermission } from '@/lib/auth/require-permission';
 
 export const dynamic = 'force-dynamic';
@@ -59,11 +59,51 @@ export async function POST(req: Request) {
   if (auth instanceof NextResponse) return auth;
 
   const body = (await req.json()) as {
+    action?: 'update' | 'create' | 'reset-password';
     id?: string;
     department?: string;
     groupCode?: string | null;
     active?: boolean;
+    email?: string;
+    name?: string;
+    role?: Role;
+    password?: string;
+    newPassword?: string;
   };
+
+  if (body.action === 'create') {
+    if (!body.email || !body.name || !body.role || !body.password) {
+      return NextResponse.json({ error: 'email, name, role, password gerekli' }, { status: 400 });
+    }
+    try {
+      const user = await createUserAdmin({
+        email: body.email,
+        name: body.name,
+        role: body.role,
+        password: body.password,
+        department: body.department,
+        groupCode: body.groupCode,
+      });
+      return NextResponse.json({ ok: true, user });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Kullanıcı oluşturulamadı';
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+  }
+
+  if (body.action === 'reset-password') {
+    if (!body.id || !body.newPassword) {
+      return NextResponse.json({ error: 'id ve newPassword gerekli' }, { status: 400 });
+    }
+    try {
+      await adminResetUserPassword(auth.user.id, body.id, body.newPassword, auth.user.name);
+      return NextResponse.json({ ok: true });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Şifre sıfırlanamadı';
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+  }
+
   if (!body.id) {
     return NextResponse.json({ error: 'id gerekli' }, { status: 400 });
   }

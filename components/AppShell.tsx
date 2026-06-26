@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { SyncStatusBar } from '@/components/SyncStatusBar';
 import { RouteAccessGuard } from '@/components/auth/RouteAccessGuard';
+import { MustChangePasswordGuard } from '@/components/auth/MustChangePasswordGuard';
 import { LicenseBadge } from '@/components/LicenseBadge';
 import { CommandPalette } from '@/components/CommandPalette';
 import { IconRail } from '@/components/IconRail';
@@ -45,10 +46,25 @@ function isThemeRoute(pathname: string, tab: string | null): boolean {
   return pathname === '/tools/theme' || (pathname === '/settings' && tab === 'theme');
 }
 
+function isScrollListRoute(pathname: string): boolean {
+  if (/^\/reservations\/[^/]+\/edit$/.test(pathname)) return false;
+  return (
+    pathname.startsWith('/reservations') ||
+    pathname.startsWith('/reception/') ||
+    pathname.startsWith('/reports') ||
+    pathname === '/rooms' ||
+    pathname.startsWith('/guest-relations') ||
+    pathname.startsWith('/accounting') ||
+    pathname.startsWith('/cashier') ||
+    pathname.startsWith('/onkasa')
+  );
+}
+
 function oneScreenVariant(pathname: string, tab: string | null): OneScreenVariant {
   if (isThemeRoute(pathname, tab)) return 'theme';
   if (pathname === '/') return 'dashboard';
   if (isHkMobileRoute(pathname)) return 'hk';
+  if (isScrollListRoute(pathname)) return 'list';
   return 'default';
 }
 
@@ -85,7 +101,9 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
         <div className="roomio-viewport-canvas">
           <div className="roomio-hk-mobile-shell">
             <ContentOneScreen variant={screenVariant}>
-              <RouteAccessGuard>{children}</RouteAccessGuard>
+              <MustChangePasswordGuard>
+                <RouteAccessGuard>{children}</RouteAccessGuard>
+              </MustChangePasswordGuard>
             </ContentOneScreen>
           </div>
         </div>
@@ -138,7 +156,9 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                 <ReleaseNotice />
               </Suspense>
               <ContentOneScreen variant={screenVariant}>
+                <MustChangePasswordGuard>
                 <RouteAccessGuard>{children}</RouteAccessGuard>
+              </MustChangePasswordGuard>
               </ContentOneScreen>
             </main>
             <ShortcutBar />

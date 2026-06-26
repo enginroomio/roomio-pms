@@ -20,9 +20,10 @@ type Props = {
   checkIn: string;
   selectedCode: string;
   onApply: (plan: RatePlan) => void;
+  compact?: boolean;
 };
 
-export function RatePlanPicker({ roomType, checkIn, selectedCode, onApply }: Props) {
+export function RatePlanPicker({ roomType, checkIn, selectedCode, onApply, compact = false }: Props) {
   const [plans, setPlans] = useState<RatePlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
@@ -64,26 +65,24 @@ export function RatePlanPicker({ roomType, checkIn, selectedCode, onApply }: Pro
   }
 
   return (
-    <div className="roomio-card" style={{ padding: 12, marginBottom: 16 }}>
+    <div className={`roomio-rate-plan-picker${compact ? ' roomio-rate-plan-picker--compact' : ''}`}>
       <label className="roomio-field">
-        <span>Rate plan (Fidelio rate code)</span>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <select
-            className="roomio-select"
-            value={selectedCode}
-            disabled={loading || !checkIn}
-            onChange={(e) => void selectPlan(e.target.value)}
-          >
-            <option value="">{loading ? 'Yükleniyor…' : 'Rate plan seçin…'}</option>
-            {plans.map((p) => (
-              <option key={p.id} value={p.code}>
-                {p.code} — {p.name} ({formatMoney(p.baseRate, p.currency)})
-              </option>
-            ))}
-          </select>
-        </div>
+        <span>{compact ? 'Rate plan' : 'Rate plan (Fidelio rate code)'}</span>
+        <select
+          className="roomio-select"
+          value={selectedCode}
+          disabled={loading || !checkIn}
+          onChange={(e) => void selectPlan(e.target.value)}
+        >
+          <option value="">{loading ? 'Yükleniyor…' : 'Rate plan seçin…'}</option>
+          {plans.map((p) => (
+            <option key={p.id} value={p.code}>
+              {p.code} — {p.name} ({formatMoney(p.baseRate, p.currency)})
+            </option>
+          ))}
+        </select>
       </label>
-      {msg ? <p className="roomio-page-desc" style={{ margin: '8px 0 0' }}>{msg}</p> : null}
+      {msg ? <p className="roomio-rate-plan-picker__msg">{msg}</p> : null}
     </div>
   );
 }

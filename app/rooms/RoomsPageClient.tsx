@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { roomioFetch } from '@/lib/client/api';
 import { RoomRackGrid } from '@/components/RoomRackGrid';
+import { PanelQuickNav } from '@/components/panel/PanelHubPanels';
 import { useRoomRackContextMenu } from '@/components/reception/useRoomRackContextMenu';
 import { Button } from '@/components/ui';
 import { useLiveHkMap } from '@/lib/client/use-live-hk-map';
@@ -35,6 +36,9 @@ export function RoomsPageClient({ initial }: { initial: import('@/lib/server/das
   const { hkMap, pullFromServer } = useLiveHkMap(snapshot.hkMap);
   const inventoryVersion = useInventoryVersion();
   const tab: Tab = searchParams.get('tab') === 'blocking' ? 'blocking' : 'rack';
+  const rackView = searchParams.get('view');
+  const roomFilter = searchParams.get('filter');
+  const useElektraRack = rackView !== 'new-rack';
   const [refreshKey, setRefreshKey] = useState(0);
   const [blocks, setBlocks] = useState<RoomBlock[]>(() => getRoomBlocks());
   const [roomNo, setRoomNo] = useState('');
@@ -105,25 +109,48 @@ export function RoomsPageClient({ initial }: { initial: import('@/lib/server/das
   }
 
   const tabs = [
-    { id: 'rack' as const, label: 'Room Rack (F12)', href: '/rooms' },
+    { id: 'rack' as const, label: useElektraRack ? 'Room Rack (F12)' : 'Klasik Rack', href: useElektraRack ? '/rooms' : '/rooms?view=new-rack' },
     { id: 'blocking' as const, label: 'Hızlı Blokaj', href: '/rooms?tab=blocking' },
   ];
+
+  const title =
+    tab === 'blocking'
+      ? 'Hızlı Blokaj'
+      : roomFilter === 'closed'
+        ? 'Kapalı Oda Listesi'
+        : useElektraRack
+          ? 'Room Rack (F12)'
+          : 'Klasik Room Rack';
 
   return (
     <PageHeader
       breadcrumb="Kat Hizmetleri › Room Rack"
-      title={tab === 'blocking' ? 'Hızlı Blokaj' : 'Room Rack (F12)'}
+      title={title}
       description={
         tab === 'blocking'
           ? 'Odaları geçici olarak bloke edin — bakım, hold veya OOO.'
-          : `${PROPERTY.name} · screen-104-kat-room-rack mockup · Prisma canlı veri`
+          : roomFilter === 'closed'
+            ? 'OOO / OOS durumundaki odalar — bakım ve servis dışı.'
+            : `${PROPERTY.name} · ${useElektraRack ? 'Elektra rack' : 'Klasik rack'} · Prisma canlı veri`
       }
       actions={
-        <Link href="/" className="roomio-btn roomio-btn--secondary">
-          Ana Sayfa
-        </Link>
+        <>
+          <Link href="/" className="roomio-btn roomio-btn--secondary">
+            Ana Sayfa
+          </Link>
+          {roomFilter !== 'closed' ? (
+            <Link href="/rooms?filter=closed" className="roomio-btn roomio-btn--ghost">
+              Kapalı odalar
+            </Link>
+          ) : (
+            <Link href="/rooms" className="roomio-btn roomio-btn--ghost">
+              Tüm rack
+            </Link>
+          )}
+        </>
       }
     >
+      <PanelQuickNav active="rack" />
       <nav className="roomio-tabs" aria-label="Oda modülü">
         {tabs.map((t) => (
           <Link
@@ -138,16 +165,47 @@ export function RoomsPageClient({ initial }: { initial: import('@/lib/server/das
 
       {tab === 'rack' ? (
         <div className={`roomio-rack-page${snapshotLoading ? ' roomio-dashboard--loading' : ''}`}>
-          <RoomRackGrid
-            key={`${propertyId}-${refreshKey}-${inventoryVersion}`}
-            elektra
-            reservations={reservations}
-            businessDate={businessDate}
-            hkMap={hkMap}
-            focusRoomNo={focusRoom}
-            onRoomPmsContextMenu={openPmsMenu}
-            onRefresh={refreshRack}
-          />
+          {roomFilter === 'closed' ? (
+            <div className="roomio-card roomio-table-wrap">
+              <table className="roomio-table">
+                <thead>
+                  <tr>
+                    <th>Oda</th>
+                    <th>HK durumu</th>
+                    <th>Misafir</th>
+                    <th>Not</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(hkMap)
+                    .filter(([, v]) => v.hkStatus === 'OOO' || v.hkStatus === 'OOS')
+                    .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
+                    .map(([roomNo, rec]) => {
+                      const res = reservations.find((r) => r.roomNo === roomNo && r.status === 'CHECKED_IN');
+                      return (
+                        <tr key={roomNo}>
+                          <td><strong>{roomNo}</strong></td>
+                          <td>{rec.hkStatus}</td>
+                          <td>{res?.guestName ?? '—'}</td>
+                          <td>{rec.notes ?? '—'}</td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <RoomRackGrid
+              key={`${propertyId}-${refreshKey}-${inventoryVersion}-${useElektraRack}`}
+              elektra={useElektraRack}
+              reservations={reservations}
+              businessDate={businessDate}
+              hkMap={hkMap}
+              focusRoomNo={focusRoom}
+              onRoomPmsContextMenu={openPmsMenu}
+              onRefresh={refreshRack}
+            />
+          )}
           {pmsMenuNode}
         </div>
       ) : (

@@ -79,6 +79,18 @@ export default function IdReaderSettingsPage() {
             <input type="checkbox" checked={config.simulateWhenOffline} onChange={(e) => setConfig({ ...config, simulateWhenOffline: e.target.checked })} />
             <span>Çevrimdışı simülasyon</span>
           </label>
+          <label className="roomio-field roomio-field--row">
+            <input type="checkbox" checked={config.requireManualApproval} onChange={(e) => setConfig({ ...config, requireManualApproval: e.target.checked })} />
+            <span>Check-in öncesi personel onayı zorunlu</span>
+          </label>
+          <label className="roomio-field roomio-field--row">
+            <input type="checkbox" checked={config.blockCheckInUntilReady} onChange={(e) => setConfig({ ...config, blockCheckInUntilReady: e.target.checked })} />
+            <span>EGM alanları tamamlanmadan check-in engelle</span>
+          </label>
+          <label className="roomio-field roomio-field--row">
+            <input type="checkbox" checked={config.autoSendEgmAfterCheckIn} onChange={(e) => setConfig({ ...config, autoSendEgmAfterCheckIn: e.target.checked })} />
+            <span>Check-in sonrası EGM otomatik gönder</span>
+          </label>
         </FormGrid>
         <FormActions className="roomio-form-actions--spaced">
           <Button onClick={() => void save()}>Kaydet</Button>

@@ -33,6 +33,7 @@ function CascadeRow({
   colIndex,
   path,
   pathname,
+  search,
   onEnter,
   onClose,
 }: {
@@ -40,6 +41,7 @@ function CascadeRow({
   colIndex: number;
   path: string[];
   pathname: string;
+  search: string;
   onEnter: (item: SidebarNavItem, colIndex: number) => void;
   onClose: () => void;
 }) {
@@ -49,7 +51,7 @@ function CascadeRow({
 
   const hasChildren = Boolean(item.children?.length);
   const selected = path[colIndex] === item.id;
-  const active = navItemActive(pathname, item);
+  const active = navItemActive(pathname, item, search);
 
   if (hasChildren) {
     return (
@@ -84,10 +86,12 @@ function CascadeRow({
 function TopMenuCascadePanel({
   items,
   pathname,
+  search,
   onClose,
 }: {
   items: SidebarNavItem[];
   pathname: string;
+  search: string;
   onClose: () => void;
 }) {
   const { t } = useI18n();
@@ -121,6 +125,7 @@ function TopMenuCascadePanel({
               colIndex={colIndex}
               path={path}
               pathname={pathname}
+              search={search}
               onEnter={onEnter}
               onClose={onClose}
             />
@@ -141,7 +146,7 @@ function panelPosition(anchor: HTMLElement): PanelPos {
 export function TopMenuNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const search = searchParams.toString();
+  const search = searchParams.toString() ? `?${searchParams.toString()}` : '';
   const { t } = useI18n();
   const groupRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -167,7 +172,14 @@ export function TopMenuNav() {
 
   useEffect(() => {
     if (!openId) return;
-    const onReflow = () => updatePanelPos();
+    const onReflow = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Node) {
+        const panel = document.querySelector('.roomio-top-menu__panel--portal');
+        if (panel?.contains(target)) return;
+      }
+      updatePanelPos();
+    };
     window.addEventListener('resize', onReflow);
     window.addEventListener('scroll', onReflow, true);
     return () => {
@@ -177,7 +189,7 @@ export function TopMenuNav() {
   }, [openId, updatePanelPos]);
 
   function groupActive(groupId: string) {
-    return topMenuGroupActive(pathname, groupId, search ? `?${search}` : '');
+    return topMenuGroupActive(pathname, groupId, search);
   }
 
   function cancelClose() {
@@ -211,6 +223,7 @@ export function TopMenuNav() {
               key={openGroup.id}
               items={topMenuItems(openGroup.id)}
               pathname={pathname}
+              search={search}
               onClose={() => setOpenId(null)}
             />
           </div>,

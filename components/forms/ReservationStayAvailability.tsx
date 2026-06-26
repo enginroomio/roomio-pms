@@ -8,11 +8,12 @@ type Props = {
   checkOut: string;
   roomType: string;
   roomCount: number;
+  compact?: boolean;
 };
 
 type DayCell = { type: string; available: number; total: number; occupancyPct: number };
 
-export function ReservationStayAvailability({ checkIn, checkOut, roomType, roomCount }: Props) {
+export function ReservationStayAvailability({ checkIn, checkOut, roomType, roomCount, compact = false }: Props) {
   const [cells, setCells] = useState<DayCell[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -49,9 +50,9 @@ export function ReservationStayAvailability({ checkIn, checkOut, roomType, roomC
 
   if (!checkIn || !checkOut || nights < 1) {
     return (
-      <div className="roomio-card roomio-alert roomio-alert--warn" style={{ marginBottom: 16 }}>
-        <p className="roomio-page-desc" style={{ margin: 0 }}>Giriş ve çıkış tarihlerini seçin.</p>
-      </div>
+      <p className={`roomio-stay-avail roomio-stay-avail--warn${compact ? ' roomio-stay-avail--compact' : ''}`}>
+        Giriş ve çıkış tarihlerini seçin.
+      </p>
     );
   }
 
@@ -59,21 +60,17 @@ export function ReservationStayAvailability({ checkIn, checkOut, roomType, roomC
   const ok = minAvail != null && minAvail >= roomCount;
 
   return (
-    <div
-      className={`roomio-card roomio-alert${ok ? ' roomio-alert--success' : minAvail != null ? ' roomio-alert--warn' : ''}`}
-      style={{ marginBottom: 16 }}
+    <p
+      className={`roomio-stay-avail${ok ? ' roomio-stay-avail--ok' : minAvail != null ? ' roomio-stay-avail--warn' : ''}${compact ? ' roomio-stay-avail--compact' : ''}`}
     >
-      <p className="roomio-page-desc" style={{ margin: 0 }}>
-        {loading ? 'Müsaitlik kontrol ediliyor…' : null}
-        {!loading && minAvail != null ? (
-          <>
-            <strong>{roomType}</strong> — {nights} gece için minimum müsait oda:{' '}
-            <strong>{minAvail}</strong> / istenen {roomCount}.
-            {ok ? ' Rezervasyon için yeterli.' : ' Yetersiz müsaitlik — tarih veya oda tipini değiştirin.'}
-          </>
-        ) : null}
-        {!loading && minAvail == null ? 'Müsaitlik verisi alınamadı.' : null}
-      </p>
-    </div>
+      {loading ? 'Müsaitlik kontrol ediliyor…' : null}
+      {!loading && minAvail != null ? (
+        <>
+          <strong>{roomType}</strong> — {nights} gece · min. müsait: <strong>{minAvail}</strong> / {roomCount}.
+          {ok ? ' Yeterli.' : ' Yetersiz — tarih veya tipi değiştirin.'}
+        </>
+      ) : null}
+      {!loading && minAvail == null ? 'Müsaitlik verisi alınamadı.' : null}
+    </p>
   );
 }

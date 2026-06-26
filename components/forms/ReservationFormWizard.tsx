@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui';
 import { EgmIdentityFormPanel } from '@/components/egm/EgmIdentityFormPanel';
 import { EgmStatusBadge } from '@/components/egm/EgmStatusBadge';
-import { nextRefNo } from '@/lib/data/reservations';
 import { AgencyPicker } from '@/components/forms/AgencyPicker';
 import { CompanyPicker } from '@/components/forms/CompanyPicker';
 import { GuestArchiveLookup } from '@/components/forms/GuestArchiveLookup';
@@ -119,10 +118,16 @@ function reservationToFormValues(r: Reservation): FormValues {
 type Props = {
   existing?: Reservation;
   seed?: { fixRoomNo?: string; checkIn?: string };
+  embedded?: boolean;
+  onComplete?: () => void;
+  onCancel?: () => void;
+  /** Düzenlemede tüm adımları tek ekranda göster */
+  singleScreen?: boolean;
 };
 
-export function ReservationFormWizard({ existing, seed }: Props) {
+export function ReservationFormWizard({ existing, seed, embedded, onComplete, onCancel, singleScreen: singleScreenProp }: Props) {
   const isEdit = Boolean(existing);
+  const singleScreen = singleScreenProp ?? (isEdit && !embedded);
   const router = useRouter();
   const [layout, setLayout] = useState<FormLayout | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
@@ -139,8 +144,8 @@ export function ReservationFormWizard({ existing, seed }: Props) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [egmWarning, setEgmWarning] = useState<string | null>(null);
   const [marketRequired, setMarketRequired] = useState(false);
-  const generatedRef = useMemo(() => nextRefNo(), []);
-  const refPreview = existing?.refNo ?? generatedRef;
+  const [refPreview, setRefPreview] = useState(existing?.refNo ?? '');
+  const [roomTypeOptions, setRoomTypeOptions] = useState<{ code: string; label: string }[]>([]);
 
   const page = formPageById('reservations-new')!;
   const coverage = useMemo(() => elektraCoverage('reservations-new'), []);
@@ -196,10 +201,12 @@ export function ReservationFormWizard({ existing, seed }: Props) {
 
   useEffect(() => {
     void (async () => {
-      const [tplRes, taxRes, marketRes] = await Promise.all([
+      const [tplRes, taxRes, marketRes, refRes, typesRes] = await Promise.all([
         roomioFetch('/api/reports/templates?pageId=reservations-new'),
         roomioFetch('/api/tax/rules'),
         roomioFetch('/api/market-required'),
+        existing?.refNo ? Promise.resolve(null) : roomioFetch('/api/reservations/next-ref'),
+        roomioFetch('/api/room-type-defs'),
       ]);
       const tplJ = (await tplRes.json()) as { template?: { layout?: FormLayout } };
       const taxJ = (await taxRes.json()) as { rules?: TaxRule[] };
@@ -207,8 +214,22 @@ export function ReservationFormWizard({ existing, seed }: Props) {
       setLayout(mergeFormLayoutWithDefaults('reservations-new', tplJ.template?.layout) ?? defaultFormLayout('reservations-new'));
       if (taxJ.rules) setTaxRules(taxJ.rules);
       setMarketRequired(Boolean(marketJ.required));
+
+      if (refRes) {
+        const refJ = (await refRes.json()) as { refNo?: string };
+        if (refJ.refNo) setRefPreview(refJ.refNo);
+      }
+
+      const typesJ = (await typesRes.json()) as { types?: { code: string; short: string; name: string; active?: boolean }[] };
+      if (typesJ.types?.length) {
+        setRoomTypeOptions(
+          typesJ.types
+            .filter((t) => t.active !== false)
+            .map((t) => ({ code: t.code, label: `${t.short} — ${t.name}` })),
+        );
+      }
     })();
-  }, []);
+  }, [existing?.refNo]);
 
   useEffect(() => {
     void loadFx(rateDate);
@@ -221,13 +242,12 @@ export function ReservationFormWizard({ existing, seed }: Props) {
 
   const steps = layout?.steps ?? page.steps;
   const activeStep = steps[stepIndex];
-  const stepFields = layout?.fields.filter((f) => f.stepId === activeStep?.id) ?? [];
 
   useEffect(() => {
-    if (activeStep?.id === 'pricing') {
+    if (activeStep?.id === 'pricing' || singleScreen) {
       void loadFx(rateDate, true);
     }
-  }, [activeStep?.id, rateDate, loadFx]);
+  }, [activeStep?.id, rateDate, loadFx, singleScreen]);
 
   const selectedFxRow = currency === 'TRY' ? rateMap.get('TRY') : rateMap.get(currency);
   const exchangeRate = currency === 'TRY' ? 1 : (selectedFxRow?.tryPerUnitBuy ?? 0);
@@ -269,7 +289,7 @@ export function ReservationFormWizard({ existing, seed }: Props) {
 
   const fxReady = Boolean(fx?.rates?.length);
 
-  function renderField(cfg: FormFieldConfig) {
+  function renderField(cfg: FormFieldConfig, opts?: { textareaRows?: number }) {
     if (!shouldShowField(cfg.key)) return null;
     const def = fieldDef(cfg.key, cfg);
     const label = cfg.label ?? formFieldLabel('reservations-new', cfg.key, def.label);
@@ -297,11 +317,21 @@ export function ReservationFormWizard({ existing, seed }: Props) {
     }
 
     if (def.type === 'select') {
+      const options = cfg.key === 'roomType' && roomTypeOptions.length
+        ? roomTypeOptions.map((o) => o.code)
+        : (def.options ?? []);
+      const optionLabel = (o: string) => {
+        if (cfg.key === 'roomType') {
+          const row = roomTypeOptions.find((t) => t.code === o);
+          return row?.label ?? o;
+        }
+        return o;
+      };
       return (
         <label key={cfg.key} className={`roomio-field${full ? ' roomio-field--full' : ''}`}>
           <span>{label}{cfg.required ? ' *' : ''}</span>
           <select className="roomio-select" value={String(val)} required={cfg.required} onChange={(e) => setValue(cfg.key, e.target.value)}>
-            {(def.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}
+            {options.map((o) => <option key={o} value={o}>{optionLabel(o)}</option>)}
           </select>
         </label>
       );
@@ -311,7 +341,12 @@ export function ReservationFormWizard({ existing, seed }: Props) {
       return (
         <label key={cfg.key} className="roomio-field roomio-field--full">
           <span>{label}</span>
-          <textarea className="roomio-input" rows={3} value={String(val)} onChange={(e) => setValue(cfg.key, e.target.value)} />
+          <textarea
+            className="roomio-input"
+            rows={opts?.textareaRows ?? 3}
+            value={String(val)}
+            onChange={(e) => setValue(cfg.key, e.target.value)}
+          />
         </label>
       );
     }
@@ -361,15 +396,19 @@ export function ReservationFormWizard({ existing, seed }: Props) {
       if (!coreKeys.has(k)) extraData[k] = String(v);
     }
 
+    const fixRoomNo = String(values.fixRoomNo ?? '').trim();
+    const agencyCode = String(values.agencyCode ?? '').trim();
+
     const reservation: Reservation = {
       id: existing?.id ?? `new-${Date.now()}`,
-      refNo: existing?.refNo ?? refPreview,
+      refNo: existing?.refNo ?? (refPreview || '1'),
       guestName: String(values.guestName ?? ''),
       email: values.email ? String(values.email) : undefined,
       phone: values.phone ? String(values.phone) : undefined,
       checkIn: String(values.checkIn ?? ''),
       checkOut: String(values.checkOut ?? ''),
       roomType: String(values.roomType ?? 'DBL'),
+      roomNo: fixRoomNo || undefined,
       adults: Number(values.adults ?? 2),
       children: Number(values.children ?? 0),
       mealPlan: String(values.mealPlan ?? 'BB'),
@@ -383,6 +422,10 @@ export function ReservationFormWizard({ existing, seed }: Props) {
       extraData: Object.keys(extraData).length ? extraData : undefined,
     };
 
+    if (agencyCode) {
+      reservation.extraData = { ...(reservation.extraData ?? {}), agencyCode };
+    }
+
     const payload = {
       id: reservation.id,
       refNo: reservation.refNo,
@@ -392,6 +435,7 @@ export function ReservationFormWizard({ existing, seed }: Props) {
       checkIn: reservation.checkIn,
       checkOut: reservation.checkOut,
       roomType: reservation.roomType,
+      roomNo: reservation.roomNo,
       adults: reservation.adults,
       children: reservation.children,
       mealPlan: reservation.mealPlan,
@@ -428,7 +472,7 @@ export function ReservationFormWizard({ existing, seed }: Props) {
       }
     }
 
-    if (!isEdit) {
+    if (String(values.idNo ?? '').trim()) {
       const { firstName: fn, lastName: ln } = splitGuestName(String(values.guestName ?? ''));
       try {
         const egmRes = await roomioFetch('/api/egm/identity', {
@@ -464,6 +508,10 @@ export function ReservationFormWizard({ existing, seed }: Props) {
 
     setSaved(true);
     setSubmitError(null);
+    if (embedded) {
+      onComplete?.();
+      return;
+    }
     const successTarget = isEdit ? `/reservations/${reservation.id}` : '/reservations';
     setTimeout(() => router.push(successTarget), isEdit ? 1200 : 800);
   }
@@ -472,8 +520,279 @@ export function ReservationFormWizard({ existing, seed }: Props) {
     return <p className="roomio-page-desc">Form yükleniyor…</p>;
   }
 
+  function fieldsForStep(stepId: string) {
+    return layout?.fields.filter((f) => f.stepId === stepId) ?? [];
+  }
+
+  function renderStepContent(stepId: string, compact = false, wizardCompact = false) {
+    const stepFields = fieldsForStep(stepId);
+
+    if (stepId === 'egm') {
+      if (compact) {
+        return (
+          <div className="roomio-form-grid roomio-form-grid--3 roomio-rez-edit-screen__fields">
+            {stepFields.map((f) => renderField(f))}
+          </div>
+        );
+      }
+      return (
+        <EgmIdentityFormPanel
+          compact={wizardCompact}
+          values={values}
+          refNo={refPreview}
+          onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}
+        />
+      );
+    }
+
+    if (stepId === 'guest') {
+      return (
+        <>
+          {!compact ? (
+            <GuestArchiveLookup values={values} onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))} />
+          ) : null}
+          <CompanyPicker
+            senderType={senderType}
+            companyCode={String(values.companyCode ?? '')}
+            onSelect={(code, name) => setValues((prev) => ({ ...prev, companyCode: code, companyName: name }))}
+          />
+          <AgencyPicker
+            senderType={senderType}
+            agencyCode={String(values.agencyCode ?? values.agency ?? '')}
+            onSelect={(code, name) => setValues((prev) => ({ ...prev, agencyCode: code, agency: name, market: 'OTA' }))}
+          />
+          <div
+            className={`roomio-form-grid roomio-rez-new-wizard__fields ${
+              compact ? 'roomio-form-grid--3 roomio-rez-edit-screen__fields' : 'roomio-form-grid--3'
+            }`}
+          >
+            {stepFields.map((f) => renderField(f))}
+          </div>
+        </>
+      );
+    }
+
+    if (stepId === 'stay') {
+      return (
+        <>
+          {!compact ? (
+            <ReservationStayAvailability
+              compact={wizardCompact}
+              checkIn={String(values.checkIn ?? '')}
+              checkOut={String(values.checkOut ?? '')}
+              roomType={String(values.roomType ?? 'DBL')}
+              roomCount={roomCount}
+            />
+          ) : null}
+          <div
+            className={`roomio-form-grid roomio-rez-new-wizard__fields ${
+              compact ? 'roomio-form-grid--3 roomio-rez-edit-screen__fields' : wizardCompact ? 'roomio-form-grid--3' : 'roomio-form-grid--2'
+            }`}
+          >
+            {stepFields.map((f) => renderField(f))}
+          </div>
+        </>
+      );
+    }
+
+    if (stepId === 'pricing') {
+      return (
+        <>
+          {!compact ? (
+            <RatePlanPicker
+              compact={wizardCompact}
+              roomType={String(values.roomType ?? 'DBL')}
+              checkIn={checkIn}
+              selectedCode={String(values.ratePlanCode ?? '')}
+              onApply={(plan) => {
+                setValues((prev) => ({
+                  ...prev,
+                  ratePlanCode: plan.code,
+                  rate: plan.baseRate,
+                  currency: plan.currency,
+                  market: plan.market,
+                  ...(plan.mealPlan ? { mealPlan: plan.mealPlan } : {}),
+                }));
+              }}
+            />
+          ) : null}
+          {!compact ? (
+            <ReservationPricingPanel
+              compact={wizardCompact}
+              currency={currency}
+              rate={rate}
+              rateDate={rateDate}
+              exchangeRate={exchangeRate}
+              currencyOptions={currencyOptions}
+              nights={nights}
+              roomCount={roomCount}
+              discountPct={discountPct}
+              gross={gross}
+              subtotal={subtotal}
+              taxes={taxes}
+              rateMap={rateMap}
+              fxReady={fxReady}
+              fxLoading={fxLoading}
+              fxDate={fx?.date}
+              onCurrencyChange={onCurrencyChange}
+              onRateChange={(next) => setValue('rate', next)}
+              onRefreshFx={() => void loadFx(rateDate, true)}
+            />
+          ) : null}
+          <div
+            className={`roomio-form-grid roomio-rez-new-wizard__fields ${
+              compact ? 'roomio-form-grid--3 roomio-rez-edit-screen__fields' : wizardCompact ? 'roomio-form-grid--3' : 'roomio-form-grid--2'
+            }`}
+            style={compact || wizardCompact ? undefined : { marginTop: 16 }}
+          >
+            {(compact ? stepFields : stepFields.filter((f) => !PRICING_PRIMARY_KEYS.has(f.key))).map((f) => renderField(f))}
+          </div>
+        </>
+      );
+    }
+
+    if (stepId === 'extra') {
+      const noteKeys = new Set(['checkInNote', 'roomNote', 'checkOutNote', 'notes']);
+      const shortFields = stepFields.filter((f) => !noteKeys.has(f.key));
+      const noteFields = stepFields.filter((f) => noteKeys.has(f.key));
+
+      if (wizardCompact || compact) {
+        return (
+          <>
+            <div className="roomio-form-grid roomio-form-grid--3 roomio-rez-new-wizard__fields">
+              {shortFields.map((f) => renderField(f))}
+            </div>
+            <div className="roomio-form-grid roomio-form-grid--2 roomio-rez-new-wizard__fields roomio-rez-new-wizard__notes">
+              {noteFields.map((f) => renderField(f, { textareaRows: 2 }))}
+            </div>
+          </>
+        );
+      }
+
+      return (
+        <div className="roomio-form-grid roomio-form-grid--2">
+          {stepFields.map((f) => renderField(f))}
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={`roomio-form-grid roomio-rez-new-wizard__fields ${
+          compact ? 'roomio-form-grid--3 roomio-rez-edit-screen__fields' : wizardCompact ? 'roomio-form-grid--3' : 'roomio-form-grid--2'
+        }`}
+      >
+        {stepFields.map((f) => renderField(f))}
+      </div>
+    );
+  }
+
+  const priceSummary = (
+    <aside className="roomio-reservation-new__summary roomio-card">
+      <h2 className="roomio-card-title">Fiyat özeti</h2>
+      <dl className="roomio-price-summary">
+        <div><dt>Rezervasyon no</dt><dd>{refPreview}</dd></div>
+        <div><dt>EGM kimlik</dt><dd><EgmStatusBadge status={egmStatus} compact /></dd></div>
+        <div><dt>Gece × oda</dt><dd>{nights > 0 ? `${nights} × ${roomCount}` : '—'}</dd></div>
+        <div><dt>Gece fiyatı</dt><dd><DualAmount amount={rate} currency={currency} rates={rateMap} /></dd></div>
+        {discountPct > 0 ? (
+          <div><dt>İndirim</dt><dd>%{discountPct}</dd></div>
+        ) : null}
+        <div className="roomio-price-summary__divider" />
+        <div><dt>Ara toplam</dt><dd><DualAmount amount={subtotal} currency={currency} rates={rateMap} /></dd></div>
+        {taxes.lines.map((line) => (
+          <div key={line.code}>
+            <dt>{line.name} (%{line.rate})</dt>
+            <dd><DualAmount amount={line.amount} currency={currency} rates={rateMap} /></dd>
+          </div>
+        ))}
+        <div className="roomio-price-summary__total">
+          <dt>Toplam</dt>
+          <dd><DualAmount amount={taxes.total} currency={currency} rates={rateMap} /></dd>
+        </div>
+        {currency !== 'TRY' ? (
+          <div className="roomio-price-summary__try-total">
+            <dt>TL toplam (giriş günü TCMB alış)</dt>
+            <dd>{formatMoney(foreignToTry(taxes.total, currency, rateMap), 'TRY')}</dd>
+          </div>
+        ) : null}
+        <div className="roomio-price-summary__fx-rate">
+          <dt>Döviz kuru (giriş: {rateDate})</dt>
+          <dd>
+            1 {currency} = {exchangeRate.toLocaleString('tr-TR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} TRY
+          </dd>
+        </div>
+      </dl>
+      {!singleScreen ? (
+        <p className="roomio-page-desc" style={{ marginTop: 8 }}>
+          <a href="/settings?section=currencies">Kurlar</a>
+          {' · '}
+          <a href="/settings?section=tax-rules">Vergiler</a>
+          {' · '}
+          <a href="/reports?tab=forms">Form tasarımı</a>
+        </p>
+      ) : null}
+    </aside>
+  );
+
+  if (singleScreen) {
+    return (
+      <div className="roomio-rez-edit-screen">
+        {saved ? (
+          <div className="roomio-card roomio-alert roomio-alert--success" role="status">
+            {`${refPreview} güncellendi — detay sayfasına yönlendiriliyorsunuz…`}
+          </div>
+        ) : null}
+        {saved && egmWarning ? (
+          <p className="roomio-card roomio-text-warn" role="status" style={{ marginBottom: 8, padding: '8px 12px' }}>
+            Rezervasyon güncellendi; EGM kimlik kaydı tamamlanamadı: {egmWarning}
+          </p>
+        ) : null}
+
+        {!fxReady ? (
+          <p className="roomio-rez-edit-screen__fx-hint" role="status">
+            TCMB kurları yüklenemedi — TRY dışı dövizlerde TL karşılığı gecikebilir.
+          </p>
+        ) : null}
+
+        <div className="roomio-reservation-new roomio-rez-edit-screen__layout">
+          <div className="roomio-reservation-new__main">
+            <div className="roomio-rez-edit-screen__steps" aria-label="Rezervasyon düzenleme — tüm adımlar">
+              {steps.map((step, index) => (
+                <section
+                  key={step.id}
+                  className={`roomio-card roomio-rez-edit-screen__step${step.id === 'egm' ? ' roomio-rez-edit-screen__step--wide' : ''}`}
+                  aria-labelledby={`rez-edit-step-${step.id}`}
+                >
+                  <h3 id={`rez-edit-step-${step.id}`} className="roomio-rez-edit-screen__step-title">
+                    <span>{index + 1}</span>
+                    {step.title}
+                    {step.id === 'egm' ? <EgmStatusBadge status={egmStatus} compact /> : null}
+                  </h3>
+                  {renderStepContent(step.id, true)}
+                </section>
+              ))}
+            </div>
+
+            {submitError ? (
+              <p className="roomio-text-warn roomio-rez-edit-screen__error" role="alert">{submitError}</p>
+            ) : null}
+
+            <div className="roomio-form-actions roomio-reservation-new__actions roomio-rez-edit-screen__actions">
+              <Button variant="secondary" href={`/reservations/${existing?.id}`}>İptal</Button>
+              <button type="button" className="roomio-btn roomio-btn--primary" onClick={() => void onSubmit()}>
+                Güncelle
+              </button>
+            </div>
+          </div>
+          {priceSummary}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className={`roomio-rez-new-wizard${embedded ? ' roomio-rez-new-wizard--embedded' : ''}`}>
       {saved ? (
         <div className="roomio-card roomio-alert roomio-alert--success" role="status">
           {isEdit
@@ -482,29 +801,31 @@ export function ReservationFormWizard({ existing, seed }: Props) {
         </div>
       ) : null}
       {saved && egmWarning ? (
-        <p className="roomio-card roomio-text-warn" role="status" style={{ marginBottom: 16, padding: '12px 16px' }}>
+        <p className="roomio-card roomio-text-warn roomio-rez-new-wizard__warn" role="status">
           Rezervasyon kaydedildi; EGM kimlik kaydı tamamlanamadı: {egmWarning}
         </p>
       ) : null}
 
-      <div className="roomio-card roomio-elektra-compare" style={{ marginBottom: 16, padding: '12px 16px' }}>
-        <p className="roomio-page-desc" style={{ margin: 0 }}>
-          <strong>Elektra screen-038</strong> karşılaştırması: {coverage.covered}/{coverage.total} alan varsayılanda.
-          {coverage.missing.length ? ` Eksik (form tasarımdan eklenebilir): ${coverage.missing.slice(0, 4).join(', ')}${coverage.missing.length > 4 ? '…' : ''}` : ' Tamam.'}
-          {' · '}
-          <Link href="/tools/rollout?phase=rezervasyon">Rollout</Link>
-        </p>
-      </div>
-
-      {!fxReady && activeStep?.id !== 'pricing' ? (
-        <div className="roomio-card roomio-alert roomio-alert--warn" style={{ marginBottom: 16 }}>
-          <p className="roomio-page-desc" style={{ margin: 0 }}>
-            TCMB kurları şu an yüklenemedi — misafir ve EGM adımlarına devam edebilirsiniz; fiyatlandırma adımında kur otomatik yenilenir.
+      {!embedded ? (
+        <div className="roomio-card roomio-elektra-compare roomio-rez-new-wizard__compare">
+          <p className="roomio-page-desc">
+            <strong>Elektra screen-038</strong> karşılaştırması: {coverage.covered}/{coverage.total} alan varsayılanda.
+            {coverage.missing.length ? ` Eksik: ${coverage.missing.slice(0, 3).join(', ')}${coverage.missing.length > 3 ? '…' : ''}` : ' Tamam.'}
+            {' · '}
+            <Link href="/tools/rollout?phase=rezervasyon">Rollout</Link>
           </p>
         </div>
       ) : null}
 
-      <nav className="roomio-wizard-steps" aria-label="Rezervasyon adımları">
+      {!fxReady && activeStep?.id !== 'pricing' ? (
+        <div className="roomio-card roomio-alert roomio-alert--warn roomio-rez-new-wizard__fx-hint">
+          <p className="roomio-page-desc">
+            TCMB kurları yüklenemedi — fiyatlandırma adımında kur yenilenir.
+          </p>
+        </div>
+      ) : null}
+
+      <nav className="roomio-wizard-steps roomio-rez-new-wizard__steps" aria-label="Rezervasyon adımları">
         {steps.map((s, i) => (
           <button
             key={s.id}
@@ -518,156 +839,40 @@ export function ReservationFormWizard({ existing, seed }: Props) {
         ))}
       </nav>
 
-      <div className="roomio-reservation-new">
+      <div className="roomio-reservation-new roomio-rez-new-wizard__layout">
         <div className="roomio-reservation-new__main">
-          <section className="roomio-card">
+          <section className="roomio-card roomio-rez-new-wizard__step">
             <h2 className="roomio-card-title">{activeStep?.title}</h2>
-            {activeStep?.description ? <p className="roomio-page-desc">{activeStep.description}</p> : null}
-            {activeStep?.id === 'egm' ? (
-              <EgmIdentityFormPanel
-                values={values}
-                refNo={refPreview}
-                onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}
-              />
-            ) : activeStep?.id === 'guest' ? (
-              <>
-                <GuestArchiveLookup values={values} onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))} />
-                <CompanyPicker
-                  senderType={senderType}
-                  companyCode={String(values.companyCode ?? '')}
-                  onSelect={(code, name) => setValues((prev) => ({ ...prev, companyCode: code, companyName: name }))}
-                />
-                <AgencyPicker
-                  senderType={senderType}
-                  agencyCode={String(values.agencyCode ?? values.agency ?? '')}
-                  onSelect={(code, name) => setValues((prev) => ({ ...prev, agencyCode: code, agency: name, market: 'OTA' }))}
-                />
-                <div className="roomio-form-grid roomio-form-grid--2">
-                  {stepFields.map(renderField)}
-                </div>
-              </>
-            ) : activeStep?.id === 'stay' ? (
-              <>
-                <ReservationStayAvailability
-                  checkIn={String(values.checkIn ?? '')}
-                  checkOut={String(values.checkOut ?? '')}
-                  roomType={String(values.roomType ?? 'DBL')}
-                  roomCount={roomCount}
-                />
-                <div className="roomio-form-grid roomio-form-grid--2">
-                  {stepFields.map(renderField)}
-                </div>
-              </>
-            ) : activeStep?.id === 'pricing' ? (
-              <>
-                <RatePlanPicker
-                  roomType={String(values.roomType ?? 'DBL')}
-                  checkIn={checkIn}
-                  selectedCode={String(values.ratePlanCode ?? '')}
-                  onApply={(plan) => {
-                    setValues((prev) => ({
-                      ...prev,
-                      ratePlanCode: plan.code,
-                      rate: plan.baseRate,
-                      currency: plan.currency,
-                      market: plan.market,
-                      ...(plan.mealPlan ? { mealPlan: plan.mealPlan } : {}),
-                    }));
-                  }}
-                />
-                <ReservationPricingPanel
-                  currency={currency}
-                  rate={rate}
-                  rateDate={rateDate}
-                  exchangeRate={exchangeRate}
-                  currencyOptions={currencyOptions}
-                  nights={nights}
-                  roomCount={roomCount}
-                  discountPct={discountPct}
-                  gross={gross}
-                  subtotal={subtotal}
-                  taxes={taxes}
-                  rateMap={rateMap}
-                  fxReady={fxReady}
-                  fxLoading={fxLoading}
-                  fxDate={fx?.date}
-                  onCurrencyChange={onCurrencyChange}
-                  onRateChange={(next) => setValue('rate', next)}
-                  onRefreshFx={() => void loadFx(rateDate, true)}
-                />
-                <div className="roomio-form-grid roomio-form-grid--2" style={{ marginTop: 16 }}>
-                  {stepFields.filter((f) => !PRICING_PRIMARY_KEYS.has(f.key)).map(renderField)}
-                </div>
-              </>
-            ) : (
-              <div className="roomio-form-grid roomio-form-grid--2">
-                {stepFields.map(renderField)}
-              </div>
-            )}
+            {activeStep?.description ? <p className="roomio-page-desc roomio-rez-new-wizard__step-desc">{activeStep.description}</p> : null}
+            <div className="roomio-rez-new-wizard__step-body">
+              {activeStep ? renderStepContent(activeStep.id, false, true) : null}
+            </div>
           </section>
 
           {submitError ? (
-            <p className="roomio-text-warn" style={{ marginTop: 12 }} role="alert">{submitError}</p>
+            <p className="roomio-text-warn roomio-rez-new-wizard__error" role="alert">{submitError}</p>
           ) : null}
-
-          <div className="roomio-form-actions roomio-reservation-new__actions">
-            {stepIndex > 0 ? (
-              <Button variant="secondary" onClick={() => setStepIndex((i) => i - 1)}>← Geri</Button>
-            ) : (
-              <Button variant="secondary" href="/reservations">İptal</Button>
-            )}
-            {stepIndex < steps.length - 1 ? (
-              <Button onClick={() => setStepIndex((i) => i + 1)}>İleri →</Button>
-            ) : (
-              <button type="button" className="roomio-btn roomio-btn--primary" onClick={() => void onSubmit()}>Kaydet</button>
-            )}
-          </div>
         </div>
 
-        <aside className="roomio-reservation-new__summary roomio-card">
-          <h2 className="roomio-card-title">Fiyat özeti</h2>
-          <dl className="roomio-price-summary">
-            <div><dt>Rezervasyon no</dt><dd>{refPreview}</dd></div>
-            <div><dt>EGM kimlik</dt><dd><EgmStatusBadge status={egmStatus} compact /></dd></div>
-            <div><dt>Gece × oda</dt><dd>{nights > 0 ? `${nights} × ${roomCount}` : '—'}</dd></div>
-            <div><dt>Gece fiyatı</dt><dd><DualAmount amount={rate} currency={currency} rates={rateMap} /></dd></div>
-            {discountPct > 0 ? (
-              <div><dt>İndirim</dt><dd>%{discountPct}</dd></div>
-            ) : null}
-            <div className="roomio-price-summary__divider" />
-            <div><dt>Ara toplam</dt><dd><DualAmount amount={subtotal} currency={currency} rates={rateMap} /></dd></div>
-            {taxes.lines.map((line) => (
-              <div key={line.code}>
-                <dt>{line.name} (%{line.rate})</dt>
-                <dd><DualAmount amount={line.amount} currency={currency} rates={rateMap} /></dd>
-              </div>
-            ))}
-            <div className="roomio-price-summary__total">
-              <dt>Toplam</dt>
-              <dd><DualAmount amount={taxes.total} currency={currency} rates={rateMap} /></dd>
-            </div>
-            {currency !== 'TRY' ? (
-              <div className="roomio-price-summary__try-total">
-                <dt>TL toplam (giriş günü TCMB alış)</dt>
-                <dd>{formatMoney(foreignToTry(taxes.total, currency, rateMap), 'TRY')}</dd>
-              </div>
-            ) : null}
-            <div className="roomio-price-summary__fx-rate">
-              <dt>Döviz kuru (giriş: {rateDate})</dt>
-              <dd>
-                1 {currency} = {exchangeRate.toLocaleString('tr-TR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} TRY
-              </dd>
-            </div>
-          </dl>
-          <p className="roomio-page-desc" style={{ marginTop: 8 }}>
-            <a href="/settings?section=currencies">Kurlar</a>
-            {' · '}
-            <a href="/settings?section=tax-rules">Vergiler</a>
-            {' · '}
-            <a href="/reports?tab=forms">Form tasarımı</a>
-          </p>
-        </aside>
+        {priceSummary}
       </div>
-    </>
+
+      <div className="roomio-form-actions roomio-reservation-new__actions roomio-rez-new-wizard__actions">
+        {stepIndex > 0 ? (
+          <Button variant="secondary" onClick={() => setStepIndex((i) => i - 1)}>← Geri</Button>
+        ) : embedded ? (
+          <Button variant="secondary" onClick={onCancel}>İptal</Button>
+        ) : (
+          <Button variant="secondary" href="/reservations">İptal</Button>
+        )}
+        {stepIndex < steps.length - 1 ? (
+          <Button onClick={() => setStepIndex((i) => i + 1)}>İleri →</Button>
+        ) : (
+          <button type="button" className="roomio-btn roomio-btn--primary" onClick={() => void onSubmit()}>
+            {isEdit ? 'Güncelle' : 'Kaydet'}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

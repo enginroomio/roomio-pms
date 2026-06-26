@@ -47,6 +47,7 @@ export const CATEGORY_REPORTS: Record<string, { id: string; name: string; format
     { id: 'dl-departure', name: 'Günlük Ayrılış', format: 'PDF' },
     { id: 'dl-room-move', name: 'Oda Değişim Listesi', format: 'PDF' },
     { id: 'dl-vip', name: 'VIP Listesi', format: 'PDF' },
+    { id: 'dl-transfer', name: 'Transfer Listesi', format: 'PDF / Excel' },
   ],
   kathizmetleri: [
     { id: 'hk-status', name: 'Oda Durum Raporu', format: 'PDF' },

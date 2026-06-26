@@ -95,6 +95,7 @@ export function proModuleVisibleItems(
   moduleId: string,
   pathname: string,
   showAll: boolean,
+  search = '',
 ): SidebarNavItem[] {
   const all = proModuleItems(moduleId);
   if (showAll) return all;
@@ -112,7 +113,7 @@ export function proModuleVisibleItems(
       continue;
     }
     lastWasSep = false;
-    if (itemMatchesEssential(item, ids) || navItemActive(pathname, item)) {
+    if (itemMatchesEssential(item, ids) || navItemActive(pathname, item, search)) {
       picked.push(item);
     }
   }
@@ -120,7 +121,7 @@ export function proModuleVisibleItems(
   return picked;
 }
 
-export function activeProModuleId(pathname: string): string {
+export function activeProModuleId(pathname: string, search = ''): string {
   if (pathname === '/settings' || pathname.startsWith('/settings/') || pathname.startsWith('/tools/')) {
     return 'system';
   }
@@ -134,7 +135,7 @@ export function activeProModuleId(pathname: string): string {
   for (const mod of PRO_SIDEBAR_MODULES) {
     for (const sectionId of mod.sectionIds) {
       const section = SIDEBAR_NAV.find((s) => s.id === sectionId);
-      if (section?.items.some((item) => navItemActive(pathname, item))) return mod.id;
+      if (section?.items.some((item) => navItemActive(pathname, item, search))) return mod.id;
     }
   }
   return 'daily';

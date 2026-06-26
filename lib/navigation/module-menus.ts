@@ -37,13 +37,15 @@ export function kurulusModuleMenuForUser(
 }
 
 export const SISTEM_MODULE_MENU: ModuleNavItem[] = [
-  { id: 'kurulus', label: 'Kuruluş', href: '/settings' },
+  { id: 'sistem-hub', label: 'Sistem Merkezi', href: '/tools/sistem' },
+  { id: 'kurulus', label: 'Kuruluş', href: '/settings?hub=sistem' },
   { id: 'rapor-design', label: 'Rapor Tasarım', href: '/reports?tab=design' },
   { id: 'raporla', label: 'Raporla', href: '/reports' },
   { id: 'user-reports', label: 'Kullanıcı Tanımlı Raporlar', href: '/reports?tab=user' },
   { id: 'sep-1', label: '', href: '#', separator: true },
   { id: 'servis', label: 'Servis Programları', href: '/settings/integrations' },
   { id: 'tesa', label: 'TESA Kapı Kartı', href: '/settings/integrations/tesa' },
+  { id: 'pbx', label: 'Grandstream Santral', href: '/settings/integrations/pbx' },
   { id: '5651', label: '5651 Hotspot', href: '/settings/compliance/5651' },
   { id: 'dil', label: 'Dil Tanımları', href: '/settings?section=language' },
   { id: 'forms', label: 'Form Tasarım Listesi', href: '/reports?tab=forms' },
@@ -53,6 +55,8 @@ export const COMPLIANCE_MODULE_MENU: ModuleNavItem[] = [
   { id: 'hub', label: 'Entegrasyonlar', href: '/settings/integrations' },
   { id: '5651', label: '5651 Hotspot Loglama', href: '/settings/compliance/5651' },
   { id: 'tesa', label: 'TESA Hospitality', href: '/settings/integrations/tesa' },
+  { id: 'pbx', label: 'Grandstream Santral', href: '/settings/integrations/pbx' },
+  { id: 'egm', label: 'EGM Kimlik Bildirimi', href: '/settings/integrations/egm' },
   { id: 'kvkk', label: 'KVKK & Gizlilik', href: '/settings/privacy' },
   { id: 'license', label: 'Lisans', href: '/settings/licensing' },
 ];
@@ -83,6 +87,9 @@ export function moduleMenuForPath(pathname: string, search = ''): ModuleNavItem[
   const path = pathname.split('?')[0];
   const qs = search || '';
 
+  if (path.startsWith('/tools/sistem')) {
+    return SISTEM_MODULE_MENU;
+  }
   if (path.startsWith('/tools/rollout')) {
     return ROLLOUT_PHASES.map((phase) => ({
       id: phase.id,

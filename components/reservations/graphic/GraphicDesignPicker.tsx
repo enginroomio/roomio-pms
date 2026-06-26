@@ -10,9 +10,9 @@ import { MonthlyProGraphicsMockup } from './mockups/MonthlyProGraphicsMockup';
 export type GraphicDesignMode = 'live' | 'monthly-pro' | 'filter-wizard' | 'elektra' | 'calendar' | 'forecast';
 
 const MODES: { id: GraphicDesignMode; label: string; hint: string }[] = [
-  { id: 'monthly-pro', label: 'Elektra Forecast F1', hint: 'Forecast · canlı API' },
+  { id: 'monthly-pro', label: 'Elektra Forecast F1', hint: 'Orijinal düzen · modern görünüm' },
   { id: 'filter-wizard', label: 'Filtre Sihirbazı', hint: 'Canlı filtre + API' },
-  { id: 'live', label: 'Canlı', hint: 'Gerçek veri' },
+  { id: 'live', label: 'Canlı', hint: 'Elektra v5 F1 ile aynı' },
   { id: 'elektra', label: 'Alt 1 · Elektra v5', hint: 'Canlı doluluk grafikleri' },
   { id: 'calendar', label: 'Alt 2 · Takvim F1', hint: 'Canlı doluluk + gelir' },
   { id: 'forecast', label: 'Alt 3 · Forecast', hint: 'Canlı analiz + tablo' },
@@ -21,11 +21,34 @@ const MODES: { id: GraphicDesignMode; label: string; hint: string }[] = [
 type Props = {
   mode: GraphicDesignMode;
   onChange: (mode: GraphicDesignMode) => void;
+  compact?: boolean;
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
 };
 
-export function GraphicDesignPicker({ mode, onChange }: Props) {
+export function GraphicDesignPicker({ mode, onChange, compact, collapsed, onToggleCollapsed }: Props) {
+  const active = MODES.find((m) => m.id === mode);
+
+  if (compact && collapsed) {
+    return (
+      <div className="roomio-grafik-design-picker-bar">
+        <span>
+          Görünüm: <strong>{active?.label ?? mode}</strong>
+        </span>
+        <button type="button" className="roomio-btn roomio-btn--secondary roomio-btn--sm" onClick={onToggleCollapsed}>
+          Görünüm değiştir
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="roomio-grafik-design-picker" role="tablist" aria-label="Grafik mockup alternatifleri">
+    <div className={`roomio-grafik-design-picker${compact ? ' roomio-grafik-design-picker--compact' : ''}`} role="tablist" aria-label="Grafik mockup alternatifleri">
+      {compact && onToggleCollapsed ? (
+        <button type="button" className="roomio-grafik-design-picker__collapse" onClick={onToggleCollapsed} aria-label="Görünüm seçiciyi kapat">
+          ×
+        </button>
+      ) : null}
       {MODES.map((m) => (
         <button
           key={m.id}

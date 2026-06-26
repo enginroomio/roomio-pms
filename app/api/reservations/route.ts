@@ -7,9 +7,11 @@ import {
 } from '@/lib/server/pms-store';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 import { validateMarketForReservation } from '@/lib/server/reservation-validation';
+import { nextReservationRefNoServer } from '@/lib/server/reservation-ref-no';
 import { resolveApiUser } from '@/lib/auth/require-api-user';
 import { requireApiPermission } from '@/lib/auth/require-permission';
 import { hasPermission } from '@/lib/auth/roles';
+import { archiveGuestFromReservation } from '@/lib/server/guest-identity-archive';
 import type { Reservation } from '@/lib/types/reservation';
 
 export const dynamic = 'force-dynamic';
@@ -46,13 +48,31 @@ export async function POST(req: Request) {
     const marketError = await validateMarketForReservation(body.market, propertyId);
     if (marketError) return NextResponse.json({ error: marketError }, { status: 400 });
 
+    const refNo = body.refNo?.trim()
+      || await nextReservationRefNoServer(propertyId);
+
+    const extraData = { ...(body.extraData ?? {}) };
+    if (!extraData.createdBy && user.name) {
+      extraData.createdBy = user.name;
+    }
+
     const saved = await addReservationServer({
       ...body,
       id: body.id || `srv-${Date.now()}`,
+      refNo,
       createdAt: body.createdAt || new Date().toISOString().slice(0, 10),
       currency: body.currency ?? 'TRY',
       status: body.status ?? 'CONFIRMED',
+      extraData: Object.keys(extraData).length ? extraData : undefined,
     }, propertyId);
+    void archiveGuestFromReservation(propertyId, {
+      id: saved.id,
+      guestName: saved.guestName,
+      email: saved.email,
+      phone: saved.phone,
+      checkOut: saved.checkOut,
+      extraData: saved.extraData,
+    }).catch(() => undefined);
     return NextResponse.json({ ok: true, reservation: saved });
   } catch {
     return NextResponse.json({ error: 'save failed' }, { status: 500 });
@@ -80,6 +100,14 @@ export async function PATCH(req: Request) {
 
     const saved = await updateReservationServer(body.id, body, propertyId);
     if (!saved) return NextResponse.json({ error: 'not found' }, { status: 404 });
+    void archiveGuestFromReservation(propertyId, {
+      id: saved.id,
+      guestName: saved.guestName,
+      email: saved.email,
+      phone: saved.phone,
+      checkOut: saved.checkOut,
+      extraData: saved.extraData,
+    }).catch(() => undefined);
     return NextResponse.json({ ok: true, reservation: saved });
   } catch {
     return NextResponse.json({ error: 'update failed' }, { status: 500 });

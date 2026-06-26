@@ -25,6 +25,7 @@ type Props = {
   onCurrencyChange: (next: PaymentCurrency) => void;
   onRateChange: (rate: number) => void;
   onRefreshFx: () => void;
+  compact?: boolean;
 };
 
 function fxAmount(amount: number, currency: string, rates: RateMap): number {
@@ -76,11 +77,12 @@ export function ReservationPricingPanel({
   onCurrencyChange,
   onRateChange,
   onRefreshFx,
+  compact = false,
 }: Props) {
   const nightLabel = nights > 0 ? `${nights} gece × ${roomCount} oda` : `${roomCount} oda`;
 
   return (
-    <div className="roomio-elektra-pricing">
+    <div className={`roomio-elektra-pricing${compact ? ' roomio-elektra-pricing--compact' : ''}`}>
       <div className="roomio-elektra-pricing__top">
         <div className="roomio-elektra-pricing__price-block">
           <label className="roomio-field">
@@ -137,9 +139,9 @@ export function ReservationPricingPanel({
 
       <div className="roomio-elektra-pricing__status">
         {fxLoading ? (
-          <span>Giriş günü TCMB kuru yükleniyor…</span>
+          <span>TCMB kuru yükleniyor…</span>
         ) : fxReady ? (
-          <span>Giriş günü TCMB alış kuru · {fxDate ?? rateDate}</span>
+          <span>{compact ? `Kur: ${fxDate ?? rateDate}` : `Giriş günü TCMB alış kuru · ${fxDate ?? rateDate}`}</span>
         ) : (
           <>
             <span>TCMB kurları alınamadı.</span>
@@ -151,6 +153,7 @@ export function ReservationPricingPanel({
         ) : null}
       </div>
 
+      {!compact ? (
       <section className="roomio-elektra-pricing__detail">
         <h3 className="roomio-elektra-pricing__detail-title">Hesap detayı</h3>
         <div className="roomio-table-wrap">
@@ -177,6 +180,7 @@ export function ReservationPricingPanel({
           </table>
         </div>
       </section>
+      ) : null}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   AGENCY_CONTRACTS,
@@ -35,7 +35,13 @@ import { RatePlansSettingsPanel } from '@/components/kurulus/RatePlansSettingsPa
 import { UserGroupsSettingsPanel } from '@/components/kurulus/UserGroupsSettingsPanel';
 import { UsersSettingsPanel } from '@/components/kurulus/UsersSettingsPanel';
 import { UserParamsSettingsPanel } from '@/components/kurulus/UserParamsSettingsPanel';
+import { PasswordChangePanel } from '@/components/auth/PasswordChangePanel';
+import { PbxCallsPanel } from '@/components/settings/PbxCallsPanel';
+import { PbxLookupPanel } from '@/components/settings/PbxLookupPanel';
+import { IntegrationsSyncStatusPanel } from '@/components/settings/IntegrationsSyncStatusPanel';
+import { LanguageTextsPanel } from '@/components/kurulus/LanguageTextsPanel';
 import { WarehousesSettingsPanel } from '@/components/kurulus/WarehousesSettingsPanel';
+import { ProductCardsPanel } from '@/components/accounting/BackOfficePanels';
 import { Button } from '@/components/ui';
 import { ExchangeRatesTable } from '@/components/exchange/ExchangeRatesTable';
 import { ExchangeConfigPanel } from '@/components/exchange/ExchangeConfigPanel';
@@ -44,13 +50,16 @@ import { ThemeScreen } from '@/components/theme/ThemeScreen';
 import type { ThemeMode } from '@/components/theme/ThemeProvider';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { findKurulusScreenTitle } from '@/lib/i18n/kurulus-nav-i18n';
+import { kurulusExternalRedirect, normalizeKurulusSection } from '@/lib/navigation/menu-route-params';
 
 function screenKey(section: string | null, tab: string | null): string {
+  const sec = normalizeKurulusSection(section);
   if (tab === 'theme') return 'theme';
+  if (tab === 'password') return 'password';
   if (tab === 'room-types') return 'room-types';
   if (tab === 'rooms') return 'rooms';
   if (tab === 'floors') return 'floors';
-  if (section) return section;
+  if (sec) return sec;
   return 'otel-bilgileri';
 }
 
@@ -140,16 +149,17 @@ export function KurulusScreen({
   const key = screenKey(section, tab);
 
   useEffect(() => {
-    if (key === 'channel-manager') {
-      router.replace('/settings/integrations/channel-manager');
-    }
-  }, [key, router]);
-
-  if (key === 'channel-manager') {
-    return <PlaceholderScreen title={findKurulusScreenTitle(t, key)} />;
-  }
+    const redirect = kurulusExternalRedirect(section, tab);
+    if (redirect) router.replace(redirect);
+  }, [section, tab, router]);
 
   switch (key) {
+    case 'password':
+      return (
+        <Suspense fallback={<div className="roomio-card">Yükleniyor…</div>}>
+          <PasswordChangePanel />
+        </Suspense>
+      );
     case 'theme':
       return <ThemeScreen initialTheme={theme ?? null} fixed={themeFixed} />;
     case 'otel-bilgileri':
@@ -226,6 +236,8 @@ export function KurulusScreen({
       return <BranchesSettingsPanel />;
     case 'warehouse':
       return <WarehousesSettingsPanel />;
+    case 'inventory':
+      return <ProductCardsPanel />;
     case 'fiscal':
       return <FiscalDevicesSettingsPanel />;
     case 'res-types':
@@ -268,6 +280,18 @@ export function KurulusScreen({
       );
     case 'user-params':
       return <UserParamsSettingsPanel />;
+    case 'pbx-calls':
+      return <PbxCallsPanel />;
+    case 'pbx-lookup':
+      return <PbxLookupPanel />;
+    case 'sync':
+      return <IntegrationsSyncStatusPanel />;
+    case 'lang-forms':
+      return <LanguageTextsPanel view="forms" />;
+    case 'lang-menus':
+      return <LanguageTextsPanel view="menus" />;
+    case 'lang-reports':
+      return <LanguageTextsPanel view="reports" />;
     default:
       return <PlaceholderScreen title={findKurulusScreenTitle(t, key)} />;
   }

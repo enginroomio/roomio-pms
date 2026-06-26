@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { BarChart3, RefreshCw, SlidersHorizontal } from 'lucide-react';
-import { DEMO_USER, PROPERTY } from '@/lib/navigation';
+import { PROPERTY } from '@/lib/navigation';
 import {
   buildForecastBars,
   formatForecastDate,
@@ -48,17 +48,6 @@ const CHECKBOXES = [
 
 const WEEKDAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
-const FX = [
-  { code: 'USD', rate: '39,8500' },
-  { code: 'GBP', rate: '53,7200' },
-  { code: 'DKK', rate: '6,2100' },
-  { code: 'EUR', rate: '46,1200' },
-  { code: 'CHF', rate: '49,3800' },
-  { code: 'NOK', rate: '3,8900' },
-  { code: 'SAR', rate: '10,6200' },
-  { code: 'TL', rate: '1,0000' },
-];
-
 function formatDayLabel(dayIndex: number) {
   const d = new Date(2026, 5, 20 + dayIndex);
   const dd = String(d.getDate()).padStart(2, '0');
@@ -68,14 +57,25 @@ function formatDayLabel(dayIndex: number) {
 }
 
 function demoBars(): ForecastBar[] {
-  return Array.from({ length: 31 }, (_, i) => ({
-    day: i + 1,
-    label: formatDayLabel(i),
-    date: shiftIsoDate(PROPERTY.businessDate, i),
-    occupied: 8 + (i % 3 === 0 ? 1 : 0),
-    empty: 77 - (i % 5 === 0 ? 2 : 0),
-    totalRooms: 77,
-  }));
+  return Array.from({ length: 31 }, (_, i) => {
+    const occupied = 8 + (i % 3 === 0 ? 1 : 0);
+    const totalRooms = 77;
+    const empty = totalRooms - occupied - (i % 5 === 0 ? 1 : 0);
+    const pax = Math.round(occupied * 2.1);
+    const paxCapacity = totalRooms * 2;
+    return {
+      day: i + 1,
+      label: formatDayLabel(i),
+      date: shiftIsoDate(PROPERTY.businessDate, i),
+      occupied,
+      empty,
+      totalRooms,
+      pax,
+      paxCapacity,
+      roomOccPct: Math.round((occupied / totalRooms) * 100),
+      paxOccPct: Math.round((pax / paxCapacity) * 100),
+    };
+  });
 }
 
 export type ElektraForecastF1MockupProps = {
@@ -83,18 +83,20 @@ export type ElektraForecastF1MockupProps = {
   from?: string;
   days?: number;
   loading?: boolean;
+  fill?: boolean;
   onRefresh?: () => void;
   onShiftFrom?: (deltaDays: number) => void;
   onResetFrom?: () => void;
   onOpenFilterWizard?: () => void;
 };
 
-/** Elektra v5 Forecast ekranı — F1 mockup (canlı API verisi veya demo) */
+/** Elektra v5 Forecast — orijinal düzen, modern görünüm */
 export function ElektraForecastF1Mockup({
   matrix,
   from = PROPERTY.businessDate,
   days = 31,
   loading = false,
+  fill = false,
   onRefresh,
   onShiftFrom,
   onResetFrom,
@@ -106,6 +108,8 @@ export function ElektraForecastF1Mockup({
     Object.fromEntries(CHECKBOXES.map((c) => [c.id, c.checked])),
   );
   const [threeD, setThreeD] = useState(false);
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [chartH, setChartH] = useState(280);
 
   const live = matrix !== undefined;
   const bars = useMemo(() => {
@@ -113,6 +117,23 @@ export function ElektraForecastF1Mockup({
     if (live) return [] as ForecastBar[];
     return demoBars();
   }, [live, matrix]);
+
+  useLayoutEffect(() => {
+    if (!fill) {
+      setChartH(280);
+      return;
+    }
+    const el = chartRef.current;
+    if (!el) return;
+    const measure = () => {
+      const h = el.clientHeight - 28;
+      setChartH(Math.max(220, h));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [fill, bars.length, mainTab]);
 
   const summary = useMemo(() => {
     if (matrix && matrix.length > 0) return forecastSummary(matrix);
@@ -140,12 +161,16 @@ export function ElektraForecastF1Mockup({
   });
 
   return (
-    <div className="roomio-grafik-mockup roomio-grafik-mockup--elektra-forecast">
-      <div className="roomio-grafik-mockup__badge">
-        Elektra v5 · Forecast F1{live ? ' · canlı veri' : ' mockup'}
-      </div>
+    <div
+      className={`roomio-grafik-mockup roomio-grafik-mockup--elektra-forecast${fill ? ' roomio-grafik-mockup--fill' : ''}`}
+    >
+      {!fill ? (
+        <div className="roomio-grafik-mockup__badge">
+          Elektra v5 Forecast F1{live ? ' · canlı veri' : ' mockup'}
+        </div>
+      ) : null}
 
-      <div className="roomio-ef1">
+      <div className={`roomio-ef1 roomio-ef1--modern${fill ? ' roomio-ef1--fill roomio-ef1--chart-focus' : ''}`}>
         <header className="roomio-ef1__titlebar">
           <BarChart3 size={16} aria-hidden />
           <span>Forecast</span>
@@ -249,15 +274,14 @@ export function ElektraForecastF1Mockup({
             {bars.length === 0 && !loading ? (
               <p className="roomio-page-desc" style={{ padding: 16 }}>Bu dönem için grafik verisi yok.</p>
             ) : (
-              <div className={`roomio-ef1__chart${threeD ? ' is-3d' : ''}`}>
-                <div className="roomio-ef1__y-axis">
+              <div ref={chartRef} className={`roomio-ef1__chart${threeD ? ' is-3d' : ''}`}>
+                <div className="roomio-ef1__y-axis" style={{ height: chartH }}>
                   {[maxY, Math.round(maxY * 0.75), Math.round(maxY * 0.5), Math.round(maxY * 0.25), 0].map((v) => (
                     <span key={v}>{v}</span>
                   ))}
                 </div>
                 <div className="roomio-ef1__bars">
                   {bars.map((b) => {
-                    const chartH = 280;
                     const occH = (b.occupied / maxY) * chartH;
                     const emptyH = (b.empty / maxY) * chartH;
                     return (
@@ -316,31 +340,6 @@ export function ElektraForecastF1Mockup({
           </div>
         )}
 
-        <footer className="roomio-ef1__footer">
-          <div className="roomio-ef1__fx">
-            <strong>Günlük Kurlar</strong>
-            <table>
-              <thead>
-                <tr>
-                  {FX.map((f) => <th key={f.code}>{f.code}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  {FX.map((f) => <td key={f.code}>{f.rate}</td>)}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div className="roomio-ef1__status">
-            <span>İş Tarihi: {formatForecastDate(PROPERTY.businessDate)}</span>
-            <span>{DEMO_USER.name} (d) Logged In</span>
-            <span>{PROPERTY.name.toUpperCase()} · Branch : 01</span>
-            <span>TL · TR</span>
-            <span>Ver : 5.24.24.329</span>
-            <span className="roomio-ef1__msg">Okunmamış Mesajınız Yok</span>
-          </div>
-        </footer>
       </div>
     </div>
   );

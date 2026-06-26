@@ -29,9 +29,12 @@ console.log('✓ Yerel sunucu ayakta');
 
 function saveUrl(url) {
   mkdirSync(join(process.cwd(), '.roomio'), { recursive: true });
+  mkdirSync(join(process.cwd(), '.roomio', 'runtime'), { recursive: true });
   writeFileSync(join(process.cwd(), '.roomio/production-url.txt'), `${url}\n`, 'utf8');
-  console.log(`\n✅ Production URL kaydedildi`);
-  console.log(`📱 Telefon: ${url}/housekeeping/mobile → Bildirimleri aç`);
+  writeFileSync(join(process.cwd(), '.roomio/runtime/windows-url.txt'), `${url}\n`, 'utf8');
+  console.log(`\n✅ Windows / dış erişim URL kaydedildi → .roomio/runtime/windows-url.txt`);
+  console.log(`\n📱 Tarayıcı (Windows): ${url}`);
+  console.log(`   Grafikler: ${url}/reservations/calendar`);
   console.log(`\nTest: ROOMIO_PRODUCTION_URL=${url} npm run test:faz11 -- --step 11.3\n`);
 }
 

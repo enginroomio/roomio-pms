@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { translateSidebarNavItems, translateFlatSidebarLink } from '@/lib/i18n/kurulus-nav-i18n';
@@ -46,35 +46,35 @@ const icons: Record<string, React.ComponentType<{ className?: string; size?: num
   'bar-chart': BarChart3,
 };
 
-function isLinkActive(pathname: string, href?: string) {
+function isLinkActive(pathname: string, href?: string, search = '') {
   if (!href || href === '#') return false;
-  const base = href.split('?')[0];
-  if (base === '/') return pathname === '/';
-  return pathname === base || pathname.startsWith(`${base}/`);
+  return navItemActive(pathname, { id: 'x', label: '', href, icon: 'file-text' }, search);
 }
 
 function FlyoutBranch({
   item,
   pathname,
+  search,
   depth = 0,
   onNavigate,
 }: {
   item: SidebarNavItem;
   pathname: string;
+  search: string;
   depth?: number;
   onNavigate: () => void;
 }) {
   if (item.separator) return <div className="roomio-pro-flyout-sep" role="separator" />;
 
   const hasChildren = Boolean(item.children?.length);
-  const active = navItemActive(pathname, item);
+  const active = navItemActive(pathname, item, search);
 
   if (hasChildren) {
     return (
       <div className="roomio-pro-flyout-group">
         <div className={`roomio-pro-flyout-heading depth-${depth}${active ? ' active' : ''}`}>{item.label}</div>
         {item.children!.map((child) => (
-          <FlyoutBranch key={child.id} item={child} pathname={pathname} depth={depth + 1} onNavigate={onNavigate} />
+          <FlyoutBranch key={child.id} item={child} pathname={pathname} search={search} depth={depth + 1} onNavigate={onNavigate} />
         ))}
       </div>
     );
@@ -83,7 +83,7 @@ function FlyoutBranch({
   return (
     <Link
       href={item.href ?? '#'}
-      className={`roomio-pro-flyout-link depth-${depth}${isLinkActive(pathname, item.href) ? ' active' : ''}`}
+      className={`roomio-pro-flyout-link depth-${depth}${isLinkActive(pathname, item.href, search) ? ' active' : ''}`}
       onClick={onNavigate}
     >
       {item.label}
@@ -93,8 +93,10 @@ function FlyoutBranch({
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString() ? `?${searchParams.toString()}` : '';
   const { t } = useI18n();
-  const routeModuleId = useMemo(() => activeProModuleId(pathname), [pathname]);
+  const routeModuleId = useMemo(() => activeProModuleId(pathname, search), [pathname, search]);
   const [moduleId, setModuleId] = useState(routeModuleId);
   const [query, setQuery] = useState('');
   const [showAll, setShowAll] = useState(false);
@@ -108,9 +110,9 @@ export function SidebarNav() {
   const activeModuleLabel = t(activeModule.labelKey, undefined, activeModule.label);
 
   const moduleItems = useMemo(() => {
-    const raw = proModuleVisibleItems(moduleId, pathname, showAll);
+    const raw = proModuleVisibleItems(moduleId, pathname, showAll, search);
     return translateSidebarNavItems(raw, t);
-  }, [moduleId, pathname, showAll, t]);
+  }, [moduleId, pathname, showAll, search, t]);
   const totalModuleLinks = useMemo(() => countModuleLinks(moduleId), [moduleId]);
 
   const filteredLinks = useMemo(() => {
@@ -210,7 +212,7 @@ export function SidebarNav() {
                 <Link
                   key={`${link.href}-${link.label}`}
                   href={link.href}
-                  className={`roomio-pro-link${isLinkActive(pathname, link.href) ? ' active' : ''}`}
+                  className={`roomio-pro-link${isLinkActive(pathname, link.href, search) ? ' active' : ''}`}
                   onClick={() => setQuery('')}
                 >
                   <span className="roomio-pro-link-text">{link.label}</span>
@@ -224,7 +226,7 @@ export function SidebarNav() {
               if (item.separator) return <div key={item.id} className="roomio-pro-sep" role="separator" />;
 
               const hasChildren = Boolean(item.children?.length);
-              const active = navItemActive(pathname, item);
+              const active = navItemActive(pathname, item, search);
               const flyoutOpen = flyoutItem?.id === item.id;
 
               if (hasChildren) {
@@ -246,7 +248,7 @@ export function SidebarNav() {
                 <Link
                   key={item.id}
                   href={item.href ?? '#'}
-                  className={`roomio-pro-link${isLinkActive(pathname, item.href) ? ' active' : ''}`}
+                  className={`roomio-pro-link${isLinkActive(pathname, item.href, search) ? ' active' : ''}`}
                 >
                   <span className="roomio-pro-link-text">{item.label}</span>
                 </Link>
@@ -282,6 +284,7 @@ export function SidebarNav() {
                   key={child.id}
                   item={child}
                   pathname={pathname}
+                  search={search}
                   onNavigate={() => setFlyoutItem(null)}
                 />
               ))}

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui';
@@ -57,15 +56,13 @@ export function ReservationEditClient({ id }: { id: string }) {
     <PageHeader
       breadcrumb={`Rezervasyon > ${reservation.refNo} > Düzenle`}
       title={`${reservation.guestName} — düzenle`}
-      description={`${reservation.checkIn} — ${reservation.checkOut}`}
+      description={`${reservation.checkIn} — ${reservation.checkOut} · Tüm adımlar tek ekranda`}
+      stackClassName="roomio-page-stack--rez-edit"
       actions={
         <Button variant="secondary" href={`/reservations/${reservation.id}`}>← Detay</Button>
       }
     >
       <ReservationFormWizard existing={reservation} />
-      <p style={{ marginTop: 16, fontSize: '0.85rem', color: 'var(--roomio-text-muted)' }}>
-        <Link href="/reservations" className="roomio-link">Listeye dön</Link>
-      </p>
     </PageHeader>
   );
 }

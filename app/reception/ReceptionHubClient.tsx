@@ -17,6 +17,8 @@ import {
   getTodayDepartures,
   getVacantRooms,
 } from '@/lib/data/reception';
+import { CashAdvancePanel } from '@/components/cash/CashAdvancePanel';
+import { ResepsiyonHubPanel, OnKasaHubPanel } from '@/components/reception/ReceptionMenuHubPanels';
 import { KimlikBildirimPanel } from '@/app/reception/KimlikBildirimPanel';
 import { KasaOperationsPanel } from '@/components/reception/KasaOperationsPanel';
 import { CashLedgerPanel } from '@/components/reception/CashLedgerPanel';
@@ -27,6 +29,7 @@ import { useI18n } from '@/components/i18n/I18nProvider';
 export function ReceptionHubClient() {
   const { t } = useI18n();
   const searchParams = useSearchParams();
+  const hub = searchParams.get('hub');
   const tab = searchParams.get('tab');
   const { reservations, loading, error, reload } = useReservations();
   const inHouseIds = useMemo(
@@ -46,11 +49,34 @@ export function ReceptionHubClient() {
   const vacantRooms = useMemo(() => getVacantRooms(reservations), [reservations]);
   const vacantClean = vacantRooms.filter((r) => r.status === 'CLEAN').length;
 
-  if (tab === 'kimlik' || tab === 'kimlik-new') {
+  if (hub === 'resepsiyon' && !tab) {
     return (
-      <PageHeader breadcrumb="Resepsiyon > Kimlik Bildirimi" title="Polis Kimlik Bildirim Sistemi" description="5651 uyumlu günlük kimlik bildirim listesi.">
+      <PageHeader breadcrumb="Resepsiyon" title="Resepsiyon Merkezi" description={t('reception.description')}>
         <ReceptionTabs />
-        <KimlikBildirimPanel />
+        <ResepsiyonHubPanel />
+      </PageHeader>
+    );
+  }
+
+  if (hub === 'onkasa' && !tab) {
+    return (
+      <PageHeader breadcrumb="Ön Kasa" title="Ön Kasa Merkezi" description="Kasa defteri, tahsilat ve depozit işlemleri.">
+        <ReceptionTabs />
+        <OnKasaHubPanel />
+      </PageHeader>
+    );
+  }
+
+  if (tab === 'kimlik' || tab === 'kimlik-new') {
+    const isNew = tab === 'kimlik-new';
+    return (
+      <PageHeader
+        breadcrumb={`Resepsiyon > ${isNew ? 'Yeni Kimlik Bildirimi' : 'Kimlik Bildirimi'}`}
+        title={isNew ? 'Yeni Kimlik Bildirim Sistemi' : 'Polis Kimlik Bildirim Sistemi'}
+        description={isNew ? 'Check-in entegrasyonlu hızlı kimlik kaydı ve gönderim.' : '5651 uyumlu günlük kimlik bildirim listesi.'}
+      >
+        <ReceptionTabs />
+        <KimlikBildirimPanel variant={isNew ? 'new' : 'list'} />
       </PageHeader>
     );
   }
@@ -59,6 +85,29 @@ export function ReceptionHubClient() {
     return (
       <PageHeader breadcrumb="Ön Kasa > Kasa Defteri" title="Kasa Defteri (F6)" description="Günlük tahsilat, ödeme, avans ve manuel hareketler.">
         <ReceptionTabs />
+        <div className="roomio-form-actions" style={{ marginTop: 0, marginBottom: 8 }}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              void roomioFetch('/api/cash?view=ledger&format=pdf')
+                .then(async (r) => {
+                  if (!r.ok) throw new Error(await parseApiError(r, 'PDF indirilemedi'));
+                  return r.blob();
+                })
+                .then((blob) => {
+                  const a = document.createElement('a');
+                  a.href = URL.createObjectURL(blob);
+                  a.download = 'kasa-defteri.pdf';
+                  a.click();
+                })
+                .catch((err) => {
+                  window.alert(err instanceof Error ? err.message : 'PDF indirilemedi');
+                });
+            }}
+          >
+            PDF indir
+          </Button>
+        </div>
         <CashLedgerPanel entries={cashEntries} onDone={() => void reloadCash()} />
       </PageHeader>
     );
@@ -128,24 +177,7 @@ export function ReceptionHubClient() {
     return (
       <PageHeader breadcrumb="Ön Kasa > Avans & Devir" title="Kasa Avans ve Devir Listesi" description="Vardiya devirleri ve avans kayıtları.">
         <ReceptionTabs />
-        <div className="roomio-card roomio-table-wrap" style={{ marginTop: 16 }}>
-          <table className="roomio-table">
-            <thead>
-              <tr><th>Saat</th><th>Kasa</th><th>Açıklama</th><th>Tutar</th><th>Kullanıcı</th></tr>
-            </thead>
-            <tbody>
-                {cashEntries.filter((e) => e.type === 'avans').map((e) => (
-                <tr key={e.id}>
-                  <td>{e.time}</td>
-                  <td>{e.register}</td>
-                  <td>{e.description}</td>
-                  <td>{formatMoney(e.amount)}</td>
-                  <td>{e.user}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <CashAdvancePanel />
       </PageHeader>
     );
   }

@@ -34,18 +34,36 @@ async function resolveBaseUrl() {
 
 const BASE = await resolveBaseUrl();
 const TIMEOUT_MS = Number(process.env.ROUTE_TEST_TIMEOUT_MS ?? 30_000);
+const INTEGRATION_TIMEOUT_MS = Number(process.env.ROUTE_TEST_INTEGRATION_TIMEOUT_MS ?? 45_000);
+const CORE_ROUTE_COUNT = 57;
+
+/** Admin-only veya auth gerektiren — 403/401 kabul edilir */
+const EXPECTED_AUTH_STATUSES = new Set(['/api/monitoring/status']);
+
+/** Entegrasyon ve misafir API uçları — daha uzun timeout */
+const INTEGRATION_API_PREFIXES = [
+  '/api/integrations/',
+  '/api/kiosk/',
+  '/api/spa/',
+  '/api/booking/',
+];
 
 const ROUTES = [
   '/',
+  '/?hub=panel',
+  '/?view=daily-status',
   '/api/health',
   '/rooms',
   '/rooms?tab=blocking',
   '/reservations',
+  '/reservations?hub=rezervasyon',
   '/reservations/new',
   '/reservations/calendar',
   '/reservations/calendar/mockups',
   '/reservations/calendar/mockups/filtre-sihirbazi',
   '/reception',
+  '/reception?hub=resepsiyon',
+  '/reception?hub=onkasa',
   '/reception/arrivals',
   '/reception/departures',
   '/reception/inhouse',
@@ -61,12 +79,20 @@ const ROUTES = [
   '/reception/departures?tab=fx',
   '/reception/vacant?tab=deposit',
   '/reports',
+  '/reports?hub=raporlar',
+  '/reports?hub=gunsonu',
   '/reports?tab=eod&action=close',
   '/reports?category=rezervasyon',
   '/housekeeping',
+  '/housekeeping?hub=kat',
   '/housekeeping/mobile',
   '/guest-relations',
+  '/guest-relations?hub=misafir',
   '/accounting',
+  '/accounting?hub=arkaburo',
+  '/fnb?hub=banket',
+  '/settings?hub=ayarlar',
+  '/settings?hub=sistem',
   '/reservations?tab=availability',
   '/reception?tab=kimlik',
   '/api/folio?reservationId=1',
@@ -82,6 +108,7 @@ const ROUTES = [
   '/settings/compliance/5651',
   '/settings/integrations/tesa',
   '/settings/integrations/pbx',
+  '/settings/integrations/egm',
   '/wifi',
   '/book',
   '/guest',
@@ -158,38 +185,118 @@ const ROUTES = [
   '/reports?category=gunluk',
   '/reports?category=gelir',
   '/reports?category=crm',
+  '/tools/sistem',
+  '/tools/sistem?tab=sql',
+  '/housekeeping?hub=kat',
+  '/guest-relations?hub=misafir',
+  '/settings?hub=sistem',
+  '/settings?hub=ayarlar',
+  '/settings?tool=calculator',
+  '/accounting?hub=arkaburo',
+  '/accounting?tab=proforma',
+  '/accounting?tab=cari',
+  '/reports?tab=design',
+  '/reports?tab=forms',
+  '/reports?tab=consolidated',
+  '/reports?tab=management',
+  '/reception/inhouse?action=share',
+  '/reception?tab=advance',
+  '/fnb?mode=card-prep',
+  '/fnb?tab=calendar',
+  '/groups',
+  '/revenue',
+  '/loyalty',
+  '/tools/deploy',
+  '/setup',
+  '/settings?tab=password',
+  '/settings/integrations/tesa?tab=modules',
+  '/reception/guest-profile',
+  '/reception/queue',
+  '/reception/vacant?tab=deposit-collect',
+  '/settings?section=sync',
+  '/settings?section=inventory',
+  '/settings?section=pbx-calls',
+  '/settings?section=pbx-lookup',
+  '/settings?section=lang-forms',
+  '/settings?section=language',
 ];
 
-async function check(path) {
+function routeTimeout(path) {
+  if (INTEGRATION_API_PREFIXES.some((p) => path.startsWith(p))) return INTEGRATION_TIMEOUT_MS;
+  return TIMEOUT_MS;
+}
+
+function routeOk(path, status) {
+  if (EXPECTED_AUTH_STATUSES.has(path) && (status === 401 || status === 403)) return true;
+  return status >= 200 && status < 500 && status !== 404;
+}
+
+async function check(path, timeoutMs = routeTimeout(path)) {
   const url = `${BASE}${path}`;
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(url, { signal: ctrl.signal });
     clearTimeout(timer);
-    return { path, status: res.status, ok: res.status >= 200 && res.status < 500 && res.status !== 404 };
+    return { path, status: res.status, ok: routeOk(path, res.status) };
   } catch (e) {
     clearTimeout(timer);
     return { path, status: 0, ok: false, error: e instanceof Error ? e.message : 'fail' };
   }
 }
 
+async function checkWithRetry(path, attempts = 3) {
+  let result = await check(path);
+  for (let i = 1; i < attempts && !result.ok && result.status === 0; i++) {
+    await new Promise((r) => setTimeout(r, 800 * i));
+    result = await check(path, Math.min(routeTimeout(path) * 2, 90_000));
+  }
+  return result;
+}
+
+async function waitForHealth(attempts = 30, delayMs = 2000) {
+  for (let a = 0; a < attempts; a++) {
+    try {
+      const h = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(12_000) });
+      if (h.ok) return true;
+    } catch {
+      // retry
+    }
+    if (a < attempts - 1) await new Promise((r) => setTimeout(r, delayMs));
+  }
+  return false;
+}
+
 async function main() {
   console.log(`Roomio smoke test → ${BASE}\n`);
+
+  process.stdout.write('Sunucu bekleniyor…');
+  const ready = await waitForHealth();
+  console.log(ready ? ' hazır\n' : ' zaman aşımı (devam)\n');
+
+  if (process.env.ROUTE_TEST_WARMUP !== '0') {
+    process.stdout.write('Warmup (çekirdek)…');
+    const warmupRoutes = ROUTES.slice(0, CORE_ROUTE_COUNT);
+    for (const path of warmupRoutes) {
+      await check(path, Math.min(routeTimeout(path), 20_000)).catch(() => undefined);
+      await new Promise((r) => setTimeout(r, 40));
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+    console.log(' tamam\n');
+  }
+
   const results = [];
   for (let i = 0; i < ROUTES.length; i++) {
     if (i > 0 && i % 25 === 0) {
-      try {
-        const h = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(8000) });
-        if (!h.ok) throw new Error(`health ${h.status}`);
-      } catch {
+      const healthy = await waitForHealth();
+      if (!healthy) {
         console.warn(`\n· Sunucu route ${i}/${ROUTES.length} civarında yanıt vermiyor — kalan rotalar atlanıyor\n`);
         break;
       }
       await new Promise((r) => setTimeout(r, 400));
     }
-    results.push(await check(ROUTES[i]));
-    await new Promise((r) => setTimeout(r, 50));
+    results.push(await checkWithRetry(ROUTES[i]));
+    await new Promise((r) => setTimeout(r, INTEGRATION_API_PREFIXES.some((p) => ROUTES[i].startsWith(p)) ? 120 : 60));
   }
   let failed = 0;
   for (const r of results) {
@@ -198,7 +305,7 @@ async function main() {
     console.log(`${mark} ${r.status} ${r.path}${extra}`);
     if (!r.ok) failed++;
   }
-  const coreCount = Math.min(57, results.length);
+  const coreCount = Math.min(CORE_ROUTE_COUNT, results.length);
   const coreOk = results.slice(0, coreCount).filter((r) => r.ok).length;
   console.log(`\n${results.length - failed}/${results.length} OK (çekirdek ${coreOk}/${coreCount})`);
   if (coreOk < coreCount) process.exit(1);

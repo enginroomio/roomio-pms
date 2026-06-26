@@ -7,6 +7,7 @@ import { getAllReservationsServer, getBusinessDate, getProperty } from '@/lib/se
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { CATEGORY_REPORTS } from '@/lib/data/eod';
 import { PROPERTY } from '@/lib/navigation';
+import { getRoomTypeDef } from '@/lib/rooms/room-types';
 import type { Reservation } from '@/lib/types/reservation';
 
 function escapeCsv(value: string | number): string {
@@ -75,6 +76,21 @@ export async function buildCategoryPdf(category: string, propertyId?: string): P
   return buildCategoryPdfKit(category, lines);
 }
 
+const AVAIL_TYPES = ['SGL', 'DBL', 'TWN', 'TRP', 'SUI'] as const;
+const ROOM_INVENTORY: Record<string, number> = { SGL: 12, DBL: 28, TWN: 18, TRP: 8, SUI: 4 };
+
+function roomTypePaxCapacity(type: string): number {
+  const code = type === 'TRP' ? 'TPL' : type;
+  return getRoomTypeDef(code)?.maxPersons ?? 2;
+}
+
+function hotelPaxCapacity(): number {
+  return AVAIL_TYPES.reduce(
+    (sum, type) => sum + (ROOM_INVENTORY[type] ?? 0) * roomTypePaxCapacity(type),
+    0,
+  );
+}
+
 export function availabilityMatrix(reservations: Reservation[], from: string, days: number) {
   const start = new Date(from);
   const dates: string[] = [];
@@ -83,8 +99,9 @@ export function availabilityMatrix(reservations: Reservation[], from: string, da
     d.setDate(d.getDate() + i);
     dates.push(d.toISOString().slice(0, 10));
   }
-  const types = ['SGL', 'DBL', 'TWN', 'TRP', 'SUI'] as const;
-  const capacity: Record<string, number> = { SGL: 12, DBL: 28, TWN: 18, TRP: 8, SUI: 4 };
+  const types = AVAIL_TYPES;
+  const capacity = ROOM_INVENTORY;
+  const totalPaxCapacity = hotelPaxCapacity();
 
   return dates.map((date) => {
     const booked = reservations.filter(
@@ -105,6 +122,19 @@ export function availabilityMatrix(reservations: Reservation[], from: string, da
     const totalBooked = cells.reduce((s, c) => s + c.booked, 0);
     const totalAvail = cells.reduce((s, c) => s + c.available, 0);
     const occupancyPct = totalRooms > 0 ? Math.round((totalBooked / totalRooms) * 100) : 0;
-    return { date, cells, totalAvail, totalBooked, totalRooms, occupancyPct };
+    const totalPax = booked.reduce((sum, r) => sum + r.adults + r.children, 0);
+    const paxOccupancyPct =
+      totalPaxCapacity > 0 ? Math.round((totalPax / totalPaxCapacity) * 100) : 0;
+    return {
+      date,
+      cells,
+      totalAvail,
+      totalBooked,
+      totalRooms,
+      occupancyPct,
+      totalPax,
+      totalPaxCapacity,
+      paxOccupancyPct,
+    };
   });
 }

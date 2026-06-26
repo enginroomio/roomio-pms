@@ -1,6 +1,8 @@
 /** Sidebar flyout/submenu href → i18n key (exact href match) */
 
 const SIDEBAR_HREF_I18N: Record<string, string> = {
+  '/tools/sistem': 'sidebar.sub.sistemHub',
+  '/tools/sistem?tab=sql': 'sidebar.sistem.sqlMessage',
   '/reports': 'sidebar.sistem.reports',
   '/reports?tab=special': 'sidebar.sub.specialReports',
   '/reports?tab=daily': 'sidebar.sub.dailyReports',

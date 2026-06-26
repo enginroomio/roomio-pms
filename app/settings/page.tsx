@@ -1,7 +1,8 @@
+import { Suspense } from 'react';
 import { SettingsPageClient } from './SettingsPageClient';
 
 type Props = {
-  searchParams: Promise<{ section?: string; tab?: string; theme?: string; fixed?: string }>;
+  searchParams: Promise<{ section?: string; tab?: string; theme?: string; fixed?: string; hub?: string }>;
 };
 
 function parseTheme(value: string | undefined): 'light' | 'dark' | 'classic' | null {
@@ -12,11 +13,13 @@ function parseTheme(value: string | undefined): 'light' | 'dark' | 'classic' | n
 export default async function SettingsPage({ searchParams }: Props) {
   const params = await searchParams;
   return (
-    <SettingsPageClient
-      section={params.section ?? null}
-      tab={params.tab ?? null}
-      theme={parseTheme(params.theme)}
-      themeFixed={params.fixed === '1'}
-    />
+    <Suspense fallback={<div className="roomio-page-desc">Yükleniyor…</div>}>
+      <SettingsPageClient
+        section={params.section ?? null}
+        tab={params.tab ?? null}
+        theme={parseTheme(params.theme)}
+        themeFixed={params.fixed === '1'}
+      />
+    </Suspense>
   );
 }

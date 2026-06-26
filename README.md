@@ -1,51 +1,76 @@
 # Roomio PMS
 
-Modern otel yönetim sistemi — **MacBook** ve **Windows** üzerinde Next.js ile çalışır.
+Modern otel yönetim sistemi — **Mac** ve **Windows** üzerinde Next.js ile çalışır. Elektra (Konak) menü yapısı referans alınmış bağımsız kod tabanıdır.
 
 ## Gereksinimler
 
 - Node.js 20+ ([nodejs.org](https://nodejs.org))
 - npm (Node ile birlikte gelir)
 
-## Kurulum (Mac & Windows)
+## Kurulum
 
 ```bash
-cd ~/Projects/roomio-pms   # Windows: cd C:\Users\...\Projects\roomio-pms
+cd ~/Projects/roomio-pms
 npm install
-npm run serve
+npm run serve          # production build + başlat (port 3100)
+# veya geliştirme:
+npm run dev            # otomatik port + hot reload
 ```
 
-Tarayıcı: **http://127.0.0.1:3100**
+Tarayıcı: **http://127.0.0.1:3100** (aktif port `.roomio/runtime/active-port.txt`)
 
-Ayrıntılı çalıştırma, port temizliği ve servis komutları için **[HELP.md](./HELP.md)** dosyasına bakın.
+Ayrıntılı komutlar: **[HELP.md](./HELP.md)** · Yol haritası: **[references/NEXT-PHASE.md](./references/NEXT-PHASE.md)**
 
-Ekran rollout sırası ve sonraki faz planı: **[references/NEXT-PHASE.md](./references/NEXT-PHASE.md)** · **[references/SCREEN-REFERENCE.md](./references/SCREEN-REFERENCE.md)**
+## Modül durumu
+
+| Modül | Durum |
+|--------|--------|
+| Panel / Ana sayfa | Güçlü — KPI, sürükle-bırak dashboard, oda rack |
+| Rezervasyon | Güçlü — liste, yeni kayıt, grafik takvim, import |
+| Resepsiyon | Güçlü — giriş/çıkış, konaklayan, kimlik (EGM) |
+| Ön kasa / Folyo | Güçlü — kasa defteri, tahsilat, döviz, depozit |
+| Kat hizmetleri | Güçlü — oda kontrolü, görevler, mobil push |
+| Misafir ilişkileri | Güçlü — trace, şikayet, VIP, yorumlar |
+| Banket / F&B | Orta — hub, katalog, POS iskeleti |
+| Arka büro | İyi — fatura, cari, stok |
+| Raporlar / Gün sonu | Güçlü — kategori raporları, EOD, export |
+| Kuruluş / Sistem | İyi — 40+ tanım ekranı, entegrasyon merkezi |
+| Entegrasyonlar | Geniş — 30+ modül (simülasyon + canlı mod) |
+| Auth / Kurulum | Güçlü — JWT, RBAC, ilk kurulum sihirbazı |
+
+**Devam eden:** Faz 15 — Render deploy, HTTPS push, opsiyonel Postgres, sahada EGM gateway.
 
 ## Test
 
 ```bash
-npm run typecheck   # TypeScript kontrolü
-npm run build       # Production derlemesi
+npm run typecheck          # TypeScript
+npm run lint               # ESLint
+npm run test:routes        # 200+ rota smoke test
+npm run test:core-flow     # Rezervasyon → check-in → folyo → check-out
+npm run test:e2e           # Playwright (36 spec)
+npm run verify:ci          # CI pipeline (typecheck + build + smoke)
 ```
 
-## Geliştirme planı (bölüm bölüm)
+İlk kurulum (boş veritabanı): `/setup` veya demo seed (`roomio123`).
 
-| Faz | Modül | Durum |
-|-----|--------|--------|
-| 1 | Shell + Ana Sayfa (teal sidebar) | ✅ |
-| 2 | Rezervasyon (liste, yeni, detay) | ✅ |
-| 3 | Resepsiyon (konaklayan, check-in/out, folyo) | ✅ |
-| 4 | Kat Hizmetleri | Sırada |
-| 5+ | Diğer modüller | Bekliyor |
+## Ortam değişkenleri
+
+`.env.example` dosyasına bakın. Production için:
+
+```bash
+ROOMIO_AUTH_REQUIRED=1
+ROOMIO_DEMO_AUTH=0
+ROOMIO_JWT_SECRET=<güçlü-secret>
+```
 
 ## Proje yapısı
 
 ```
 roomio-pms/
-├── app/              # Sayfalar (Next.js App Router)
-├── components/       # AppShell, PageHeader
-├── lib/              # navigation, theme
-└── package.json
+├── app/              # Sayfalar ve API (App Router)
+├── components/       # UI, hub panelleri, modül ekranları
+├── lib/              # auth, data, integrations, server
+├── prisma/           # SQLite (dev) + PostgreSQL (prod) şemaları
+├── e2e/              # Playwright testleri
+└── scripts/          # smoke test, deploy, verify
 ```
-
-Konak PMS (Elektra) menü haritası referans alınır; Roomio bağımsız yeni kod tabanıdır.

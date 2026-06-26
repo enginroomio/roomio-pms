@@ -136,7 +136,8 @@ export function graphicFilterImpact(matrix: GraphicCalendarDay[]) {
   const activeDays = matrix.filter((d) => d.totalBooked > 0).length;
   const avgRoomOcc =
     matrix.reduce((sum, d) => sum + d.occupancyPct, 0) / matrix.length;
-  const avgPersonOcc = Math.min(100, Math.round(avgRoomOcc * 1.08 * 10) / 10);
+  const avgPersonOcc =
+    matrix.reduce((sum, d) => sum + (d.paxOccupancyPct ?? 0), 0) / matrix.length;
   return {
     days: activeDays,
     totalDays: matrix.length,

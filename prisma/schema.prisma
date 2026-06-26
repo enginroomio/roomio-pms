@@ -31,6 +31,7 @@ model Property {
   roomBlocks            RoomBlock[]
   eodArchives           EodArchive[]
   identityNotifications IdentityNotification[]
+  guestIdentityArchives GuestIdentityArchive[]
   invoices              Invoice[]
   stockItems            StockItem[]
   ledgerEntries         LedgerEntry[]
@@ -91,14 +92,15 @@ model AppState {
 }
 
 model User {
-  id           String  @id
-  email        String  @unique
-  name         String
-  role         String
-  passwordHash String
-  department   String?
-  groupCode    String?
-  active       Boolean @default(true)
+  id                 String  @id
+  email              String  @unique
+  name               String
+  role               String
+  passwordHash       String
+  department         String?
+  groupCode          String?
+  active             Boolean @default(true)
+  mustChangePassword Boolean @default(false)
 }
 
 model Reservation {
@@ -177,6 +179,40 @@ model IdentityNotification {
   errorMessage   String?
   createdAt      String
   property       Property @relation(fields: [propertyId], references: [id])
+}
+
+// KVKK uyumlu misafir kimlik arşivi — tekrar konaklamada otomatik doldurma
+model GuestIdentityArchive {
+  id                String   @id
+  propertyId        String
+  idNoHash          String
+  guestName         String
+  firstName         String
+  lastName          String
+  email             String?
+  phone             String?
+  nationality       String
+  idNo              String
+  idType            String   @default("TCKN")
+  birthDate         String?
+  birthPlace        String?
+  gender            String?
+  fatherName        String?
+  motherName        String?
+  consentAt         String
+  consentPurpose    String   @default("konaklama_kimlik")
+  retentionUntil    String
+  visits            Int      @default(1)
+  lastStay          String
+  lastReservationId String?
+  anonymizedAt      String?
+  createdAt         String
+  updatedAt         String
+  property          Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, idNoHash])
+  @@index([propertyId, guestName])
+  @@index([propertyId, retentionUntil])
 }
 
 model Invoice {

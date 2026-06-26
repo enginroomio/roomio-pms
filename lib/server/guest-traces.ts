@@ -54,7 +54,7 @@ export async function seedGuestTracesIfEmpty(propertyId?: string): Promise<void>
       due: t.due,
       status: t.status,
       assignee: t.assignee,
-      notes: null,
+      notes: t.notes ?? null,
       createdAt: now,
     })),
   });

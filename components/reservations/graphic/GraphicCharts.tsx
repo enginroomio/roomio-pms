@@ -27,6 +27,8 @@ export function GraphicCharts({ points }: Props) {
 
   const currentLine = points.map((p, i) => ({ x: xAt(i), y: yOcc(p.value) }));
   const priorLine = points.map((p, i) => ({ x: xAt(i), y: yOcc(p.priorValue) }));
+  const paxLine = points.map((p, i) => ({ x: xAt(i), y: yOcc(p.paxValue) }));
+  const priorPaxLine = points.map((p, i) => ({ x: xAt(i), y: yOcc(p.priorPaxValue) }));
   const forecastStart = points.findIndex((p) => p.isForecast);
   const forecastX = forecastStart >= 0 ? xAt(forecastStart) : null;
 
@@ -35,7 +37,7 @@ export function GraphicCharts({ points }: Props) {
       <section className="roomio-rez-graphic-pro__chart-panel" aria-label="Günlük doluluk oranları">
         <header className="roomio-rez-graphic-pro__chart-head">
           <div>
-            <h3>Günlük Doluluk Oranları (%)</h3>
+            <h3>Günlük Oda Doluluğu (%)</h3>
             <p>Bu yıl ve geçen yıl karşılaştırması</p>
           </div>
           <div className="roomio-rez-graphic-pro__chart-legend">
@@ -72,6 +74,52 @@ export function GraphicCharts({ points }: Props) {
             <g key={p.date}>
               <circle cx={xAt(i)} cy={yOcc(p.value)} r={3.5} className="roomio-rez-graphic-pro__dot roomio-rez-graphic-pro__dot--current" />
               <text x={xAt(i)} y={yOcc(p.value) - 8} textAnchor="middle" className="roomio-rez-graphic-pro__point-label">{p.value}</text>
+              <text x={xAt(i)} y={H - 10} textAnchor="middle" className="roomio-rez-graphic-pro__axis">{p.label}</text>
+            </g>
+          ))}
+        </svg>
+      </section>
+
+      <section className="roomio-rez-graphic-pro__chart-panel" aria-label="Günlük kişi doluluğu">
+        <header className="roomio-rez-graphic-pro__chart-head">
+          <div>
+            <h3>Günlük Kişi Doluluğu (%)</h3>
+            <p>Oda doluluğu ile birlikte konaklayan kişi trendi</p>
+          </div>
+          <div className="roomio-rez-graphic-pro__chart-legend">
+            <span><i className="swatch swatch--pax-current" /> Bu yıl</span>
+            <span><i className="swatch swatch--pax-prior" /> Geçen yıl</span>
+            <span><i className="swatch swatch--forecast" /> Tahmin</span>
+          </div>
+        </header>
+        <svg viewBox={`0 0 ${W} ${H}`} className="roomio-rez-graphic-pro__svg" role="img" aria-label="Kişi doluluğu çizgi grafiği">
+          {[0, 25, 50, 75, 100].map((tick) => {
+            const y = yOcc(tick);
+            return (
+              <g key={tick}>
+                <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} className="roomio-rez-graphic-pro__grid" />
+                <text x={PAD.left - 8} y={y + 4} textAnchor="end" className="roomio-rez-graphic-pro__axis">{tick}%</text>
+              </g>
+            );
+          })}
+          {forecastX != null ? (
+            <>
+              <rect
+                x={forecastX}
+                y={PAD.top}
+                width={W - PAD.right - forecastX}
+                height={chartH}
+                className="roomio-rez-graphic-pro__forecast-zone"
+              />
+              <text x={forecastX + 8} y={PAD.top + 14} className="roomio-rez-graphic-pro__forecast-label">Tahmin</text>
+            </>
+          ) : null}
+          <path d={linePath(priorPaxLine)} className="roomio-rez-graphic-pro__line roomio-rez-graphic-pro__line--pax-prior" fill="none" />
+          <path d={linePath(paxLine)} className="roomio-rez-graphic-pro__line roomio-rez-graphic-pro__line--pax-current" fill="none" />
+          {points.map((p, i) => (
+            <g key={p.date}>
+              <circle cx={xAt(i)} cy={yOcc(p.paxValue)} r={3.5} className="roomio-rez-graphic-pro__dot roomio-rez-graphic-pro__dot--pax" />
+              <text x={xAt(i)} y={yOcc(p.paxValue) - 8} textAnchor="middle" className="roomio-rez-graphic-pro__point-label">{p.paxValue}</text>
               <text x={xAt(i)} y={H - 10} textAnchor="middle" className="roomio-rez-graphic-pro__axis">{p.label}</text>
             </g>
           ))}

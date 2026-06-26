@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
-import { AUTH_COOKIE } from '@/lib/auth/config';
 import { isAuthRequired } from '@/lib/auth/config';
 import { getJwtPayloadFromRequest } from '@/lib/auth/request-token';
 import { ROLE_LABELS, getDemoSession, hasPermission } from '@/lib/auth/roles';
 import type { Role } from '@/lib/auth/roles';
 import { buildSessionUserFromAuth } from '@/lib/auth/session-user';
+import { revokeToken } from '@/lib/auth/session-store';
+import { isRedisConfigured } from '@/lib/server/redis';
 import { getInvoices, getLedgerEntries, getStockItems } from '@/lib/server/pms-store';
+import { getUserMustChangePassword } from '@/lib/server/users-admin';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 
 export const dynamic = 'force-dynamic';
@@ -22,6 +24,7 @@ export async function GET(req: Request) {
       payload.groupCode,
       propertyId,
     );
+    const mustChangePassword = await getUserMustChangePassword(payload.sub);
     const [invoices, stock, ledger] = await Promise.all([
       getInvoices(propertyId),
       getStockItems(propertyId),
@@ -36,6 +39,7 @@ export async function GET(req: Request) {
         role: payload.role,
         roleLabel: session.roleLabel,
         permissions: session.permissions,
+        mustChangePassword,
       },
       roles: Object.entries(ROLE_LABELS).map(([id, label]) => ({ id, label })),
       invoices,
@@ -68,6 +72,8 @@ export async function GET(req: Request) {
   });
 }
 
+type SessionAdminAction = 'ping' | 'revoke';
+
 export async function POST(req: Request) {
   const payload = await getJwtPayloadFromRequest(req);
   if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -77,5 +83,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  return NextResponse.json({ ok: true, message: 'Admin action placeholder' });
+  const body = (await req.json().catch(() => ({}))) as { action?: SessionAdminAction; jti?: string };
+  const action = body.action ?? 'ping';
+
+  if (action === 'ping') {
+    return NextResponse.json({
+      ok: true,
+      message: 'Oturum yönetimi aktif',
+      redis: isRedisConfigured(),
+      userId: payload.sub,
+    });
+  }
+
+  if (action === 'revoke') {
+    const jti = body.jti?.trim();
+    if (!jti) {
+      return NextResponse.json({ error: 'jti gerekli' }, { status: 400 });
+    }
+    await revokeToken(jti);
+    return NextResponse.json({ ok: true, message: 'Oturum iptal edildi', jti });
+  }
+
+  return NextResponse.json({ error: 'Geçersiz işlem — action: ping | revoke' }, { status: 400 });
 }

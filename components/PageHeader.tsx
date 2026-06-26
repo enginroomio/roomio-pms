@@ -1,24 +1,36 @@
 import type { ReactNode } from 'react';
 
 type Props = {
-  breadcrumb: string;
+  breadcrumb?: string;
   title: string;
   description?: string;
   actions?: ReactNode;
+  stackClassName?: string;
+  hideHeader?: boolean;
   children: ReactNode;
 };
 
-export function PageHeader({ breadcrumb, title, description, actions, children }: Props) {
+export function PageHeader({
+  breadcrumb,
+  title,
+  description,
+  actions,
+  stackClassName,
+  hideHeader,
+  children,
+}: Props) {
   return (
-    <div className="roomio-page-stack">
-      <div className="roomio-page-header" style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-        <div>
-          <div className="roomio-breadcrumb">{breadcrumb}</div>
-          <h1 className="roomio-page-title">{title}</h1>
-          {description ? <p className="roomio-page-desc">{description}</p> : null}
+    <div className={`roomio-page-stack${stackClassName ? ` ${stackClassName}` : ''}`}>
+      {hideHeader ? null : (
+        <div className="roomio-page-header" style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            {breadcrumb ? <div className="roomio-breadcrumb">{breadcrumb}</div> : null}
+            {title ? <h1 className="roomio-page-title">{title}</h1> : null}
+            {description ? <p className="roomio-page-desc">{description}</p> : null}
+          </div>
+          {actions}
         </div>
-        {actions}
-      </div>
+      )}
       {children}
     </div>
   );

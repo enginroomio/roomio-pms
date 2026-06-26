@@ -10,7 +10,10 @@ import { fileURLToPath } from 'node:url';
 import net from 'node:net';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const HOST = process.env.ROOMIO_HOST ?? '127.0.0.1';
+/** Sunucunun dinlediği arayüz (LAN için 0.0.0.0). */
+export const BIND_HOST = process.env.ROOMIO_BIND_HOST ?? process.env.ROOMIO_HOST ?? '0.0.0.0';
+/** Tarayıcı / yerel curl — 0.0.0.0 adresi tarayıcıda açılmaz. */
+export const CONNECT_HOST = process.env.ROOMIO_CONNECT_HOST ?? '127.0.0.1';
 const PREFERRED = Number(process.env.ROOMIO_PORT ?? 3100);
 const PORT_END = Number(process.env.ROOMIO_PORT_END ?? 3220);
 const RUNTIME_DIR = join(ROOT, '.roomio', 'runtime');
@@ -24,7 +27,7 @@ export function portFree(port) {
   return new Promise((resolve) => {
     const server = net.createServer();
     server.once('error', () => resolve(false));
-    server.listen(port, HOST, () => server.close(() => resolve(true)));
+    server.listen(port, BIND_HOST, () => server.close(() => resolve(true)));
   });
 }
 
@@ -85,7 +88,7 @@ export function readActivePort() {
 }
 
 async function portResponds(port) {
-  const baseUrl = `http://${HOST}:${port}`;
+  const baseUrl = `http://${CONNECT_HOST}:${port}`;
   try {
     const res = await fetch(`${baseUrl}/api/health`, { signal: AbortSignal.timeout(1500) });
     return res.ok;
@@ -160,7 +163,7 @@ export async function findWorkingPort(start = PREFERRED, end = PORT_END) {
   for (const port of [...new Set(candidates)]) {
     if (!Number.isFinite(port)) continue;
     if (!(await portResponds(port))) continue;
-    const baseUrl = `http://${HOST}:${port}`;
+    const baseUrl = `http://${CONNECT_HOST}:${port}`;
     try {
       await verifyHomeAssets(baseUrl);
       return port;
@@ -173,7 +176,7 @@ export async function findWorkingPort(start = PREFERRED, end = PORT_END) {
 
 export async function resolveRoomioUrl() {
   const port = (await findWorkingPort()) ?? readActivePort();
-  return `http://${HOST}:${port}/`;
+  return `http://${CONNECT_HOST}:${port}/`;
 }
 
 export async function waitForHealth(baseUrl, timeoutMs = 90_000) {
@@ -223,8 +226,8 @@ export async function preparePort(preferred = PREFERRED) {
   const port = await pickPort(preferred);
   writeActivePort(port);
   if (port !== preferred) {
-    console.warn(`[port] UYARI: http://${HOST}:${preferred} eski/hatalı sunucu olabilir.`);
-    console.warn(`[port] Roomio şu adreste açılacak: http://${HOST}:${port}/`);
+    console.warn(`[port] UYARI: http://${CONNECT_HOST}:${preferred} eski/hatalı sunucu olabilir.`);
+    console.warn(`[port] Roomio şu adreste açılacak: http://${CONNECT_HOST}:${port}/`);
   }
   return port;
 }
@@ -234,7 +237,7 @@ export async function pruneStaleServers(start = PREFERRED, end = PORT_END) {
   let kept = null;
   for (let port = start; port <= end; port += 1) {
     if (!(await portResponds(port))) continue;
-    const baseUrl = `http://${HOST}:${port}`;
+    const baseUrl = `http://${CONNECT_HOST}:${port}`;
     let current = false;
     try {
       await verifyCanaryRoutes(baseUrl);
@@ -260,7 +263,7 @@ export async function pruneStaleServers(start = PREFERRED, end = PORT_END) {
 }
 
 export function baseUrlForPort(port) {
-  return `http://${HOST}:${port}/`;
+  return `http://${CONNECT_HOST}:${port}/`;
 }
 
 /** Güncel sunucu yoksa arka planda başlatır; port döndürür. */
@@ -298,9 +301,9 @@ export async function ensureRoomioServer(options = {}) {
         cwd: join(ROOT, '.next', 'standalone'),
         detached: true,
         stdio: 'ignore',
-        env: { ...process.env, NODE_ENV: 'production', PORT: String(port), HOSTNAME: HOST, DATABASE_URL: dbUrl },
+        env: { ...process.env, NODE_ENV: 'production', PORT: String(port), HOSTNAME: BIND_HOST, DATABASE_URL: dbUrl },
       })
-    : spawn(process.execPath, [nextBin, 'start', '-H', HOST, '-p', String(port)], {
+    : spawn(process.execPath, [nextBin, 'start', '-H', BIND_HOST, '-p', String(port)], {
         cwd: ROOT,
         detached: true,
         stdio: 'ignore',

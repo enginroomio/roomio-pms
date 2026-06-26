@@ -1,30 +1,21 @@
 'use client';
 
-import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Download, Printer, RefreshCw } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useClientSearchParams } from '@/lib/client/use-client-search-params';
 import { roomioFetch } from '@/lib/client/api';
 import { parseApiError } from '@/lib/client/api-errors';
-import { Button } from '@/components/ui';
 import { PROPERTY } from '@/lib/navigation';
-import { GraphicCharts } from '@/components/reservations/graphic/GraphicCharts';
 import { GraphicDesignPicker, GraphicMockupView, type GraphicDesignMode } from '@/components/reservations/graphic/GraphicDesignPicker';
 import { ElektraForecastF1Mockup } from '@/components/reservations/graphic/mockups/ElektraForecastF1Mockup';
 import { FilterWizardProMockup } from '@/components/reservations/graphic/mockups/FilterWizardProMockup';
 import { CalendarHeatmapMockup } from '@/components/reservations/graphic/mockups/CalendarHeatmapMockup';
 import { ElektraV5Mockup } from '@/components/reservations/graphic/mockups/ElektraV5Mockup';
 import { ForecastAnalyticsMockup } from '@/components/reservations/graphic/mockups/ForecastAnalyticsMockup';
-import { GraphicKpiStrip } from '@/components/reservations/graphic/GraphicKpiStrip';
-import { GraphicRoomMatrix } from '@/components/reservations/graphic/GraphicRoomMatrix';
 import type { GraphicFilterRule } from '@/lib/reservations/graphic-filters';
 import {
-  buildChartPoints,
-  buildGraphicKpis,
   daysInMonth,
-  formatGraphicMonthYear,
-  GRAPHIC_RANGE_OPTIONS,
   monthStartIso,
   shiftIsoDate,
   shiftMonthIso,
@@ -57,6 +48,7 @@ function downloadMatrixCsv(matrix: GraphicCalendarDay[], from: string, days: num
 
 type Props = {
   initialFrom?: string;
+  fullScreen?: boolean;
 };
 
 const MODE_PARAM = 'mode';
@@ -67,7 +59,12 @@ function parseDesignMode(raw: string | null): GraphicDesignMode | null {
   return allowed.includes(raw as GraphicDesignMode) ? (raw as GraphicDesignMode) : null;
 }
 
-export function ReservationGraphicCalendar({ initialFrom = PROPERTY.businessDate }: Props) {
+function GraphicViewport({ fullScreen, children }: { fullScreen: boolean; children: ReactNode }) {
+  if (!fullScreen) return <>{children}</>;
+  return <div className="roomio-grafik-f1-forecast-viewport">{children}</div>;
+}
+
+export function ReservationGraphicCalendar({ initialFrom = PROPERTY.businessDate, fullScreen = false }: Props) {
   const router = useRouter();
   const searchParams = useClientSearchParams();
   const [from, setFrom] = useState(initialFrom);
@@ -76,8 +73,8 @@ export function ReservationGraphicCalendar({ initialFrom = PROPERTY.businessDate
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [filterRules, setFilterRules] = useState<GraphicFilterRule[]>([]);
-  // SSR + ilk hydrate aynı kalsın; URL modu mount sonrası (hydration hatası önlenir)
   const [designMode, setDesignMode] = useState<GraphicDesignMode>('monthly-pro');
+  const [pickerCollapsed, setPickerCollapsed] = useState(fullScreen);
 
   useEffect(() => {
     const fromUrl = searchParams.get(MODE_PARAM);
@@ -135,138 +132,92 @@ export function ReservationGraphicCalendar({ initialFrom = PROPERTY.businessDate
     void load();
   }, [load]);
 
-  const chartPoints = useMemo(
-    () => buildChartPoints(matrix, PROPERTY.businessDate),
-    [matrix],
+  const forecastF1 = (
+    <GraphicViewport fullScreen={fullScreen}>
+      <ElektraForecastF1Mockup
+        fill={fullScreen}
+        matrix={matrix}
+        from={from}
+        days={days}
+        loading={loading}
+        onRefresh={() => void load()}
+        onShiftFrom={(delta) => setFrom((v) => shiftIsoDate(v, delta))}
+        onResetFrom={() => setFrom(PROPERTY.businessDate)}
+        onOpenFilterWizard={() => setDesignModeAndUrl('filter-wizard')}
+      />
+    </GraphicViewport>
   );
-  const kpis = useMemo(() => buildGraphicKpis(matrix), [matrix]);
 
   return (
-    <div className="roomio-rez-graphic-pro">
+    <div className={`roomio-grafik-f1-host${fullScreen ? ' roomio-grafik-f1-host--fill' : ''}`}>
       {loadError ? (
         <p className="roomio-page-desc roomio-text-warn" role="alert" style={{ marginBottom: 12 }}>
           {loadError}
         </p>
       ) : null}
-      <GraphicDesignPicker mode={designMode} onChange={setDesignModeAndUrl} />
+      <GraphicDesignPicker
+        mode={designMode}
+        onChange={setDesignModeAndUrl}
+        compact={fullScreen}
+        collapsed={fullScreen && pickerCollapsed}
+        onToggleCollapsed={() => setPickerCollapsed((v) => !v)}
+      />
 
-      {designMode === 'monthly-pro' ? (
-        <ElektraForecastF1Mockup
-          matrix={matrix}
-          from={from}
-          days={days}
-          loading={loading}
-          onRefresh={() => void load()}
-          onShiftFrom={(delta) => setFrom((v) => shiftIsoDate(v, delta))}
-          onResetFrom={() => setFrom(PROPERTY.businessDate)}
-          onOpenFilterWizard={() => setDesignModeAndUrl('filter-wizard')}
-        />
+      {designMode === 'monthly-pro' || designMode === 'live' ? (
+        forecastF1
       ) : designMode === 'filter-wizard' ? (
-        <FilterWizardProMockup
-          live
-          from={from}
-          days={days}
-          onApply={(rules) => {
-            setFilterRules(rules);
-            setDesignModeAndUrl('monthly-pro');
-          }}
-          onOpenForecast={() => setDesignModeAndUrl('monthly-pro')}
-        />
+        <GraphicViewport fullScreen={fullScreen}>
+          <FilterWizardProMockup
+            live
+            from={from}
+            days={days}
+            onApply={(rules) => {
+              setFilterRules(rules);
+              setDesignModeAndUrl('monthly-pro');
+            }}
+            onOpenForecast={() => setDesignModeAndUrl('monthly-pro')}
+          />
+        </GraphicViewport>
       ) : designMode === 'calendar' ? (
-        <CalendarHeatmapMockup
-          live
-          matrix={matrix}
-          monthStart={monthStartIso(from)}
-          loading={loading}
-          onRefresh={() => void load()}
-          onShiftMonth={(delta) => setFrom((v) => shiftMonthIso(v, delta))}
-        />
+        <GraphicViewport fullScreen={fullScreen}>
+          <CalendarHeatmapMockup
+            live
+            matrix={matrix}
+            monthStart={monthStartIso(from)}
+            loading={loading}
+            onRefresh={() => void load()}
+            onShiftMonth={(delta) => setFrom((v) => shiftMonthIso(v, delta))}
+          />
+        </GraphicViewport>
       ) : designMode === 'elektra' ? (
-        <ElektraV5Mockup
-          live
-          matrix={matrix}
-          from={from}
-          days={daysInMonth(monthStartIso(from))}
-          loading={loading}
-          onRefresh={() => void load()}
-          onShiftMonth={(delta) => setFrom((v) => shiftMonthIso(v, delta))}
-          onExport={() => downloadMatrixCsv(matrix, monthStartIso(from), daysInMonth(monthStartIso(from)))}
-        />
+        <GraphicViewport fullScreen={fullScreen}>
+          <ElektraV5Mockup
+            live
+            matrix={matrix}
+            from={from}
+            days={daysInMonth(monthStartIso(from))}
+            loading={loading}
+            onRefresh={() => void load()}
+            onShiftMonth={(delta) => setFrom((v) => shiftMonthIso(v, delta))}
+            onExport={() => downloadMatrixCsv(matrix, monthStartIso(from), daysInMonth(monthStartIso(from)))}
+          />
+        </GraphicViewport>
       ) : designMode === 'forecast' ? (
-        <ForecastAnalyticsMockup
-          live
-          matrix={matrix}
-          from={from}
-          loading={loading}
-          onRefresh={() => void load()}
-          onShiftMonth={(delta) => setFrom((v) => shiftMonthIso(v, delta))}
-          onOpenFilterWizard={() => setDesignModeAndUrl('filter-wizard')}
-        />
-      ) : designMode !== 'live' ? (
-        <GraphicMockupView mode={designMode} />
+        <GraphicViewport fullScreen={fullScreen}>
+          <ForecastAnalyticsMockup
+            live
+            matrix={matrix}
+            from={from}
+            loading={loading}
+            onRefresh={() => void load()}
+            onShiftMonth={(delta) => setFrom((v) => shiftMonthIso(v, delta))}
+            onOpenFilterWizard={() => setDesignModeAndUrl('filter-wizard')}
+          />
+        </GraphicViewport>
       ) : (
-        <>
-      <div className="roomio-rez-graphic-pro__toolbar">
-        <div className="roomio-rez-graphic-pro__filters">
-          <label className="roomio-rez-graphic-pro__filter">
-            <span>Dönem</span>
-            <div className="roomio-rez-graphic-pro__nav">
-              <button type="button" className="roomio-btn roomio-btn--ghost roomio-btn--sm" onClick={() => setFrom((v) => shiftIsoDate(v, -days))} aria-label="Önceki dönem">
-                <ChevronLeft size={16} />
-              </button>
-              <strong>{formatGraphicMonthYear(from)}</strong>
-              <button type="button" className="roomio-btn roomio-btn--ghost roomio-btn--sm" onClick={() => setFrom((v) => shiftIsoDate(v, days))} aria-label="Sonraki dönem">
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </label>
-
-          <label className="roomio-rez-graphic-pro__filter">
-            <span>Görünüm</span>
-            <div className="roomio-rez-graphic-pro__segments" role="group" aria-label="Gün aralığı">
-              {GRAPHIC_RANGE_OPTIONS.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className={`roomio-rez-graphic-pro__segment${days === option ? ' is-active' : ''}`}
-                  onClick={() => setDays(option)}
-                >
-                  {option} gün
-                </button>
-              ))}
-            </div>
-          </label>
-        </div>
-
-        <div className="roomio-rez-graphic-pro__actions">
-          <button type="button" className="roomio-btn roomio-btn--ghost roomio-btn--sm" onClick={() => void load()}>
-            <RefreshCw size={15} /> Yenile
-          </button>
-          <button type="button" className="roomio-btn roomio-btn--ghost roomio-btn--sm" onClick={() => window.print()}>
-            <Printer size={15} /> Yazdır
-          </button>
-          <button type="button" className="roomio-btn roomio-btn--ghost roomio-btn--sm" onClick={() => downloadMatrixCsv(matrix, from, days)}>
-            <Download size={15} /> Dışa Aktar
-          </button>
-          <Button href="/reservations/new">+ Yeni Rezervasyon (F2)</Button>
-        </div>
-      </div>
-
-      <GraphicKpiStrip items={kpis} />
-      <GraphicCharts points={chartPoints} />
-      <GraphicRoomMatrix matrix={matrix} />
-
-      <footer className="roomio-rez-graphic-pro__foot">
-        <p>
-          Elektra v5 F1 — doluluk trendi, gecelemeler ve oda tipi matrisi.
-          {' · '}
-          <Link href="/reservations?tab=availability">Tablo görünümü (Oda Planı)</Link>
-        </p>
-        <p className="roomio-rez-graphic-pro__foot-note">
-          Geçen yıl karşılaştırması demo verisiyle simüle edilir · tahmin bölgesi iş günü sonrasını gösterir
-        </p>
-      </footer>
-        </>
+        <GraphicViewport fullScreen={fullScreen}>
+          <GraphicMockupView mode={designMode} />
+        </GraphicViewport>
       )}
     </div>
   );

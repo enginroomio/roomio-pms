@@ -19,17 +19,39 @@ export async function searchGuestArchiveFromDb(
 
   if (!name && !idNo && !phone && !email) return [];
 
-  const byKey = new Map<string, { guestName: string; email?: string; phone?: string; visits: number; lastStay: string; idNo?: string }>();
+  const byKey = new Map<string, {
+    guestName: string;
+    email?: string;
+    phone?: string;
+    visits: number;
+    lastStay: string;
+    idNo?: string;
+    nationality?: string;
+    idType?: string;
+    birthDate?: string;
+    birthPlace?: string;
+    gender?: string;
+    fatherName?: string;
+    motherName?: string;
+    firstName?: string;
+    lastName?: string;
+  }>();
 
   for (const r of reservations) {
     if (r.status === 'CANCELLED') continue;
     const extra = r.extraData ?? {};
-    const rid = extra.idNo ?? '';
+    const rid = String(extra.idNo ?? '').trim();
     const key = rid || norm(r.guestName) || r.email || r.phone || r.id;
     const existing = byKey.get(key);
     if (existing) {
       existing.visits += 1;
       if (r.checkOut > existing.lastStay) existing.lastStay = r.checkOut;
+      if (!existing.idNo && rid) existing.idNo = rid;
+      if (!existing.nationality && extra.nationality) existing.nationality = String(extra.nationality);
+      if (!existing.birthDate && extra.birthDate) existing.birthDate = String(extra.birthDate);
+      if (!existing.birthPlace && extra.birthPlace) existing.birthPlace = String(extra.birthPlace);
+      if (!existing.fatherName && extra.fatherName) existing.fatherName = String(extra.fatherName);
+      if (!existing.motherName && extra.motherName) existing.motherName = String(extra.motherName);
     } else {
       byKey.set(key, {
         guestName: r.guestName,
@@ -38,6 +60,15 @@ export async function searchGuestArchiveFromDb(
         visits: 1,
         lastStay: r.checkOut,
         idNo: rid || undefined,
+        nationality: extra.nationality ? String(extra.nationality) : undefined,
+        idType: extra.idType ? String(extra.idType) : undefined,
+        birthDate: extra.birthDate ? String(extra.birthDate) : undefined,
+        birthPlace: extra.birthPlace ? String(extra.birthPlace) : undefined,
+        gender: extra.gender ? String(extra.gender) : undefined,
+        fatherName: extra.fatherName ? String(extra.fatherName) : undefined,
+        motherName: extra.motherName ? String(extra.motherName) : undefined,
+        firstName: extra.firstName ? String(extra.firstName) : undefined,
+        lastName: extra.lastName ? String(extra.lastName) : undefined,
       });
     }
   }
@@ -68,18 +99,18 @@ export async function searchGuestArchiveFromDb(
       entry: {
         id: `db-${key.slice(0, 24)}`,
         guestName: agg.guestName,
-        firstName,
-        lastName,
+        firstName: agg.firstName ?? firstName,
+        lastName: agg.lastName ?? lastName,
         email: agg.email,
         phone: agg.phone,
-        nationality: 'TR',
+        nationality: agg.nationality ?? 'TR',
         idNo: agg.idNo ?? '',
-        idType: 'TCKN',
-        birthDate: '',
-        birthPlace: '',
-        gender: 'E',
-        fatherName: '',
-        motherName: '',
+        idType: (agg.idType as GuestArchiveEntry['idType']) ?? 'TCKN',
+        birthDate: agg.birthDate ?? '',
+        birthPlace: agg.birthPlace ?? '',
+        gender: (agg.gender as GuestArchiveEntry['gender']) ?? 'E',
+        fatherName: agg.fatherName ?? '',
+        motherName: agg.motherName ?? '',
         lastStay: agg.lastStay,
         visits: agg.visits,
         source: 'archive',

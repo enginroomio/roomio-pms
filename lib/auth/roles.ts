@@ -92,6 +92,8 @@ export function canAccessRoute(
 ): boolean {
   if (pathname.startsWith('/settings')) {
     if (pathname === '/settings/privacy') return true;
+    const tab = searchParams?.tab ?? null;
+    if (tab === 'password' || tab === 'theme') return true;
     if (
       pathname.startsWith('/settings/integrations')
       || pathname.startsWith('/settings/compliance')

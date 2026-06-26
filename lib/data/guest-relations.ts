@@ -59,6 +59,7 @@ export type TraceItem = {
   due: string;
   status: 'Açık' | 'Tamamlandı';
   assignee: string;
+  notes?: string;
 };
 
 export type FacilityBooking = {
@@ -170,6 +171,9 @@ export const DEMO_VIP_GUESTS: VipGuest[] = [
 export const DEMO_TRACES: TraceItem[] = [
   { id: '1', date: '2026-06-18', guest: 'John Smith', roomNo: '312', subject: 'Havalimanı transfer 06:00', due: '19.06 06:00', status: 'Açık', assignee: 'Ön Büro' },
   { id: '2', date: '2026-06-18', guest: 'James Miller', roomNo: '205', subject: 'Ek havlu seti', due: '18.06 18:00', status: 'Tamamlandı', assignee: 'Kat HK' },
+  { id: '3', date: '2026-06-18', guest: 'Sophie Martin', roomNo: '415', subject: 'Uyandırma 06:30', due: '19.06 06:30', status: 'Açık', assignee: 'Ön Büro', notes: 'type:wakeup' },
+  { id: '4', date: '2026-06-18', guest: 'Maria Garcia', roomNo: '205', subject: 'VIP karşılama notu', due: '18.06 14:00', status: 'Açık', assignee: 'Misafir İlişkileri', notes: 'type:yellow Şampanya oda' },
+  { id: '5', date: '2026-06-17', guest: 'David Johnson', roomNo: '502', subject: 'Geç çıkış talebi', due: '19.06 14:00', status: 'Açık', assignee: 'Ön Büro', notes: 'type:note' },
 ];
 
 export const DEMO_RESTAURANT: FacilityBooking[] = [
@@ -234,3 +238,40 @@ export const WEATHER_FORECAST = [
 
 export const REVIEW_SOURCES = ['Tümü', 'Booking.com', 'Google', 'Tripadvisor', 'Otel Web'];
 export const REVIEW_CATEGORIES = ['Hizmet - Oda', 'Hizmet - Resepsiyon', 'Yiyecek & İçecek', 'Temizlik', 'Genel'];
+
+export type CrmMessage = {
+  id: string;
+  at: string;
+  channel: 'WhatsApp' | 'E-posta' | 'Portal' | 'Telefon';
+  guest: string;
+  roomNo?: string;
+  subject: string;
+  body: string;
+  status: 'Yeni' | 'Yanıtlandı' | 'Kapandı';
+};
+
+export type DirectoryEntry = {
+  id: string;
+  name: string;
+  role: string;
+  department: string;
+  phone: string;
+  email?: string;
+  extension?: string;
+};
+
+export const DEMO_CRM_MESSAGES: CrmMessage[] = [
+  { id: 'crm-1', at: '2026-06-18 09:15', channel: 'WhatsApp', guest: 'John Smith', roomNo: '312', subject: 'Geç checkout', body: '14:00 çıkış mümkün mü?', status: 'Yeni' },
+  { id: 'crm-2', at: '2026-06-18 08:40', channel: 'Portal', guest: 'Maria Garcia', roomNo: '205', subject: 'Ek yastık', body: '2 adet ek yastık rica ederim.', status: 'Yanıtlandı' },
+  { id: 'crm-3', at: '2026-06-17 22:10', channel: 'E-posta', guest: 'James Miller', subject: 'Fatura talebi', body: 'Şirket faturası için vergi no göndereceğim.', status: 'Kapandı' },
+];
+
+export const HOTEL_DIRECTORY: DirectoryEntry[] = [
+  { id: 'd-1', name: 'Arda Yılmaz', role: 'Ön Büro Müdürü', department: 'Resepsiyon', phone: '+90 212 555 0101', extension: '101', email: 'arda@hotelsapphire.com' },
+  { id: 'd-2', name: 'Selin Kaya', role: 'Misafir İlişkileri', department: 'GR', phone: '+90 212 555 0102', extension: '102', email: 'gr@hotelsapphire.com' },
+  { id: 'd-3', name: 'Murat Şahin', role: 'HK Süpervizör', department: 'Kat Hizmetleri', phone: '+90 212 555 0103', extension: '103' },
+  { id: 'd-4', name: 'Acil', role: 'Güvenlik / İlk Yardım', department: 'Operasyon', phone: '+90 212 555 0199', extension: '199' },
+  { id: 'd-5', name: 'Doktor', role: 'Yerel sağlık', department: 'Dış', phone: '112' },
+  { id: 'd-6', name: 'Havalimanı VIP', role: 'Transfer', department: 'Dış', phone: '+90 212 555 4400' },
+];
+

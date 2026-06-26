@@ -1,13 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, StatusBadge } from '@/components/ui';
 import { ReceptionLoading } from '@/components/reception/ReceptionLoading';
+import { CheckInIdentityPanel, type CheckInIdentityState } from '@/components/reception/CheckInIdentityPanel';
 import { useReservations } from '@/lib/client/use-reservations';
 import { roomioFetch } from '@/lib/client/api';
 import { parseApiError } from '@/lib/client/api-errors';
+import { reservationToEgmSeed } from '@/lib/egm/merge';
 import { RoomSuggestPanel } from '@/components/reception/RoomSuggestPanel';
 import { ExtraChargesCheckInPicker } from '@/components/reception/ExtraChargesPanel';
 import {
@@ -28,6 +30,11 @@ export default function CheckInPage() {
   const [done, setDone] = useState(false);
   const [messages, setMessages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [identityState, setIdentityState] = useState<CheckInIdentityState | null>(null);
+  const egmSeed = useMemo(() => (r ? reservationToEgmSeed(r) : {}), [r]);
+  const onIdentityChange = useCallback((state: CheckInIdentityState) => {
+    setIdentityState(state);
+  }, []);
 
   if (loading) {
     return (
@@ -51,6 +58,10 @@ export default function CheckInPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!roomNo || !r) return;
+    if (identityState && !identityState.canSubmit) {
+      setMessages([identityState.blockReason ?? 'Kimlik onayı gerekli']);
+      return;
+    }
     setSubmitting(true);
     setMessages([]);
 
@@ -66,6 +77,8 @@ export default function CheckInPage() {
           checkOut: r.checkOut,
           reservationRef: r.refNo,
           extraChargeCodes: extraCharges,
+          egmForm: identityState?.form,
+          identityApproved: identityState?.approved ?? false,
         }),
       });
       if (!res.ok) throw new Error(await parseApiError(res, 'Check-in başarısız'));
@@ -122,6 +135,7 @@ export default function CheckInPage() {
           selected={extraCharges}
           onChange={setExtraCharges}
         />
+        <CheckInIdentityPanel seed={egmSeed} roomNo={roomNo} onChange={onIdentityChange} />
         <form className="roomio-card roomio-form" onSubmit={(e) => void submit(e)}>
           <h2 className="roomio-card-title">Oda Ata — Otomatik Check-in</h2>
           <p className="roomio-page-desc">
@@ -157,7 +171,11 @@ export default function CheckInPage() {
           ) : null}
           <div className="roomio-form-actions">
             <Button variant="secondary" href="/reception/arrivals">Vazgeç</Button>
-            <button type="submit" className="roomio-btn roomio-btn--primary" disabled={submitting}>
+            <button
+              type="submit"
+              className="roomio-btn roomio-btn--primary"
+              disabled={submitting || (identityState !== null && !identityState.canSubmit)}
+            >
               {submitting ? 'İşleniyor…' : 'Check-in Tamamla'}
             </button>
           </div>

@@ -2,20 +2,24 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { roomioFetch } from '@/lib/client/api';
-import { archiveToFormValues, type GuestArchiveEntry } from '@/lib/egm/guest-archive';
+import { applyGuestArchiveEntry, type GuestArchiveListItem } from '@/lib/client/guest-archive-apply';
+import { archiveToFormValues } from '@/lib/egm/guest-archive';
 
 type FormSlice = Record<string, string | number>;
 
 type Props = {
   values: FormSlice;
   onChange: (patch: Record<string, string | number>) => void;
+  autoApplySingle?: boolean;
 };
 
-/** Rezervasyon sihirbazı — Misafir adımı arşiv araması */
-export function GuestArchiveLookup({ values, onChange }: Props) {
-  const [results, setResults] = useState<GuestArchiveEntry[]>([]);
+/** Rezervasyon sihirbazı — Misafir adımı arşiv araması (KVKK maskeli liste, apply ile tam veri) */
+export function GuestArchiveLookup({ values, onChange, autoApplySingle = true }: Props) {
+  const [results, setResults] = useState<GuestArchiveListItem[]>([]);
   const [searching, setSearching] = useState(false);
   const [appliedId, setAppliedId] = useState<string | null>(null);
+  const [applyError, setApplyError] = useState<string | null>(null);
+  const [retentionNote, setRetentionNote] = useState<string | null>(null);
 
   const guestName = String(values.guestName ?? '');
 
@@ -32,8 +36,9 @@ export function GuestArchiveLookup({ values, onChange }: Props) {
     setSearching(true);
     try {
       const res = await roomioFetch(`/api/guests/archive?${q.toString()}`);
-      const j = (await res.json()) as { results?: GuestArchiveEntry[] };
+      const j = (await res.json()) as { results?: GuestArchiveListItem[]; retentionNote?: string };
       setResults(j.results ?? []);
+      setRetentionNote(j.retentionNote ?? null);
     } finally {
       setSearching(false);
     }
@@ -44,47 +49,67 @@ export function GuestArchiveLookup({ values, onChange }: Props) {
     return () => clearTimeout(t);
   }, [searchArchive]);
 
-  function apply(entry: GuestArchiveEntry) {
-    onChange(archiveToFormValues(entry));
-    setAppliedId(entry.id);
-  }
+  const apply = useCallback(
+    async (archiveId: string) => {
+      setApplyError(null);
+      try {
+        const entry = await applyGuestArchiveEntry(archiveId);
+        if (!entry) return;
+        onChange(archiveToFormValues(entry));
+        setAppliedId(archiveId);
+      } catch (err) {
+        setApplyError(err instanceof Error ? err.message : 'Arşiv kaydı uygulanamadı');
+      }
+    },
+    [onChange],
+  );
+
+  useEffect(() => {
+    if (!autoApplySingle || appliedId || results.length !== 1) return;
+    const only = results[0];
+    if (!only?.id) return;
+    if (values.idNo && only.idNoMasked) return;
+    void apply(only.id);
+  }, [autoApplySingle, appliedId, results, apply, values.idNo]);
 
   if (!guestName.trim() && !values.email && !values.phone) {
     return (
-      <p className="roomio-page-desc" style={{ marginBottom: 12 }}>
-        Misafir adı, e-posta veya telefon yazın — arşiv ve önceki konaklamalar otomatik aranır.
+      <p className="roomio-page-desc roomio-guest-archive-hint">
+        Misafir adı, e-posta veya telefon yazın — KVKK arşivinden önceki konaklamalar aranır; kimlik detayları tek tıkla doldurulur.
       </p>
     );
   }
 
   return (
-    <div className="roomio-card" style={{ marginBottom: 16, padding: 12 }}>
-      <p className="roomio-card-title" style={{ fontSize: '0.9rem', margin: '0 0 8px' }}>
-        Misafir arşivi {searching ? '(aranıyor…)' : results.length ? `(${results.length})` : ''}
+    <div className="roomio-card roomio-guest-archive-lookup">
+      <p className="roomio-card-title roomio-guest-archive-lookup__title">
+        Misafir kimlik arşivi {searching ? '(aranıyor…)' : results.length ? `(${results.length})` : ''}
       </p>
+      {retentionNote ? <p className="roomio-guest-archive-lookup__kvkk">{retentionNote}</p> : null}
       {appliedId ? (
-        <p className="roomio-page-desc" style={{ margin: '0 0 8px' }}>
-          Arşiv kaydı uygulandı.
-          <button type="button" className="roomio-link" style={{ marginLeft: 8 }} onClick={() => setAppliedId(null)}>
+        <p className="roomio-page-desc roomio-guest-archive-lookup__applied">
+          Arşiv kaydı uygulandı — kimlik alanları dolduruldu.
+          <button type="button" className="roomio-link" onClick={() => setAppliedId(null)}>
             Sıfırla
           </button>
         </p>
       ) : null}
+      {applyError ? <p className="roomio-text-warn">{applyError}</p> : null}
       {results.length === 0 && !searching ? (
-        <p className="roomio-page-desc" style={{ margin: 0 }}>Eşleşme yok — yeni misafir olarak devam edin.</p>
+        <p className="roomio-page-desc">Eşleşme yok — yeni misafir olarak devam edin.</p>
       ) : (
         <ul className="roomio-egm-archive-items">
           {results.map((entry) => (
             <li key={entry.id}>
-              <button type="button" className="roomio-egm-archive-item" onClick={() => apply(entry)}>
+              <button type="button" className="roomio-egm-archive-item" onClick={() => void apply(entry.id)}>
                 <strong>{entry.guestName}</strong>
                 <span>
                   {entry.visits} konaklama · Son: {entry.lastStay}
                   {entry.email ? ` · ${entry.email}` : ''}
                 </span>
                 <span className="roomio-text-muted">
-                  {entry.source === 'egm' ? 'EGM' : 'Arşiv'}
-                  {entry.idNo ? ` · ${entry.idNo.slice(0, 4)}***` : ''}
+                  {entry.source === 'egm' ? 'EGM' : 'KVKK arşiv'}
+                  {entry.idNoMasked || entry.idNo ? ` · ${entry.idNoMasked ?? entry.idNo}` : ''}
                 </span>
               </button>
             </li>

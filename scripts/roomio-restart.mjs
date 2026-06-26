@@ -12,6 +12,7 @@ import { syncStandaloneAssets } from './sync-standalone-assets.mjs';
 import { roomioDatabaseUrl } from './roomio-db-url.mjs';
 import {
   baseUrlForPort,
+  BIND_HOST,
   findWorkingPort,
   preparePort,
   pruneStaleServers,
@@ -21,7 +22,6 @@ import {
 } from './roomio-port.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const HOST = process.env.ROOMIO_HOST ?? '127.0.0.1';
 const devMode = process.argv.includes('--dev');
 const skipTest = process.argv.includes('--no-test');
 const BUILD_ID = join(ROOT, '.next', 'BUILD_ID');
@@ -105,7 +105,7 @@ async function main() {
   const useStandalone = !devMode && existsSync(standaloneServer);
 
   const dbUrl = roomioDatabaseUrl();
-  const prodEnv = { ...process.env, NODE_ENV: 'production', PORT: String(port), HOSTNAME: HOST, DATABASE_URL: dbUrl };
+  const prodEnv = { ...process.env, NODE_ENV: 'production', PORT: String(port), HOSTNAME: BIND_HOST, DATABASE_URL: dbUrl };
 
   const child = useStandalone
     ? spawn(process.execPath, [standaloneServer], {
@@ -114,7 +114,7 @@ async function main() {
         detached: false,
         env: prodEnv,
       })
-    : spawn(process.execPath, [join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next'), ...(devMode ? ['dev'] : ['start']), '-H', HOST, '-p', String(port)], {
+    : spawn(process.execPath, [join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next'), ...(devMode ? ['dev'] : ['start']), '-H', BIND_HOST, '-p', String(port)], {
         cwd: ROOT,
         stdio: 'inherit',
         detached: false,

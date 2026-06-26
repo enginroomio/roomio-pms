@@ -10,6 +10,7 @@ const EXTRA_SECTION_KEYS: Record<string, string> = {
   'rate-plans': 'nav.kontrat.rate-plans',
   agencies: 'nav.kontrat.agencies',
   extras: 'nav.kontrat.extras',
+  inventory: 'nav.kurulus.inventory',
 };
 
 export function kurulusNavLabel(t: TFn, entry: { id: string; label: string; separator?: boolean }): string {

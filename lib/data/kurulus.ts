@@ -93,11 +93,11 @@ export const CURRENCIES = [
 ];
 
 export const MEAL_PLANS: CodeRow[] = [
-  { code: 'RO', name: 'Room Only', active: true },
-  { code: 'BB', name: 'Bed & Breakfast', active: true },
-  { code: 'HB', name: 'Half Board', active: true },
-  { code: 'FB', name: 'Full Board', active: true },
-  { code: 'AI', name: 'All Inclusive', active: false },
+  { code: 'RO', name: 'Oda', description: 'OB — Room Only', active: true },
+  { code: 'BB', name: 'Kahvaltı', description: 'BB — Bed & Breakfast', active: true },
+  { code: 'HB', name: 'Yarım Pansiyon', description: 'HB — Half Board', active: true },
+  { code: 'FB', name: 'Tam Pansiyon', description: 'FB — Full Board', active: true },
+  { code: 'AI', name: 'Her Şey Dahil', description: 'AI — All Inclusive', active: false },
 ];
 
 export const NATIONALITIES = [
@@ -166,6 +166,7 @@ export type AgencyRow = {
 export const AGENCY_CONTRACTS: AgencyRow[] = [
   { code: 'BKG', name: 'Booking.com', commission: '%15', contractEnd: '2026-12-31', active: true },
   { code: 'EXP', name: 'Expedia', commission: '%18', contractEnd: '2026-12-31', active: true },
+  { code: 'TNT', name: 'Tantur', commission: '%10', contractEnd: '2026-12-31', active: true },
   { code: 'TUI', name: 'TUI Deutschland', commission: '%12', contractEnd: '2027-03-31', active: true },
   { code: 'DIR', name: 'Doğrudan / Walk-in', commission: '—', contractEnd: '—', active: true },
 ];

@@ -5,6 +5,7 @@ import { verifyToken } from '@/lib/auth/jwt';
 
 const PUBLIC_PATHS = [
   '/login',
+  '/setup',
   '/offline',
   '/wifi',
   '/book',
@@ -30,6 +31,8 @@ const PUBLIC_PATHS = [
 
 const PUBLIC_API_PREFIXES = [
   '/api/auth/login',
+  '/api/auth/setup',
+  '/api/auth/setup-status',
   '/api/auth/config',
   '/api/health',
   '/api/compliance/5651/wifi/',

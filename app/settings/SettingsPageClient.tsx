@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ModuleLayout } from '@/components/ModuleLayout';
 import { KurulusScreen } from '@/components/kurulus/KurulusScreen';
 import { useSession } from '@/components/auth/SessionProvider';
@@ -10,6 +11,9 @@ import { findKurulusNavTitle, translateKurulusModuleMenu } from '@/lib/i18n/kuru
 import { kurulusModuleMenuForUser } from '@/lib/navigation/module-menus';
 import { Button } from '@/components/ui';
 import type { ThemeMode } from '@/components/theme/ThemeProvider';
+import { AyarlarHubPanel } from '@/components/settings/AyarlarHubPanel';
+import { SistemHubPanel } from '@/components/settings/SistemHubPanel';
+import { CalculatorToolPanel, SettingsAyalarHub } from '@/components/settings/SettingsHubPanels';
 
 function KurulusAccessBanner() {
   const { user } = useSession();
@@ -48,28 +52,113 @@ export function SettingsPageClient({
   theme?: ThemeMode | null;
   themeFixed?: boolean;
 }) {
-  const { user } = useSession();
+  const { user, logout } = useSession();
+  const searchParams = useSearchParams();
   const { t } = useI18n();
-  const menuSearch = section ? `?section=${section}` : tab ? `?tab=${tab}` : '';
-  const title = findKurulusNavTitle(t, section, tab);
+  const hub = searchParams.get('hub');
+  const tool = searchParams.get('tool');
+  const action = searchParams.get('action');
+  const menuSearch = useMemo(() => {
+    if (tool) return `?tool=${tool}`;
+    if (action) return `?action=${action}`;
+    if (section) return `?section=${section}`;
+    if (tab) {
+      const fixed = searchParams.get('fixed');
+      return fixed ? `?tab=${tab}&fixed=${fixed}` : `?tab=${tab}`;
+    }
+    if (hub) return `?hub=${hub}`;
+    return '';
+  }, [tool, action, section, tab, hub, searchParams]);
+  const title = hub === 'ayarlar' ? 'Ayarlar' : hub === 'sistem' ? 'Sistem' : findKurulusNavTitle(t, section, tab);
   const canAccess = user ? canAccessRoute(user, '/settings', { section, tab }) : true;
   const kurulusMenu = useMemo(
     () => translateKurulusModuleMenu(kurulusModuleMenuForUser(user), t),
     [user, t],
   );
 
-  if (tab === 'theme') {
-    if (user && !canAccessRoute(user, '/settings', { section, tab: 'theme' })) {
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'logout' || action === 'exit') {
+      void logout();
+    }
+  }, [searchParams, logout]);
+
+  if (tool === 'calculator') {
+    return (
+      <ModuleLayout
+        breadcrumb={t('nav.settings.breadcrumb')}
+        title="Hesap Makinesi"
+        description={t('nav.settings.description')}
+        sideTitle={t('nav.settings.sideTitle')}
+        menuSearch="?tool=calculator"
+        menuItems={kurulusMenu}
+      >
+        <CalculatorToolPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (hub === 'sistem' && !section && !tab) {
+    return (
+      <ModuleLayout
+        breadcrumb="Sistem"
+        title="Sistem ve Kuruluş"
+        description="Kuruluş tanımları, rapor tasarım, entegrasyonlar ve uyumluluk."
+        sideTitle={t('nav.settings.sideTitle')}
+        menuSearch="?hub=sistem"
+        menuItems={kurulusMenu}
+      >
+        <SistemHubPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (hub === 'ayarlar' && !section && !tab) {
+    return (
+      <ModuleLayout
+        breadcrumb="Ayarlar"
+        title="Ayarlar ve Kısayollar"
+        description="Tema, güvenlik, notlar, santral ve lisans işlemleri."
+        sideTitle={t('nav.settings.sideTitle')}
+        menuSearch="?hub=ayarlar"
+        menuItems={kurulusMenu}
+      >
+        <AyarlarHubPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (tab === 'theme' || tab === 'password') {
+    if (tab === 'theme' && user && !canAccessRoute(user, '/settings', { section, tab: 'theme' })) {
       return (
-        <div className="roomio-card" style={{ padding: 16 }}>
-          <p className="roomio-page-desc">{t('nav.settings.themeAdminRequired')}</p>
-          <Button href="/settings?section=users" style={{ marginTop: 12 }}>
-            {t('nav.settings.userDefs')}
-          </Button>
-        </div>
+        <ModuleLayout
+          breadcrumb={t('nav.settings.breadcrumb')}
+          title={title}
+          sideTitle={t('nav.settings.sideTitle')}
+          menuSearch={menuSearch}
+          menuItems={kurulusMenu}
+        >
+          <div className="roomio-card" style={{ padding: 16 }}>
+            <p className="roomio-page-desc">{t('nav.settings.themeAdminRequired')}</p>
+            <Button href="/settings?section=users" style={{ marginTop: 12 }}>
+              {t('nav.settings.userDefs')}
+            </Button>
+          </div>
+        </ModuleLayout>
       );
     }
-    return <KurulusScreen section={section} tab={tab} theme={theme} themeFixed={themeFixed} />;
+    return (
+      <ModuleLayout
+        breadcrumb={t('nav.settings.breadcrumb')}
+        title={title}
+        description={t('nav.settings.description')}
+        sideTitle={t('nav.settings.sideTitle')}
+        menuSearch={menuSearch}
+        menuItems={kurulusMenu}
+      >
+        <KurulusScreen section={section} tab={tab} theme={theme} themeFixed={themeFixed} />
+      </ModuleLayout>
+    );
   }
 
   if (user && !canAccess) {
@@ -134,6 +223,7 @@ export function SettingsPageClient({
         </div>
       </div>
       <KurulusAccessBanner />
+      {!section && !tab ? <SettingsAyalarHub /> : null}
       <KurulusScreen section={section} tab={tab} theme={theme} themeFixed={themeFixed} />
       <p className="roomio-page-desc" style={{ marginTop: 16 }}>
         {t('nav.settings.activeScreen', { title })}

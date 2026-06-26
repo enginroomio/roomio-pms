@@ -7,6 +7,7 @@ import type { Role } from '@/lib/auth/roles';
 import { buildSessionUserFromAuth } from '@/lib/auth/session-user';
 import { registerSession } from '@/lib/auth/session-store';
 import { findUserByEmail } from '@/lib/server/pms-store';
+import { getUserMustChangePassword } from '@/lib/server/users-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
     }
 
     const user = await findUserByEmail(body.email.trim().toLowerCase());
-    if (!user) {
+    if (!user || user.active === false) {
       return NextResponse.json({ error: 'Geçersiz giriş bilgileri' }, { status: 401 });
     }
 
@@ -39,6 +40,7 @@ export async function POST(req: Request) {
     });
     await registerSession(user.id, jti);
     const session = await buildSessionUserFromAuth(user.id, user.name, role, user.groupCode);
+    const mustChangePassword = user.mustChangePassword ?? await getUserMustChangePassword(user.id);
 
     const response = NextResponse.json({
       ok: true,
@@ -50,6 +52,7 @@ export async function POST(req: Request) {
         role,
         roleLabel: session.roleLabel,
         permissions: session.permissions,
+        mustChangePassword,
       },
       roles: Object.entries(ROLE_LABELS).map(([id, label]) => ({ id, label })),
     });

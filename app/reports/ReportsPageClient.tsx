@@ -1,38 +1,62 @@
 'use client';
 
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
-import { FileBarChart, LayoutTemplate } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { FileBarChart } from 'lucide-react';
 import { ModuleLayout } from '@/components/ModuleLayout';
 import { Button } from '@/components/ui';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { useProperty } from '@/components/property/PropertyProvider';
 import type { FormTemplateDraft } from '@/components/forms/FormDesignEditor';
-import { TemplateSharePanel } from '@/components/reports/TemplateSharePanel';
-import { FORM_PAGES, defaultFormLayout, formPageById } from '@/lib/forms/form-catalog';
-import { fieldLabel, LIVE_DATA_MODULES, REPORT_MODULES } from '@/lib/reports/field-catalog';
+import { FORM_PAGES, defaultFormLayout } from '@/lib/forms/form-catalog';
+import { REPORT_MODULES } from '@/lib/reports/field-catalog';
 import { roomioFetch } from '@/lib/client/api';
 import { SIDEBAR_NAV } from '@/lib/navigation/sidebar-nav';
-import { CATEGORY_REPORTS, DEMO_EOD_REPORTS, type EodArchive } from '@/lib/data/eod';
-import { NightAuditPanel } from '@/components/reports/NightAuditPanel';
-import { NightAuditPreClosePanel } from '@/components/reports/NightAuditPreClosePanel';
-
-const editorLoading = () => <p className="roomio-page-desc">Editör yükleniyor…</p>;
-
-const ReportDesignEditor = dynamic(
-  () => import('@/components/reports/ReportDesignEditor').then((m) => m.ReportDesignEditor),
-  { loading: editorLoading },
-);
-const FormDesignEditor = dynamic(
-  () => import('@/components/forms/FormDesignEditor').then((m) => m.FormDesignEditor),
-  { loading: editorLoading },
-);
-const ReportAiSuggest = dynamic(
-  () => import('@/components/reports/ReportAiSuggest').then((m) => m.ReportAiSuggest),
-  { loading: editorLoading },
-);
+import { CATEGORY_REPORTS } from '@/lib/data/eod';
+import { EodOperationsHub } from '@/components/reports/EodOperationsHub';
+import {
+  AgencyAnalysisPanel,
+  MarketRateAnalysisPanel,
+  MgmtEngReportPanel,
+  NationalityReportPanel,
+  RemoteReportsPanel,
+  ReportCategoryHub,
+  SpecialReportsPanel,
+} from '@/components/reports/ReportsMiscPanels';
+import { TransferReportPanel } from '@/components/reservations/TransferReportPanel';
+import { ReservationDateChangeReportPanel } from '@/components/reservations/ReservationDateChangeReportPanel';
+import { CategoryReportDetailPanel } from '@/components/reports/CategoryReportDetailPanel';
+import { RoomChangesReportPanel } from '@/components/reception/RoomChangesPanel';
+import { DailyFinanceReportPanel } from '@/components/cash/DailyFinanceReportPanel';
+import { DailyBalanceReportPanel } from '@/components/cash/DailyBalanceReportPanel';
+import {
+  BanketOccupancyReportPanel,
+  BanketRevenueReportPanel,
+} from '@/components/fnb/BanketOperationsPanels';
+import {
+  DeptRevenueOldPanel,
+  DeptTransferPanel,
+  DistributionAnalysisPanel,
+  KrediKontrolPanel,
+  ManagementPrepareHub,
+  ManagementSummaryPanel,
+  MgmtOldReportPanel,
+} from '@/components/reports/BackOfficeReportPanels';
+import {
+  EnergyConsumptionPanel,
+  HkStatusReportPanel,
+  RoomFixturesPanel,
+} from '@/components/housekeeping/HkReportPanels';
+import { UserReportsPanel } from '@/components/reports/UserReportsPanel';
+import { GunSonuHubPanel, RaporlarHubPanel } from '@/components/reports/MenuHubPanels';
+import {
+  ReportsConsolidatedTabContent,
+  ReportsDesignTabContent,
+  ReportsFormsTabContent,
+} from '@/components/reports/ReportsEditorTabPanels';
+import { useReservations } from '@/lib/client/use-reservations';
 
 type ReportTemplate = {
   id: string;
@@ -68,21 +92,24 @@ export function ReportsPageClient({
   tab,
   category,
   action,
+  report,
+  propertyCode,
 }: {
   tab: string | null;
   category: string | null;
   action: string | null;
+  report?: string | null;
+  propertyCode?: string | null;
 }) {
   const { t } = useI18n();
+  const searchParams = useSearchParams();
+  const hub = searchParams.get('hub');
   const { propertyId, activeProperty } = useProperty();
+  const { reservations, loading: rezLoading } = useReservations();
   const activeTab = tabFromParams(tab, category);
   const categories = reportCategories();
   const activeCategory = categories.find((c) => c.href?.includes(`category=${category}`));
-  const [eodArchive, setEodArchive] = useState<EodArchive[]>([]);
   const [businessDate, setBusinessDate] = useState('2026-06-18');
-  const [eodMsg, setEodMsg] = useState<string | null>(null);
-  const [eodBusy, setEodBusy] = useState(false);
-  const [eodCanClose, setEodCanClose] = useState(true);
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [editing, setEditing] = useState<ReportTemplate | null>(null);
   const [formTemplates, setFormTemplates] = useState<ReportTemplate[]>([]);
@@ -96,14 +123,13 @@ export function ReportsPageClient({
   useEffect(() => {
     void roomioFetch('/api/eod/close')
       .then((r) => r.json())
-      .then((j: { archive?: EodArchive[]; businessDate?: string }) => {
-        if (j.archive) setEodArchive(j.archive);
+      .then((j: { businessDate?: string }) => {
         if (j.businessDate) setBusinessDate(j.businessDate);
       });
   }, [propertyId]);
 
   useEffect(() => {
-    if (activeTab !== 'hub' && activeTab !== 'design') return;
+    if (activeTab !== 'hub' && activeTab !== 'design' && activeTab !== 'user') return;
     void roomioFetch('/api/reports/templates?kind=report')
       .then((r) => r.json())
       .then((j: { templates?: ReportTemplate[] }) => {
@@ -190,34 +216,6 @@ export function ReportsPageClient({
     }
   }
 
-  async function handleCloseDay() {
-    setEodBusy(true);
-    setEodMsg(null);
-    const r = await roomioFetch('/api/eod/close', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ closedBy: 'Arda Yılmaz' }),
-    });
-    const j = (await r.json()) as { ok?: boolean; newBusinessDate?: string; error?: string; pdfBase64?: string };
-    if (r.ok && j.ok) {
-      setEodMsg(`Gün kapatıldı. Yeni iş günü: ${j.newBusinessDate}`);
-      if (j.newBusinessDate) setBusinessDate(j.newBusinessDate);
-      if (j.pdfBase64) {
-        const blob = new Blob([Uint8Array.from(atob(j.pdfBase64), (c) => c.charCodeAt(0))], { type: 'application/pdf' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'roomio-gun-sonu.pdf';
-        a.click();
-      }
-      const refresh = await roomioFetch('/api/eod/close');
-      const data = (await refresh.json()) as { archive?: EodArchive[] };
-      if (data.archive) setEodArchive(data.archive);
-    } else {
-      setEodMsg(j.error ?? 'Kapatma başarısız');
-    }
-    setEodBusy(false);
-  }
-
   async function handleSaveFormTemplate() {
     if (!formEditing) return;
     setTplMsg(null);
@@ -279,13 +277,574 @@ export function ReportsPageClient({
     { id: 'consolidated', label: t('reports.tab.consolidated'), href: '/reports?tab=consolidated' },
   ];
 
+  const consolidatedMenuSearch = propertyCode ? `?tab=consolidated&property=${propertyCode}` : '?tab=consolidated';
+
+  if (hub === 'gunsonu' && !tab && !report && !category) {
+    return (
+      <ModuleLayout
+        breadcrumb="Gün Sonu"
+        title="Gün Sonu Merkezi"
+        description="Night audit, rapor paketi ve yedekleme işlemleri."
+        sideTitle={t('nav.reports')}
+        menuSearch="?hub=gunsonu"
+      >
+        <GunSonuHubPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (hub === 'raporlar' && !tab && !report && !category) {
+    return (
+      <ModuleLayout
+        breadcrumb="Raporlar"
+        title="Raporlar Merkezi"
+        description="Kategori raporları, tasarım ve dışa aktarma."
+        sideTitle={t('nav.reports')}
+        menuSearch="?hub=raporlar"
+      >
+        <RaporlarHubPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'transfer') {
+    return (
+      <ModuleLayout
+        breadcrumb="Rezervasyon › Transfer Bilgileri"
+        title="Transfer Listesi"
+        description="Geliş/gidiş transfer saatleri ve uçuş bilgileri"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=transfer"
+      >
+        {rezLoading ? (
+          <p className="roomio-page-desc">Yükleniyor…</p>
+        ) : (
+          <TransferReportPanel reservations={reservations} />
+        )}
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'room-changes') {
+    return (
+      <ModuleLayout
+        breadcrumb="Resepsiyon › Oda Değişimleri"
+        title="Oda Değişim Listesi"
+        description="Planlanan oda taşıma kayıtları"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=room-changes"
+      >
+        {rezLoading ? (
+          <p className="roomio-page-desc">Yükleniyor…</p>
+        ) : (
+          <RoomChangesReportPanel reservations={reservations} />
+        )}
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'departure-change') {
+    return (
+      <ModuleLayout
+        breadcrumb="Rezervasyon › Tarih Değişimleri"
+        title="Ayrılış Tarihi Değişim Tablosu"
+        description="Planlanan çıkış tarihi değişen rezervasyonlar"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=departure-change"
+      >
+        <ReservationDateChangeReportPanel kind="departure" />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'arrival-change') {
+    return (
+      <ModuleLayout
+        breadcrumb="Rezervasyon › Tarih Değişimleri"
+        title="Geliş Tarihi Değişim Tablosu"
+        description="Planlanan giriş tarihi değişen rezervasyonlar"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=arrival-change"
+      >
+        <ReservationDateChangeReportPanel kind="arrival" />
+      </ModuleLayout>
+    );
+  }
+
+  if (category && report && (CATEGORY_REPORTS[category] ?? []).some((r) => r.id === report)) {
+    return (
+      <ModuleLayout
+        breadcrumb={`Raporlar › ${activeCategory?.label ?? category}`}
+        title={(CATEGORY_REPORTS[category] ?? []).find((r) => r.id === report)?.name ?? report}
+        description="Kategori raporu önizleme ve dışa aktarma"
+        sideTitle={t('nav.reports')}
+        menuSearch={`?category=${category}&report=${report}`}
+      >
+        <CategoryReportDetailPanel
+          category={category}
+          reportId={report}
+          categoryLabel={activeCategory?.label ?? category}
+          exportHref={(format) => {
+            const params = new URLSearchParams({ format, propertyId, category, report });
+            return `/api/reports/export?${params.toString()}`;
+          }}
+        />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'gunluk-maliye') {
+    return (
+      <ModuleLayout
+        breadcrumb="Ön Kasa › Günlük Maliye"
+        title="Günlük Maliye Listesi"
+        description="Kasa hareketleri, döviz ve depozit özeti"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=gunluk-maliye"
+      >
+        <DailyFinanceReportPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'gunluk-balans') {
+    return (
+      <ModuleLayout
+        breadcrumb="Ön Kasa › Günlük Balanslar"
+        title="Günlük Balanslar"
+        description="Konaklayan misafir folyo bakiyeleri"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=gunluk-balans"
+      >
+        <DailyBalanceReportPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'enerji') {
+    return (
+      <ModuleLayout
+        breadcrumb="Kat Hizmetleri › Enerji"
+        title="Enerji Tüketim Tablosu"
+        description="Oda bazlı enerji tüketim özeti"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=enerji"
+      >
+        <EnergyConsumptionPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'demirbas') {
+    return (
+      <ModuleLayout
+        breadcrumb="Kat Hizmetleri › Demirbaş"
+        title="Oda Demirbaş Listesi"
+        description="Oda envanter ve demirbaş durumu"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=demirbas"
+      >
+        <RoomFixturesPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'occupancy' && category === 'banket') {
+    return (
+      <ModuleLayout
+        breadcrumb="Banket › Salon Doluluk"
+        title="Salon Doluluk Raporu"
+        description="Salon bazlı etkinlik ve kişi doluluğu"
+        sideTitle={t('nav.reports')}
+        menuSearch="?category=banket&report=occupancy"
+      >
+        <BanketOccupancyReportPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'revenue' && category === 'banket') {
+    return (
+      <ModuleLayout
+        breadcrumb="Banket › Etkinlik Gelir"
+        title="Etkinlik Gelir Raporu"
+        description="Onaylı ve opsiyon banket gelirleri"
+        sideTitle={t('nav.reports')}
+        menuSearch="?category=banket&report=revenue"
+      >
+        <BanketRevenueReportPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (category === 'banket' && !tab && !report) {
+    return (
+      <ModuleLayout
+        breadcrumb="Banket › Raporlar"
+        title="Banket Raporları"
+        description="Salon doluluk ve etkinlik gelir raporları"
+        sideTitle={t('nav.reports')}
+        menuSearch="?category=banket"
+      >
+        <div className="roomio-gr-grid">
+          <Link href="/reports?category=banket&report=occupancy" className="roomio-card roomio-gr-card">
+            <strong>Salon Doluluk Raporu</strong>
+            <span className="roomio-page-desc">Salon bazlı etkinlik ve kişi doluluğu</span>
+          </Link>
+          <Link href="/reports?category=banket&report=revenue" className="roomio-card roomio-gr-card">
+            <strong>Etkinlik Gelir Raporu</strong>
+            <span className="roomio-page-desc">Onaylı ve opsiyon gelir özeti</span>
+          </Link>
+          <Link href="/fnb?tab=calendar" className="roomio-card roomio-gr-card">
+            <strong>Ajanda Raporu</strong>
+            <span className="roomio-page-desc">Tarih bazlı etkinlik ajandası</span>
+          </Link>
+          <Link href="/fnb?tab=agreements" className="roomio-card roomio-gr-card">
+            <strong>Anlaşma Listesi</strong>
+            <span className="roomio-page-desc">Onaylı ve opsiyon anlaşmalar</span>
+          </Link>
+        </div>
+      </ModuleLayout>
+    );
+  }
+
+  const mgmtTabs = new Set(['prepare', 'cube', 'occupancy', '3year', 'dept', 'management']);
+  if (tab && mgmtTabs.has(tab)) {
+    return (
+      <ModuleLayout
+        breadcrumb="Arka Büro › Yönetim Raporu"
+        title={tab === 'prepare' ? 'Yönetim Raporu Hazırlama' : 'Yönetim Raporu'}
+        description="Gelir, doluluk ve departman analizleri"
+        sideTitle={t('nav.reports')}
+        menuSearch={`?tab=${tab}`}
+      >
+        {tab === 'prepare' ? <ManagementPrepareHub /> : <ManagementSummaryPanel variant={tab} />}
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'dept-revenue-old') {
+    return (
+      <ModuleLayout
+        breadcrumb="Arka Büro › Departman Gelirleri"
+        title="Eski Tarihli Departman Gelirleri"
+        description="Arşivlenmiş günlük departman gelir satırları"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=dept-revenue-old"
+      >
+        <DeptRevenueOldPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'distribution') {
+    return (
+      <ModuleLayout
+        breadcrumb="Arka Büro › Dağılım Analizi"
+        title="Dağılım Analizi"
+        description="Segment bazlı oda ve gelir dağılımı"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=distribution"
+      >
+        <DistributionAnalysisPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'mgmt-old') {
+    return (
+      <ModuleLayout
+        breadcrumb="Arka Büro › Yönetim Raporu"
+        title="Eski Tarihli Günlük Yönetim Raporu"
+        description="Gün sonu arşivinden yönetim özetleri"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=mgmt-old"
+      >
+        <MgmtOldReportPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'kredi-kontrol') {
+    return (
+      <ModuleLayout
+        breadcrumb="Arka Büro › Kredi Kontrol"
+        title="Kredi Kontrol Listesi"
+        description="Cari limit ve vadesi geçmiş bakiye takibi"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=kredi-kontrol"
+      >
+        <KrediKontrolPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'dept-transfer') {
+    return (
+      <ModuleLayout
+        breadcrumb="Arka Büro › Gelir Aktarım"
+        title="Departman Gelirleri Aktarım"
+        description="Günlük departman gelirlerinin muhasebe aktarımı"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=dept-transfer"
+      >
+        <DeptTransferPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (tab === 'eod') {
+    return (
+      <ModuleLayout
+        breadcrumb="Gün Sonu"
+        title="Gün Sonu İşlemleri"
+        description="Rapor alma, gün kapatma, yedekleme ve gece posting"
+        sideTitle={t('nav.reports')}
+        menuSearch="?tab=eod"
+      >
+        <EodOperationsHub action={action} />
+      </ModuleLayout>
+    );
+  }
+
+  if (tab === 'special') {
+    return (
+      <ModuleLayout
+        breadcrumb="Raporlar › Özel"
+        title="Özel Raporlar"
+        description="Sık kullanılan özel rapor kısayolları"
+        sideTitle={t('nav.reports')}
+        menuSearch="?tab=special"
+      >
+        <SpecialReportsPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (tab === 'remote') {
+    return (
+      <ModuleLayout
+        breadcrumb="Raporlar › Uzak"
+        title="Uzak Otelden Raporlama"
+        description="Merkez ofisten bağlı tesislere rapor çekme"
+        sideTitle={t('nav.reports')}
+        menuSearch="?tab=remote"
+      >
+        <RemoteReportsPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (tab === 'daily') {
+    return (
+      <ModuleLayout
+        breadcrumb="Sistem › Günlük Raporlar"
+        title="DL — Günlük Raporlar"
+        description="In-house listeleri ve günlük özet raporları"
+        sideTitle={t('nav.reports')}
+        menuSearch="?tab=daily"
+      >
+        <ReportCategoryHub category="gunluk" label="Günlük Raporlar (InHouse Lists)" />
+      </ModuleLayout>
+    );
+  }
+
+  if (tab === 'user') {
+    return (
+      <ModuleLayout
+        breadcrumb="Sistem › Kullanıcı Raporları"
+        title="Kullanıcı Tanımlı Raporlar"
+        description="Kayıtlı özel rapor şablonları"
+        sideTitle={t('nav.reports')}
+        menuSearch="?tab=user"
+      >
+        <UserReportsPanel propertyId={propertyId} />
+      </ModuleLayout>
+    );
+  }
+
+  if (tab === 'design' && !report && !category) {
+    return (
+      <ModuleLayout
+        breadcrumb="Sistem › Rapor Tasarım"
+        title={t('reports.design')}
+        description="Sürükle-bırak rapor şablon editörü"
+        sideTitle={t('nav.reports')}
+        menuSearch="?tab=design"
+      >
+        <div className="roomio-form-actions" style={{ marginTop: 0, marginBottom: 8 }}>
+          <Button variant="secondary" href="/reports">Raporlama programı</Button>
+          <Button variant="ghost" href="/reports?tab=forms">Form tasarım</Button>
+          <Button variant="ghost" href="/reports?tab=user">Kullanıcı raporları</Button>
+        </div>
+        <ReportsDesignTabContent
+          t={t}
+          activePropertyName={activeProperty?.name}
+          templates={templates}
+          editing={editing}
+          tplMsg={tplMsg}
+          onStartNew={startNewTemplate}
+          onEdit={setEditing}
+          onSave={() => void handleSaveTemplate()}
+          onDelete={(id) => void handleDeleteTemplate(id)}
+          onTplMsg={setTplMsg}
+          exportTemplateHref={exportTemplateHref}
+        />
+      </ModuleLayout>
+    );
+  }
+
+  if (tab === 'forms' && !report && !category) {
+    return (
+      <ModuleLayout
+        breadcrumb="Sistem › Form Tasarım"
+        title={t('reports.tab.forms')}
+        description="Rezervasyon ve form sihirbazı düzeni"
+        sideTitle={t('nav.reports')}
+        menuSearch="?tab=forms"
+      >
+        <div className="roomio-form-actions" style={{ marginTop: 0, marginBottom: 8 }}>
+          <Button variant="secondary" href="/reports?tab=design">Rapor tasarım</Button>
+          <Button variant="ghost" href="/reservations/new">Rezervasyon formu</Button>
+        </div>
+        <ReportsFormsTabContent
+          formTemplates={formTemplates}
+          formEditing={formEditing}
+          tplMsg={tplMsg}
+          onStartNew={startNewFormTemplate}
+          onEdit={setFormEditing}
+          onSave={() => void handleSaveFormTemplate()}
+          onDelete={(id) => void handleDeleteFormTemplate(id)}
+          onTplMsg={setTplMsg}
+        />
+      </ModuleLayout>
+    );
+  }
+
+  if (tab === 'consolidated' && !report && !category) {
+    const filteredProperties = consolidated?.properties.filter((p) =>
+      !propertyCode
+      || p.propertyId === propertyCode
+      || p.name.toLowerCase().includes(propertyCode.toLowerCase()),
+    ) ?? [];
+    return (
+      <ModuleLayout
+        breadcrumb="Raporlar › Konsolide"
+        title={t('reports.consolidatedTitle')}
+        description="Tüm tesisler — canlı doluluk özeti"
+        sideTitle={t('nav.reports')}
+        menuSearch={consolidatedMenuSearch}
+      >
+        <ReportsConsolidatedTabContent
+          t={t}
+          propertyCode={propertyCode}
+          consolidated={consolidated}
+          filteredProperties={filteredProperties}
+          onRefresh={loadConsolidated}
+        />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'acenta-analiz') {
+    return (
+      <ModuleLayout
+        breadcrumb="Raporlar › Acenta"
+        title="Acenta Analiz"
+        description="Gün, ay ve yıl bazlı acenta üretim analizi"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=acenta-analiz"
+      >
+        <AgencyAnalysisPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'market-rate') {
+    return (
+      <ModuleLayout
+        breadcrumb="Raporlar › Market Rate"
+        title="Market Rate Analiz"
+        description="Segment bazlı ADR ve gelir dağılımı"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=market-rate"
+      >
+        <MarketRateAnalysisPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'nationality') {
+    return (
+      <ModuleLayout
+        breadcrumb="Raporlar › Uyruk"
+        title="Uyruk Raporu"
+        description="Misafir uyruk dağılımı"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=nationality"
+      >
+        <NationalityReportPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (report === 'mgmt-eng') {
+    return (
+      <ModuleLayout
+        breadcrumb="Raporlar › Yönetim"
+        title="Management Report (Eng)"
+        description="English management summary export"
+        sideTitle={t('nav.reports')}
+        menuSearch="?report=mgmt-eng"
+      >
+        <MgmtEngReportPanel />
+      </ModuleLayout>
+    );
+  }
+
+  if (category && !tab && !report && category !== 'banket' && category !== 'kathizmetleri' && activeCategory) {
+    return (
+      <ModuleLayout
+        breadcrumb={`Raporlar › ${activeCategory.label}`}
+        title={activeCategory.label}
+        description="Kategori raporları — önizleme ve dışa aktarma"
+        sideTitle={t('nav.reports')}
+        menuSearch={`?category=${category}`}
+      >
+        <ReportCategoryHub category={category} label={activeCategory.label} />
+      </ModuleLayout>
+    );
+  }
+
+  if (category === 'kathizmetleri' && !tab) {
+    return (
+      <ModuleLayout
+        breadcrumb="Kat Hizmetleri › HK Raporları"
+        title="House Keeping Raporu"
+        description="Canlı oda durumu ve HK raporları"
+        sideTitle={t('nav.reports')}
+        menuSearch="?category=kathizmetleri"
+      >
+        <HkStatusReportPanel />
+      </ModuleLayout>
+    );
+  }
+
   return (
     <ModuleLayout
       breadcrumb="Sistem › Raporlar"
       title={activeTab === 'design' ? t('reports.design') : activeCategory?.label ?? t('reports.hub')}
       description="Rapor kategorileri, şablon tasarımı ve gün sonu raporları."
       sideTitle={t('nav.reports')}
-      menuSearch={tab ? `?tab=${tab}` : category ? `?category=${category}` : ''}
+      menuSearch={
+        tab === 'consolidated' && propertyCode
+          ? consolidatedMenuSearch
+          : tab
+            ? `?tab=${tab}`
+            : category
+              ? `?category=${category}`
+              : ''
+      }
     >
       <div className="roomio-tabs">
         {tabs.map((item) => (
@@ -373,327 +932,46 @@ export function ReportsPageClient({
       ) : null}
 
       {activeTab === 'design' ? (
-        <div style={{ marginTop: 16 }}>
-          <div className="roomio-card">
-            <div className="roomio-kurulus-toolbar">
-              <h2 className="roomio-card-title">
-                <LayoutTemplate size={18} /> {t('reports.templates')}
-              </h2>
-              <Button onClick={startNewTemplate}>{t('reports.newTemplate')}</Button>
-            </div>
-            {tplMsg ? <p className="roomio-page-desc">{tplMsg}</p> : null}
-            <p className="roomio-page-desc">
-              Teknik bilgi gerekmez — departman seçin, hazır şablona tıklayın veya alanları sürükleyin.
-              Şablonları diğer otellere <strong>Paylaş</strong> ile kopyalayabilirsiniz.
-              {' '}
-              <strong>{activeProperty?.name ?? '—'}</strong>
-            </p>
-          </div>
-
-          <ReportAiSuggest
-            onApply={(s) => setEditing((prev) => (prev
-              ? { ...prev, ...s }
-              : { id: '', updatedAt: '', ...s }))}
-          />
-
-          {editing ? (
-            <ReportDesignEditor
-              value={editing}
-              onChange={setEditing}
-              onSave={() => void handleSaveTemplate()}
-              onCancel={() => setEditing(null)}
-            />
-          ) : null}
-
-          <div className="roomio-card" style={{ marginTop: 16 }}>
-            <h3 className="roomio-card-title" style={{ fontSize: '0.95rem' }}>Kayıtlı şablonlar</h3>
-            <div className="roomio-table-wrap" style={{ marginTop: 12 }}>
-              <table className="roomio-table">
-                <thead>
-                  <tr>
-                    <th>Şablon</th>
-                    <th>Modül</th>
-                    <th>Sütunlar</th>
-                    <th>Güncelleme</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {templates.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="roomio-page-desc">
-                        Bu şube için henüz şablon yok. <strong>Yeni şablon</strong> ile başlayın.
-                      </td>
-                    </tr>
-                  ) : null}
-                  {templates.map((tpl) => (
-                    <tr key={tpl.id}>
-                      <td><strong>{tpl.name}</strong></td>
-                      <td>{tpl.module}{LIVE_DATA_MODULES.has(tpl.module) ? ' · canlı' : ''}</td>
-                      <td>
-                        <div className="roomio-report-template-chips">
-                          {tpl.columns.map((col) => (
-                            <span key={col} className="roomio-badge roomio-badge--muted">
-                              {fieldLabel(tpl.module, col)}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td>{tpl.updatedAt}</td>
-                      <td className="roomio-table-actions">
-                        <PermissionGate permission="reports.export">
-                          <Button variant="secondary" href={exportTemplateHref(tpl.id, 'pdf')}>PDF</Button>
-                          {' '}
-                          <Button variant="secondary" href={exportTemplateHref(tpl.id, 'csv')}>CSV</Button>
-                          {' '}
-                        </PermissionGate>
-                        <Button variant="secondary" onClick={() => setEditing(tpl)}>{t('reports.edit')}</Button>
-                        {' '}
-                        <TemplateSharePanel
-                          templateId={tpl.id}
-                          templateName={tpl.name}
-                          onDone={(msg) => setTplMsg(msg)}
-                        />
-                        {' '}
-                        <Button variant="ghost" onClick={() => void handleDeleteTemplate(tpl.id)}>Sil</Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <ReportsDesignTabContent
+          t={t}
+          activePropertyName={activeProperty?.name}
+          templates={templates}
+          editing={editing}
+          tplMsg={tplMsg}
+          onStartNew={startNewTemplate}
+          onEdit={setEditing}
+          onSave={() => void handleSaveTemplate()}
+          onDelete={(id) => void handleDeleteTemplate(id)}
+          onTplMsg={setTplMsg}
+          exportTemplateHref={exportTemplateHref}
+        />
       ) : null}
 
       {activeTab === 'forms' ? (
-        <div style={{ marginTop: 16 }}>
-          <div className="roomio-card">
-            <div className="roomio-kurulus-toolbar">
-              <h2 className="roomio-card-title">
-                <LayoutTemplate size={18} /> Form &amp; sayfa tasarımı
-              </h2>
-              <Button onClick={startNewFormTemplate}>Yeni form şablonu</Button>
-            </div>
-            {tplMsg ? <p className="roomio-page-desc">{tplMsg}</p> : null}
-            <p className="roomio-page-desc">
-              Rezervasyon ve diğer formların sihirbaz adımlarını, alanlarını ve özel bilgi alanlarını buradan düzenleyin.
-              Form şablonlarını diğer otellere <strong>Paylaş</strong> ile kopyalayabilirsiniz.
-            </p>
-            <div className="roomio-report-dept-grid" style={{ marginTop: 12 }}>
-              {FORM_PAGES.map((p) => (
-                <Link key={p.id} href={p.href} className="roomio-report-dept-card">
-                  <span aria-hidden>{p.emoji}</span>
-                  <strong>{p.label}</strong>
-                  <small>{p.href}</small>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {formEditing ? (
-            <FormDesignEditor
-              value={formEditing}
-              onChange={setFormEditing}
-              onSave={() => void handleSaveFormTemplate()}
-              onCancel={() => setFormEditing(null)}
-            />
-          ) : null}
-
-          <div className="roomio-card" style={{ marginTop: 16 }}>
-            <h3 className="roomio-card-title" style={{ fontSize: '0.95rem' }}>Kayıtlı form şablonları</h3>
-            <div className="roomio-table-wrap" style={{ marginTop: 12 }}>
-              <table className="roomio-table">
-                <thead>
-                  <tr><th>Şablon</th><th>Sayfa</th><th>Adımlar</th><th>Alan</th><th /></tr>
-                </thead>
-                <tbody>
-                  {formTemplates.length === 0 ? (
-                    <tr><td colSpan={5} className="roomio-page-desc">Henüz form şablonu yok.</td></tr>
-                  ) : null}
-                  {formTemplates.map((tpl) => (
-                    <tr key={tpl.id}>
-                      <td><strong>{tpl.name}</strong></td>
-                      <td>{formPageById(tpl.pageId ?? '')?.label ?? tpl.pageId}</td>
-                      <td>{tpl.layout?.steps.length ?? '—'}</td>
-                      <td>{tpl.columns.length}</td>
-                      <td className="roomio-table-actions">
-                        <Button variant="secondary" onClick={() => setFormEditing({
-                          id: tpl.id,
-                          name: tpl.name,
-                          pageId: tpl.pageId ?? FORM_PAGES[0].id,
-                          module: tpl.module,
-                          columns: tpl.columns,
-                          layout: tpl.layout ?? defaultFormLayout(tpl.pageId ?? FORM_PAGES[0].id)!,
-                          updatedAt: tpl.updatedAt,
-                        })}>Düzenle</Button>
-                        {' '}
-                        <TemplateSharePanel
-                          templateId={tpl.id}
-                          templateName={tpl.name}
-                          onDone={(msg) => setTplMsg(msg)}
-                        />
-                        {' '}
-                        <Button variant="ghost" onClick={() => void handleDeleteFormTemplate(tpl.id)}>Sil</Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {activeTab === 'user' ? (
-        <div className="roomio-card" style={{ marginTop: 16 }}>
-          <h2 className="roomio-card-title">Kullanıcı tanımlı raporlar</h2>
-          <p className="roomio-page-desc">Henüz özel rapor tanımlanmadı. Rapor Tasarım&apos;dan şablon oluşturun.</p>
-          <div className="roomio-form-actions" style={{ marginTop: 16 }}>
-            <Button href="/reports?tab=design">Şablon oluştur</Button>
-          </div>
-        </div>
+        <ReportsFormsTabContent
+          formTemplates={formTemplates}
+          formEditing={formEditing}
+          tplMsg={tplMsg}
+          onStartNew={startNewFormTemplate}
+          onEdit={setFormEditing}
+          onSave={() => void handleSaveFormTemplate()}
+          onDelete={(id) => void handleDeleteFormTemplate(id)}
+          onTplMsg={setTplMsg}
+        />
       ) : null}
 
       {activeTab === 'consolidated' ? (
-        <div className="roomio-card roomio-table-wrap" style={{ marginTop: 16 }}>
-          <div className="roomio-card-head-row">
-            <h2 className="roomio-card-title">{t('reports.consolidatedTitle')}</h2>
-            <Button variant="secondary" onClick={() => loadConsolidated()}>Yenile</Button>
-          </div>
-          <p className="roomio-page-desc">Tüm tesisler — canlı doluluk ve rezervasyon özeti.</p>
-          {consolidated ? (
-            <>
-              <table className="roomio-table">
-                <thead>
-                  <tr>
-                    <th>Tesis</th>
-                    <th>Şehir</th>
-                    <th>Oda</th>
-                    <th>Konaklayan</th>
-                    <th>Doluluk</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {consolidated.properties.map((p) => (
-                    <tr key={p.propertyId}>
-                      <td><strong>{p.name}</strong></td>
-                      <td>{p.city ?? '—'}</td>
-                      <td>{p.totalRooms}</td>
-                      <td>{p.checkedIn}</td>
-                      <td>%{p.occupancyPct}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="roomio-page-desc" style={{ marginTop: 12 }}>
-                Toplam {consolidated.totals.properties} tesis · {consolidated.totals.rooms} oda · {consolidated.totals.checkedIn} konaklayan
-              </p>
-              <Button href="/api/reports/consolidated?format=csv">CSV indir</Button>
-              {' '}
-              <Button href="/api/reports/consolidated?format=pdf">{t('reports.downloadPdf')}</Button>
-            </>
-          ) : (
-            <p className="roomio-page-desc">Yükleniyor…</p>
-          )}
-        </div>
-      ) : null}
-
-      {activeTab === 'eod' ? (
-        <div className="roomio-card" style={{ marginTop: 16 }}>
-          <h2 className="roomio-card-title">
-            {action === 'close' ? 'Günü Kapat' : action === 'archive' ? 'Eski Gün Sonu Raporları' : action === 'room-prices' ? 'Oda Fiyatlarını İşle' : action === 'audit' ? 'Gece Denetim İzi' : 'Gün Sonu Raporları'}
-          </h2>
-          <nav className="roomio-tabs" style={{ marginTop: 12 }}>
-            <Link href="/reports?tab=eod&action=fetch" className={`roomio-tab${(!action || action === 'fetch') ? ' is-active' : ''}`}>{t('reports.eod.fetch')}</Link>
-            <Link href="/reports?tab=eod&action=close" className={`roomio-tab${action === 'close' ? ' is-active' : ''}`}>{t('reports.eod.close')}</Link>
-            <Link href="/reports?tab=eod&action=archive" className={`roomio-tab${action === 'archive' ? ' is-active' : ''}`}>{t('reports.eod.archive')}</Link>
-            <Link href="/reports?tab=eod&action=room-prices" className={`roomio-tab${action === 'room-prices' ? ' is-active' : ''}`}>{t('reports.eod.roomPrices')}</Link>
-            <Link href="/reports?tab=eod&action=audit" className={`roomio-tab${action === 'audit' ? ' is-active' : ''}`}>{t('reports.eod.audit')}</Link>
-          </nav>
-
-          {action === 'audit' ? (
-            <NightAuditPanel businessDate={businessDate} />
-          ) : action === 'close' ? (
-            <div style={{ marginTop: 16 }}>
-              <NightAuditPreClosePanel businessDate={businessDate} onReadyChange={setEodCanClose} />
-              <p className="roomio-page-desc">İş günü <strong>{businessDate}</strong> kapatılmaya hazır.</p>
-              {eodMsg ? <p className="roomio-page-desc">{eodMsg}</p> : null}
-              {!eodCanClose ? (
-                <p className="roomio-page-desc roomio-text-warn">Açık kasa varken gün kapatılamaz — önce kasaları kapatın.</p>
-              ) : null}
-              <div className="roomio-form-actions" style={{ marginTop: 16 }}>
-                <PermissionGate permission="eod.close" fallback={<p className="roomio-page-desc">Gün kapatma yetkiniz yok (RBAC).</p>}>
-                  <Button disabled={eodBusy || !eodCanClose} onClick={() => void handleCloseDay()}>
-                    {eodBusy ? 'Kapatılıyor…' : 'Günü kapat ve arşivle'}
-                  </Button>
-                </PermissionGate>
-                <Button variant="secondary" href="/reports?tab=eod&action=fetch">Önce raporları al</Button>
-              </div>
-            </div>
-          ) : action === 'archive' ? (
-            <div className="roomio-table-wrap" style={{ marginTop: 16 }}>
-              <table className="roomio-table">
-                <thead>
-                  <tr><th>İş günü</th><th>Kapanış</th><th>Kullanıcı</th><th>Doluluk</th><th>Gelir</th><th /></tr>
-                </thead>
-                <tbody>
-                  {eodArchive.map((a) => (
-                    <tr key={a.id}>
-                      <td><strong>{a.businessDate}</strong></td>
-                      <td>{a.closedAt}</td>
-                      <td>{a.closedBy}</td>
-                      <td>%{a.occupancy}</td>
-                      <td>₺{a.revenue.toLocaleString('tr-TR')}</td>
-                      <td><Button variant="secondary">İndir</Button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : action === 'room-prices' ? (
-            <div style={{ marginTop: 16 }}>
-              <p className="roomio-page-desc">BAR ve kontrat fiyatları bir sonraki iş gününe aktarılır.</p>
-              <div className="roomio-table-wrap" style={{ marginTop: 12 }}>
-                <table className="roomio-table">
-                  <thead><tr><th>Oda tipi</th><th>Mevcut</th><th>Yeni</th><th>Durum</th></tr></thead>
-                  <tbody>
-                    <tr><td>DBL</td><td>₺5.200</td><td>₺5.400</td><td><span className="roomio-badge">Bekliyor</span></td></tr>
-                    <tr><td>SUI</td><td>₺9.800</td><td>₺10.200</td><td><span className="roomio-badge">Bekliyor</span></td></tr>
-                    <tr><td>TRP</td><td>₺6.100</td><td>₺6.100</td><td><span className="roomio-badge roomio-badge--muted">Değişmedi</span></td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <div className="roomio-form-actions" style={{ marginTop: 16 }}>
-                <Button>Fiyatları işle</Button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <p className="roomio-page-desc" style={{ marginTop: 12 }}>Bugünün gün sonu rapor paketi.</p>
-              <div className="roomio-table-wrap" style={{ marginTop: 12 }}>
-                <table className="roomio-table">
-                  <thead><tr><th>Rapor</th><th>İş günü</th><th>Oluşturma</th><th>Durum</th><th /></tr></thead>
-                  <tbody>
-                    {DEMO_EOD_REPORTS.map((r) => (
-                      <tr key={r.id}>
-                        <td><strong>{r.type}</strong></td>
-                        <td>{r.businessDate}</td>
-                        <td>{r.generatedAt}</td>
-                        <td><span className={`roomio-badge roomio-badge--${r.status === 'ready' ? 'ok' : 'warn'}`}>{r.status === 'ready' ? 'Hazır' : 'Bekliyor'}</span></td>
-                        <td><Button variant="secondary" disabled={r.status !== 'ready'}>İndir</Button></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="roomio-form-actions" style={{ marginTop: 16 }}>
-                <Button>Tüm raporları al</Button>
-                <Button variant="secondary" href="/reports?tab=eod&action=close">Günü kapat</Button>
-              </div>
-            </>
-          )}
-        </div>
+        <ReportsConsolidatedTabContent
+          t={t}
+          propertyCode={propertyCode}
+          consolidated={consolidated}
+          filteredProperties={consolidated?.properties.filter((p) =>
+            !propertyCode
+            || p.propertyId === propertyCode
+            || p.name.toLowerCase().includes(propertyCode.toLowerCase()),
+          ) ?? []}
+          onRefresh={loadConsolidated}
+        />
       ) : null}
 
       <p className="roomio-page-desc" style={{ marginTop: 16 }}>

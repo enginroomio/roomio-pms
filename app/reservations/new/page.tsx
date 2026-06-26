@@ -16,6 +16,7 @@ function NewReservationContent() {
       breadcrumb="Rezervasyon > Yeni Rezervasyon Kaydı"
       title="Yeni Rezervasyon"
       description="Elektra screen-038 uyumlu sihirbaz — EGM kimlik adımı ve misafir arşivi otomatik doldurma."
+      stackClassName="roomio-page-stack--rez-new"
       actions={
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Button variant="secondary" href="/reports?tab=forms">Form tasarımı</Button>

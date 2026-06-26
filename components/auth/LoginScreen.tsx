@@ -18,6 +18,15 @@ export function LoginScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    void fetch('/api/auth/setup-status')
+      .then((r) => r.json())
+      .then((j: { needsSetup?: boolean }) => {
+        if (j.needsSetup) router.replace('/setup');
+      })
+      .catch(() => undefined);
+  }, [router]);
+
+  useEffect(() => {
     if (!loading && authenticated) {
       router.replace(next);
     }
@@ -35,6 +44,10 @@ export function LoginScreen() {
       const result = await login(email.trim(), password);
       if (!result.ok) {
         setError(result.error ?? 'Giriş başarısız');
+        return;
+      }
+      if (result.mustChangePassword) {
+        router.replace('/settings?tab=password&required=1');
         return;
       }
       router.replace(next);
