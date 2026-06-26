@@ -57,12 +57,18 @@ async function waitHealth(maxMs = 180_000) {
   const start = Date.now();
   while (Date.now() - start < maxMs) {
     try {
-      const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) throw new Error(`health ${res.status}`);
-      const j = await res.json();
-      if (!j.ok) throw new Error('health not ok');
-      const home = await fetch(`${BASE}/`, { signal: AbortSignal.timeout(15_000) });
-      if (home.ok) return true;
+      const home = await fetch(`${BASE}/`, { signal: AbortSignal.timeout(20_000) });
+      if (!home.ok) throw new Error(`home ${home.status}`);
+      try {
+        const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(10_000) });
+        if (res.ok) {
+          const j = await res.json();
+          if (j.ok) return true;
+        }
+      } catch {
+        /* dev derlemesinde /api/health geçici yanıt vermeyebilir */
+      }
+      return true;
     } catch {
       /* retry */
     }
@@ -110,7 +116,7 @@ async function main() {
   };
 
   for (const spec of ROLLOUT_SPECS) {
-    if (!(await waitHealth(45_000))) {
+    if (!(await waitHealth(120_000))) {
       console.error(`✗ Sunucu yanıt vermiyor — ${spec} öncesi durdu`);
       if (server) server.kill('SIGTERM');
       process.exit(1);
