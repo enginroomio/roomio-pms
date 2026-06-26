@@ -33,6 +33,7 @@
     "test:routes": "node scripts/test-routes.mjs",
     "test:routes:all": "node scripts/test-routes-all.mjs",
     "test:core-flow": "node scripts/test-core-flow.mjs",
+    "test:unit": "tsx --test 'lib/**/*.test.ts'",
     "test:integrations": "node scripts/test-integrations.mjs",
     "test:integrations:live": "node scripts/test-integrations-live.mjs",
     "test:elektra-modules": "node scripts/test-elektra-modules.mjs",

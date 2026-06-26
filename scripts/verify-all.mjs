@@ -233,6 +233,7 @@ async function main() {
   console.log('════════════════════════════════════════');
 
   run('Typecheck', 'npm', ['run', 'typecheck']);
+  run('Unit tests', 'npm', ['run', 'test:unit']);
 
   if (process.env.VERIFY_BUILD === '1') {
     run('Production build', 'npm', ['run', 'build']);

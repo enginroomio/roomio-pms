@@ -47,6 +47,7 @@ npm run typecheck          # TypeScript
 npm run lint               # ESLint
 npm run test:routes        # 200+ rota smoke test
 npm run test:core-flow     # Rezervasyon → check-in → folyo → check-out
+npm run test:unit          # Birim testleri (21 test)
 npm run test:e2e           # Playwright (36 spec)
 npm run verify:ci          # CI pipeline (typecheck + build + smoke)
 ```

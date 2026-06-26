@@ -5,6 +5,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 function readActivePort() {
   try {
@@ -237,6 +238,35 @@ const ROUTES = [
   '/reception/arrivals?tab=prepay',
   '/reception/vacant?tab=deposit-refund',
   '/reception/inhouse?tab=room-changes',
+  '/reservations?track=1',
+  '/reservations?status=CHECKED_OUT',
+  '/reservations?tab=import',
+  '/reservations?tab=import-text',
+  '/reservations?tab=email',
+  '/reservations?tab=group-codes',
+  '/reservations?tab=availability&prices=1',
+  '/reports?report=transfer',
+  '/reports?report=room-changes',
+  '/reports?report=departure-change',
+  '/reports?report=arrival-change',
+  '/reports?report=gunluk-maliye',
+  '/guest-relations?tab=messages',
+  '/guest-relations/complaints?new=1',
+  '/guest-relations/reclamations',
+  '/guest-relations/traces?tab=agenda',
+  '/guest-relations/traces?type=wakeup',
+  '/fnb?mode=quick',
+  '/reception?tab=kimlik-new',
+  '/reception/arrivals?tab=collections',
+  '/reception/arrivals?tab=cash-sale',
+  '/reception/departures?tab=rates',
+  '/reception/inhouse?tab=bulk',
+  '/accounting?tab=fiscal',
+  '/housekeeping/rooms',
+  '/housekeeping/tasks',
+  '/fnb?tab=rates',
+  '/settings?section=lang-menus',
+  '/settings?section=lang-reports',
 ];
 
 export { ROUTES };
@@ -347,4 +377,6 @@ async function main() {
   }
 }
 
-main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}

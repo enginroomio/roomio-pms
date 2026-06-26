@@ -24,7 +24,9 @@ function reservationExtra(reservation: AgencyCodeSource, key: string): string {
   return reservation.extraData?.[key]?.trim() ?? '';
 }
 
-export type AgencyCodeSource = Pick<Reservation, 'agency' | 'market' | 'roomNo' | 'extraData'>;
+export type AgencyCodeSource = Pick<Reservation, 'agency' | 'roomNo' | 'extraData'> & {
+  market?: Reservation['market'];
+};
 
 export function buildAgencyCodeLookup(contracts: AgencyContractRef[]): Map<string, string> {
   const map = new Map<string, string>();
