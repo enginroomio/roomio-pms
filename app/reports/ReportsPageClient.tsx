@@ -13,7 +13,7 @@ import type { FormTemplateDraft } from '@/components/forms/FormDesignEditor';
 import { FORM_PAGES, defaultFormLayout } from '@/lib/forms/form-catalog';
 import { REPORT_MODULES } from '@/lib/reports/field-catalog';
 import { roomioFetch } from '@/lib/client/api';
-import { SIDEBAR_NAV } from '@/lib/navigation/sidebar-nav';
+import { SIDEBAR_NAV, type SidebarNavItem } from '@/lib/navigation/sidebar-nav';
 import { CATEGORY_REPORTS } from '@/lib/data/eod';
 import { EodOperationsHub } from '@/components/reports/EodOperationsHub';
 import {
@@ -85,9 +85,23 @@ function tabFromParams(tab: string | null, category: string | null): Tab {
   return 'hub';
 }
 
+function categoryNavItems(items: SidebarNavItem[]): SidebarNavItem[] {
+  return items.filter(
+    (item) =>
+      !item.separator &&
+      (item.href?.includes('category=') ||
+        item.children?.some((child) => child.href?.includes('category='))),
+  );
+}
+
+function categoryMatches(item: SidebarNavItem, category: string): boolean {
+  if (item.href?.includes(`category=${category}`)) return true;
+  return item.children?.some((child) => child.href?.includes(`category=${category}`)) ?? false;
+}
+
 function reportCategories() {
   const section = SIDEBAR_NAV.find((s) => s.id === 'raporlar');
-  return (section?.items ?? []).filter((i) => i.href?.includes('category='));
+  return categoryNavItems(section?.items ?? []);
 }
 
 export function ReportsPageClient({
@@ -110,7 +124,7 @@ export function ReportsPageClient({
   const { reservations, loading: rezLoading } = useReservations();
   const activeTab = tabFromParams(tab, category);
   const categories = reportCategories();
-  const activeCategory = categories.find((c) => c.href?.includes(`category=${category}`));
+  const activeCategory = categories.find((c) => category && categoryMatches(c, category));
   const [businessDate, setBusinessDate] = useState('2026-06-18');
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [editing, setEditing] = useState<ReportTemplate | null>(null);

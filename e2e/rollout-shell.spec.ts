@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Kabuk rollout — adım adım', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 90_000 });
+    await expect(page.getByRole('navigation', { name: 'Ana menü' })).toBeVisible({ timeout: 60_000 });
   });
 
   test('Adım 1 — İkon rayı (Ana, Önbüro, Kat HK…)', async ({ page }) => {

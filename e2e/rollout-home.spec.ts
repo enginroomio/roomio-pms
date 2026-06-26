@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Ana Sayfa rollout — adım adım', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 90_000 });
+    await expect(page.getByRole('region', { name: 'Günlük özet' })).toBeVisible({ timeout: 60_000 });
   });
 
   test('Adım 1 — Karşılama & operasyon şeridi', async ({ page }) => {

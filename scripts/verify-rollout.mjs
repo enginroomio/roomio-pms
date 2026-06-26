@@ -97,6 +97,9 @@ async function main() {
       console.error('✗ Sunucu hazır değil');
       process.exit(1);
     }
+  } else if (!(await waitHealth())) {
+    console.error(`✗ Mevcut sunucu hazır değil (${BASE}) — önce dev sunucuyu başlatın veya PLAYWRIGHT_REUSE_SERVER=0 kullanın`);
+    process.exit(1);
   }
 
   const e2eEnv = {
@@ -107,6 +110,11 @@ async function main() {
   };
 
   for (const spec of ROLLOUT_SPECS) {
+    if (!(await waitHealth(45_000))) {
+      console.error(`✗ Sunucu yanıt vermiyor — ${spec} öncesi durdu`);
+      if (server) server.kill('SIGTERM');
+      process.exit(1);
+    }
     const label = `E2E — ${spec.replace('e2e/', '').replace('.spec.ts', '')}`;
     run(label, 'npx', ['playwright', 'test', '--config=playwright.rollout.config.ts', spec], e2eEnv);
   }

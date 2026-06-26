@@ -15,9 +15,9 @@ test.describe('Raporlar rollout — adım adım', () => {
 
   test('Adım 3 — HK raporları', async ({ page }) => {
     await page.goto('/reports?category=kathizmetleri');
-    await expect(page.getByRole('heading', { name: /HK-HouseKeeping Raporları/i }).first()).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(
+      page.getByRole('heading', { name: /House Keeping Raporu|HK-HouseKeeping Raporları/i }).first(),
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test('Adım 4 — Yönetim raporları', async ({ page }) => {

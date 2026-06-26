@@ -11,7 +11,8 @@ test.describe('Gün Sonu rollout — adım adım', () => {
   test('Adım 2 — Günü kapat', async ({ page }) => {
     await page.goto('/reports?tab=eod&action=close');
     await expect(page.getByRole('heading', { name: 'Günü Kapat', level: 2 })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Günü kapat ve arşivle/i })).toBeVisible();
+    await expect(page.getByText(/Kontrol ediliyor/i)).toBeHidden({ timeout: 30_000 });
+    await expect(page.getByRole('button', { name: /Günü kapat ve arşivle/i })).toBeVisible({ timeout: 15_000 });
   });
 
   test('Adım 3 — Eski gün sonu raporları', async ({ page }) => {
