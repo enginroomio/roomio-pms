@@ -28,8 +28,13 @@ test.describe('Kabuk rollout — adım adım', () => {
   test('Adım 3 — Alt kısayol çubuğu F2–F12', async ({ page }) => {
     const footer = page.getByRole('contentinfo', { name: 'Durum çubuğu' });
     await expect(footer).toBeVisible();
-    await expect(footer.getByRole('link', { name: /F2 Hızlı Giriş/i })).toBeVisible();
-    await expect(footer.getByRole('link', { name: /F12 Hızlı Çıkış|Oda Rack/i })).toBeVisible();
-    await expect(footer.getByRole('link', { name: /F6 Ön Kasa/i })).toBeVisible();
+    const shortcuts = footer.locator('.roomio-status-footer__shortcuts');
+    await expect(shortcuts).toBeVisible({ timeout: 30_000 });
+    await expect(footer.getByRole('link', { name: /Hızlı Giriş/i })).toBeVisible();
+    await expect(footer.getByRole('link', { name: /Hızlı Çıkış/i })).toBeVisible();
+    await expect(footer.getByRole('link', { name: /Ön Kasa/i })).toBeVisible();
+    await expect(footer.locator('kbd', { hasText: 'F2' })).toBeVisible();
+    await expect(footer.locator('kbd', { hasText: 'F12' })).toBeVisible();
+    await expect(footer.locator('kbd', { hasText: 'F6' })).toBeVisible();
   });
 });
