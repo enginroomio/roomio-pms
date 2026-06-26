@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -31,12 +31,11 @@ export default function GuestAppSettingsPage() {
   const featureKeys = Object.keys(config.features) as Array<keyof GuestAppConfig['features']>;
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Misafir Uygulaması"
-      title="Native Misafir Uygulaması"
-      description="iOS/Android branded app — deep link, push ve özellik bayrakları."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Native Misafir Uygulaması"}
+      title={"Native Misafir Uygulaması"}
+      description={"iOS/Android branded app — deep link, push ve özellik bayrakları."}
+      >
       <FormSection title="Uygulama">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -71,6 +70,6 @@ export default function GuestAppSettingsPage() {
         {saved ? <p className="roomio-page-desc">Kaydedildi.</p> : null}
         <p className="roomio-page-desc" style={{ marginTop: 12 }}>Landing: <Link href="/app">/app</Link></p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -29,12 +29,11 @@ export default function CarbonSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Karbon Ofset"
-      title="Karbon Ofset"
-      description="Konaklama karbon ayak izi hesaplama ve misafir ofset teklifi."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Karbon Ofset"}
+      title={"Karbon Ofset"}
+      description={"Konaklama karbon ayak izi hesaplama ve misafir ofset teklifi."}
+      >
       <FormSection title="Ofset">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -63,6 +62,6 @@ export default function CarbonSettingsPage() {
           Misafir URL: <Link href="/carbon">/carbon</Link> · {config.co2PerNightKg} kg CO₂/gece · {config.offsetCostPerKg} {config.currency}/kg
         </p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

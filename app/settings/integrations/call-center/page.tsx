@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -35,12 +35,11 @@ export default function CallCenterSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Çağrı Merkezi"
-      title="Çağrı Merkezi"
-      description="Rezervasyon kuyruğu, PBX entegrasyonu ve upsell senaryoları."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Çağrı Merkezi"}
+      title={"Çağrı Merkezi"}
+      description={"Rezervasyon kuyruğu, PBX entegrasyonu ve upsell senaryoları."}
+      >
       <FormSection title="Kuyruk">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -70,6 +69,6 @@ export default function CallCenterSettingsPage() {
           {config.upsellScripts.map((s, i) => <li key={i}>{s}</li>)}
         </ul>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

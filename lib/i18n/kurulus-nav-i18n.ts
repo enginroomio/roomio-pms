@@ -8,6 +8,10 @@ type TFn = (key: string, params?: Record<string, string | number>, fallback?: st
 
 const EXTRA_SECTION_KEYS: Record<string, string> = {
   language: 'nav.kurulus.language',
+  'lang-forms': 'sidebar.sub.langForms',
+  'lang-menus': 'sidebar.sub.langMenus',
+  'lang-reports': 'sidebar.sub.langReports',
+  nationalities: 'nav.kurulus.nationalities',
   'rate-plans': 'nav.kontrat.rate-plans',
   agencies: 'nav.kontrat.agencies',
   extras: 'nav.kontrat.extras',

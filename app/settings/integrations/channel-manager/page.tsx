@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Globe2, RefreshCw } from 'lucide-react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -81,12 +81,11 @@ export default function ChannelManagerPage() {
   const enabledCount = config.channels.filter((c) => c.enabled).length;
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Kanal Yöneticisi"
-      title="Kanal Yöneticisi"
-      description="ElektraWeb / Barboon uyumlu iki yönlü kanal senkronu — Booking, Expedia, fiyat, müsaitlik ve rezervasyon aktarımı."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Kanal Yöneticisi"}
+      title={"Kanal Yöneticisi"}
+      description={"ElektraWeb / Barboon uyumlu iki yönlü kanal senkronu — Booking, Expedia, fiyat, müsaitlik ve rezervasyon aktarımı."}
+      >
       <FormSection title="Genel">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -296,6 +295,6 @@ export default function ChannelManagerPage() {
           </table>
         </div>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

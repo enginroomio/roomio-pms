@@ -1,4 +1,4 @@
-const CACHE = 'roomio-pms-v11';
+const CACHE = 'roomio-pms-v12';
 const OFFLINE_URL = '/offline';
 
 const SHELL = [
@@ -56,11 +56,25 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+function isBuildAsset(pathname) {
+  return pathname.startsWith('/_next/');
+}
+
+/** Giriş/kurulum — eski önbellek 404 ve chunk hatasına yol açmasın */
+function isFreshShell(pathname) {
+  return pathname === '/login' || pathname === '/setup';
+}
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
   if (event.request.method === 'GET') {
+    if (isBuildAsset(url.pathname) || isFreshShell(url.pathname)) {
+      event.respondWith(fetch(event.request));
+      return;
+    }
+
     event.respondWith(
       fetch(event.request)
         .then((res) => {

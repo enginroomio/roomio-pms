@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -34,12 +34,11 @@ export default function FixedAssetsSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Demirbaş Yönetimi"
-      title="Demirbaş Yönetimi"
-      description="Sabit kıymet envanteri, amortisman ve periyodik sayım."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Demirbaş Yönetimi"}
+      title={"Demirbaş Yönetimi"}
+      description={"Sabit kıymet envanteri, amortisman ve periyodik sayım."}
+      >
       <FormSection title="Demirbaş">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -86,6 +85,6 @@ export default function FixedAssetsSettingsPage() {
           </table>
         </div>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

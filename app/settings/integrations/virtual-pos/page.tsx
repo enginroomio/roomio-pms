@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -48,12 +48,11 @@ export default function VirtualPosSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Sanal POS"
-      title="Sanal POS"
-      description="Online ödeme tahsilatı — iyzico, PayTR ve diğer sanal POS sağlayıcıları."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Sanal POS"}
+      title={"Sanal POS"}
+      description={"Online ödeme tahsilatı — iyzico, PayTR ve diğer sanal POS sağlayıcıları."}
+      >
       <FormSection title="Bağlantı">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -86,6 +85,6 @@ export default function VirtualPosSettingsPage() {
         {testResult ? <p className="roomio-page-desc">{testResult.message}</p> : null}
         {chargeResult ? <p className="roomio-page-desc">{chargeResult.message}</p> : null}
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

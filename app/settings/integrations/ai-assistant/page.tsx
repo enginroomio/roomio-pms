@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -36,12 +36,11 @@ export default function AiAssistantSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > AI Asistan"
-      title="Otel AI Asistan"
-      description="Misafir ve personel için yapay zeka destekli sohbet asistanı."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Otel AI Asistan"}
+      title={"Otel AI Asistan"}
+      description={"Misafir ve personel için yapay zeka destekli sohbet asistanı."}
+      >
       <FormSection title="Model">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -80,6 +79,6 @@ export default function AiAssistantSettingsPage() {
         {testMsg ? <p className="roomio-page-desc">{testMsg}</p> : null}
         <p className="roomio-page-desc" style={{ marginTop: 12 }}>Misafir URL: <Link href="/ask">/ask</Link></p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

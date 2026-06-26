@@ -1,5 +1,6 @@
 'use client';
 
+import { Fragment } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui';
 import { PermissionGate } from '@/components/auth/PermissionGate';
@@ -8,6 +9,7 @@ import { useI18n } from '@/components/i18n/I18nProvider';
 import { hasPermission, ROLE_LABELS, type Role } from '@/lib/auth/roles';
 import { roomioFetch } from '@/lib/client/api';
 import { parseApiError } from '@/lib/client/api-errors';
+import { UserDetailDrawer } from '@/components/kurulus/UserDetailDrawer';
 
 type UserRow = {
   id: string;
@@ -19,6 +21,9 @@ type UserRow = {
   department: string;
   groupCode: string | null;
   active: boolean;
+  propertyIds?: string[];
+  allProperties?: boolean;
+  lastLoginAt?: string | null;
 };
 
 type GroupOption = { code: string; name: string };
@@ -36,7 +41,7 @@ const emptyCreateForm = {
 
 export function UsersSettingsPanel() {
   const { t } = useI18n();
-  const { user } = useSession();
+  const { user, loading: sessionLoading, authenticated } = useSession();
   const canAdmin = hasPermission(user, 'settings.admin');
   const canViewIdentity = hasPermission(user, 'identity.read');
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -45,7 +50,14 @@ export function UsersSettingsPanel() {
   const [error, setError] = useState<string | null>(null);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ department: '', groupCode: '', active: true, newPassword: '' });
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    department: '',
+    groupCode: '',
+    active: true,
+    role: 'reception' as Role,
+    newPassword: '',
+  });
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState(emptyCreateForm);
 
@@ -79,13 +91,32 @@ export function UsersSettingsPanel() {
   }, [load]);
 
   function openRow(u: UserRow) {
+    setDetailId(null);
     setEditingId(u.id);
     setEditForm({
       department: u.department,
       groupCode: u.groupCode ?? '',
       active: u.active,
+      role: (u.roleId as Role) ?? 'reception',
       newPassword: '',
     });
+  }
+
+  async function deleteUser(id: string, email: string) {
+    if (!window.confirm(`${email} kullanıcısını silmek istediğinize emin misiniz?`)) return;
+    setSaveMsg(null);
+    try {
+      const res = await roomioFetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id }),
+      });
+      if (!res.ok) throw new Error(await parseApiError(res, 'Kullanıcı silinemedi'));
+      setEditingId(null);
+      await load();
+    } catch (err) {
+      setSaveMsg(err instanceof Error ? err.message : 'Kullanıcı silinemedi');
+    }
   }
 
   async function saveUser(id: string) {
@@ -99,6 +130,7 @@ export function UsersSettingsPanel() {
           department: editForm.department,
           groupCode: editForm.groupCode || null,
           active: editForm.active,
+          role: editForm.role,
         }),
       });
       if (!res.ok) throw new Error(await parseApiError(res, t('kurulus.users.saveError')));
@@ -152,7 +184,7 @@ export function UsersSettingsPanel() {
     <div className="roomio-card roomio-table-wrap">
       <div className="roomio-kurulus-toolbar">
         <h2 className="roomio-card-title">{t('kurulus.users.title')} ({t('kurulus.live')})</h2>
-        <Button variant="secondary" disabled={loading} onClick={() => void load()}>
+        <Button variant="secondary" disabled={loading || sessionLoading} onClick={() => void load()}>
           {loading ? t('kurulus.loading') : t('kurulus.users.refresh')}
         </Button>
         <PermissionGate permission="settings.admin">
@@ -160,6 +192,20 @@ export function UsersSettingsPanel() {
         </PermissionGate>
         <span className="roomio-badge">{loading ? '…' : t('kurulus.users.count').replace('{count}', String(users.length))}</span>
       </div>
+
+      {!sessionLoading && !canAdmin ? (
+        <p className="roomio-page-desc" style={{ marginTop: 12 }}>
+          {authenticated
+            ? `Oturum: ${user.name} (${user.roleLabel}) — kullanıcı ekleme/silme için Sistem Yöneticisi girişi gerekir.`
+            : 'Demo moddasınız. Tam yetki için /login üzerinden admin@roomio.local ile giriş yapın.'}
+          {!authenticated ? (
+            <>
+              {' '}
+              <Button variant="secondary" href="/login?next=/settings%3Fsection%3Dusers">Giriş yap</Button>
+            </>
+          ) : null}
+        </p>
+      ) : null}
 
       {showCreate ? (
         <div className="roomio-card" style={{ marginTop: 12, padding: 12, background: 'var(--roomio-surface-muted)' }}>
@@ -195,7 +241,11 @@ export function UsersSettingsPanel() {
               </select>
             </label>
           </div>
-          <p className="roomio-page-desc" style={{ marginTop: 8 }}>İlk girişte kullanıcıdan şifre değiştirmesi istenir.</p>
+          <p className="roomio-page-desc" style={{ marginTop: 8 }}>
+            İlk girişte kullanıcıdan şifre değiştirmesi istenir. Ek yetkiler için kullanıcıyı bir gruba atayın
+            {' '}
+            <Button variant="ghost" href="/settings?section=user-groups">(Grup tanımları)</Button>
+          </p>
           <div className="roomio-form-actions" style={{ marginTop: 12 }}>
             <Button onClick={() => void createUser()}>Oluştur</Button>
             <Button variant="ghost" onClick={() => setShowCreate(false)}>{t('kurulus.cancel')}</Button>
@@ -220,20 +270,36 @@ export function UsersSettingsPanel() {
             <th>{t('kurulus.users.col.department')}</th>
             <th>{t('kurulus.users.col.group')}</th>
             <th>{t('kurulus.col.status')}</th>
+            <th>Son giriş</th>
             <th />
           </tr>
         </thead>
         <tbody>
           {loading ? (
-            <tr><td colSpan={8}>{t('kurulus.loading')}</td></tr>
+            <tr><td colSpan={9}>{t('kurulus.loading')}</td></tr>
           ) : users.map((u) => {
             const isOpen = editingId === u.id;
+            const isDetail = detailId === u.id;
             return (
-              <tr key={u.id}>
+              <Fragment key={u.id}>
+              <tr>
                 <td><strong>{u.username}</strong></td>
                 <td>{u.fullName}</td>
                 <td>{u.email}</td>
-                <td>{u.role}</td>
+                <td>
+                  {isOpen ? (
+                    <select
+                      className="roomio-input"
+                      value={editForm.role}
+                      disabled={!canAdmin}
+                      onChange={(e) => setEditForm((p) => ({ ...p, role: e.target.value as Role }))}
+                    >
+                      {ROLE_OPTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+                    </select>
+                  ) : (
+                    u.role
+                  )}
+                </td>
                 <td>
                   {isOpen ? (
                     <input
@@ -276,7 +342,11 @@ export function UsersSettingsPanel() {
                     u.active ? t('kurulus.active') : t('kurulus.inactive')
                   )}
                 </td>
+                <td className="roomio-page-desc">
+                  {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('tr-TR') : '—'}
+                </td>
                 <td>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                   {isOpen ? (
                     canAdmin ? (
                       <PermissionGate permission="settings.admin">
@@ -288,9 +358,16 @@ export function UsersSettingsPanel() {
                             value={editForm.newPassword}
                             onChange={(e) => setEditForm((p) => ({ ...p, newPassword: e.target.value }))}
                           />
-                          <div style={{ display: 'flex', gap: 8 }}>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <Button onClick={() => void saveUser(u.id)}>{t('kurulus.save')}</Button>
                             <Button variant="ghost" onClick={() => setEditingId(null)}>{t('kurulus.cancel')}</Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => void deleteUser(u.id, u.email)}
+                              disabled={u.id === user.id}
+                            >
+                              Sil
+                            </Button>
                           </div>
                         </div>
                       </PermissionGate>
@@ -302,7 +379,7 @@ export function UsersSettingsPanel() {
                       permission="settings.admin"
                       fallback={
                         canViewIdentity ? (
-                          <Button variant="secondary" onClick={() => openRow(u)}>{t('kurulus.users.view')}</Button>
+                          <Button variant="secondary" onClick={() => openRow(u)}>{t('kurulus.users.edit')}</Button>
                         ) : (
                           <span className="roomio-page-desc">—</span>
                         )
@@ -311,8 +388,32 @@ export function UsersSettingsPanel() {
                       <Button variant="secondary" onClick={() => openRow(u)}>{t('kurulus.users.edit')}</Button>
                     </PermissionGate>
                   )}
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingId(null);
+                      setDetailId(isDetail ? null : u.id);
+                    }}
+                  >
+                    {isDetail ? 'Detay ▲' : 'Detay'}
+                  </Button>
+                  </div>
                 </td>
               </tr>
+              {isDetail ? (
+                <UserDetailDrawer
+                  key={`${u.id}-detail`}
+                  userId={u.id}
+                  userName={u.fullName}
+                  email={u.email}
+                  canAdmin={canAdmin}
+                  propertyIds={u.propertyIds ?? []}
+                  allProperties={u.allProperties ?? u.roleId === 'admin'}
+                  lastLoginAt={u.lastLoginAt ?? null}
+                  onClose={() => setDetailId(null)}
+                />
+              ) : null}
+              </Fragment>
             );
           })}
         </tbody>

@@ -23,7 +23,7 @@ import { ExtrasSettingsPanel } from '@/components/kurulus/ExtrasSettingsPanel';
 import { FiscalDevicesSettingsPanel } from '@/components/kurulus/FiscalDevicesSettingsPanel';
 import { HotelInfoSettingsPanel } from '@/components/kurulus/HotelInfoSettingsPanel';
 import { HotelSeasonsSettingsPanel } from '@/components/kurulus/HotelSeasonsSettingsPanel';
-import { LanguagesSettingsPanel } from '@/components/kurulus/LanguagesSettingsPanel';
+import { DilTanimlariHub } from '@/components/kurulus/DilTanimlariHub';
 import { MealPricesSettingsPanel } from '@/components/kurulus/MealPricesSettingsPanel';
 import { MasterCodesPanel } from '@/components/kurulus/MasterCodesPanel';
 import { FloorsSettingsPanel } from '@/components/kurulus/FloorsSettingsPanel';
@@ -39,7 +39,6 @@ import { PasswordChangePanel } from '@/components/auth/PasswordChangePanel';
 import { PbxCallsPanel } from '@/components/settings/PbxCallsPanel';
 import { PbxLookupPanel } from '@/components/settings/PbxLookupPanel';
 import { IntegrationsSyncStatusPanel } from '@/components/settings/IntegrationsSyncStatusPanel';
-import { LanguageTextsPanel } from '@/components/kurulus/LanguageTextsPanel';
 import { WarehousesSettingsPanel } from '@/components/kurulus/WarehousesSettingsPanel';
 import { ProductCardsPanel } from '@/components/accounting/BackOfficePanels';
 import { Button } from '@/components/ui';
@@ -51,6 +50,7 @@ import type { ThemeMode } from '@/components/theme/ThemeProvider';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { findKurulusScreenTitle } from '@/lib/i18n/kurulus-nav-i18n';
 import { kurulusExternalRedirect } from '@/lib/navigation/menu-route-params';
+import type { DilTanimlariSection } from '@/lib/navigation/dil-tanimlari';
 import { resolveKurulusScreenKey } from '@/lib/navigation/kurulus-screen';
 
 function screenKey(section: string | null, tab: string | null): string {
@@ -186,9 +186,11 @@ export function KurulusScreen({
     case 'tax-rules':
       return <TaxRulesPanel />;
     case 'nationalities':
-      return <MasterCodesPanel kind="nationality" titleKey="nav.kurulus.nationalities" />;
     case 'language':
-      return <LanguagesSettingsPanel />;
+    case 'lang-forms':
+    case 'lang-menus':
+    case 'lang-reports':
+      return <DilTanimlariHub section={key as DilTanimlariSection} />;
     case 'meal-plans':
       return <MasterCodesPanel kind="meal_plan" titleKey="nav.kurulus.meal-plans" />;
     case 'company-list':
@@ -280,12 +282,6 @@ export function KurulusScreen({
       return <PbxLookupPanel />;
     case 'sync':
       return <IntegrationsSyncStatusPanel />;
-    case 'lang-forms':
-      return <LanguageTextsPanel view="forms" />;
-    case 'lang-menus':
-      return <LanguageTextsPanel view="menus" />;
-    case 'lang-reports':
-      return <LanguageTextsPanel view="reports" />;
     default:
       return <PlaceholderScreen title={findKurulusScreenTitle(t, key)} />;
   }

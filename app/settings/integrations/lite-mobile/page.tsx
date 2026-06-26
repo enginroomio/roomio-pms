@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -39,12 +39,11 @@ export default function LiteMobileSettingsPage() {
   const featureKeys = Object.keys(FEATURE_LABELS) as Array<keyof typeof FEATURE_LABELS>;
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Lite Mobile"
-      title="Lite Mobile"
-      description="Personel mobil uygulaması — kat hizmetleri, bakım ve misafir talepleri."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Lite Mobile"}
+      title={"Lite Mobile"}
+      description={"Personel mobil uygulaması — kat hizmetleri, bakım ve misafir talepleri."}
+      >
       <FormSection title="Uygulama">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -71,6 +70,6 @@ export default function LiteMobileSettingsPage() {
         {saved ? <p className="roomio-page-desc">Kaydedildi.</p> : null}
         <p className="roomio-page-desc" style={{ marginTop: 12 }}>Önizleme: <Link href="/staff">/staff</Link></p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

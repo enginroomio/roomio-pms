@@ -79,7 +79,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
     return <div className="roomio-wifi-shell">{children}</div>;
   }
 
-  if (pathname === '/login' || pathname === '/offline') {
+  if (pathname === '/login' || pathname === '/setup' || pathname === '/offline') {
     return <>{children}</>;
   }
 

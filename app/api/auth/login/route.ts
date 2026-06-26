@@ -7,7 +7,7 @@ import type { Role } from '@/lib/auth/roles';
 import { buildSessionUserFromAuth } from '@/lib/auth/session-user';
 import { registerSession } from '@/lib/auth/session-store';
 import { findUserByEmail } from '@/lib/server/pms-store';
-import { getUserMustChangePassword } from '@/lib/server/users-admin';
+import { getUserMustChangePassword, touchUserLogin } from '@/lib/server/users-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +39,7 @@ export async function POST(req: Request) {
       jti,
     });
     await registerSession(user.id, jti);
+    await touchUserLogin(user.id);
     const session = await buildSessionUserFromAuth(user.id, user.name, role, user.groupCode);
     const mustChangePassword = user.mustChangePassword ?? await getUserMustChangePassword(user.id);
 

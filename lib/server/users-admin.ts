@@ -8,6 +8,12 @@ import { prisma } from '@/lib/server/prisma';
 import { bustReadCaches } from '@/lib/server/perf-cache';
 import { init } from '@/lib/server/pms-store';
 import { appendAuditLog } from '@/lib/server/audit-log';
+import {
+  ensureDefaultPropertyAccess,
+  getUserPropertyIds,
+  setUserPropertyIds,
+  userHasAllPropertyAccess,
+} from '@/lib/server/user-properties';
 
 const DEPARTMENT_BY_ROLE: Record<Role, string> = {
   admin: 'IT',
@@ -39,6 +45,19 @@ export type AdminUserRow = {
   active: boolean;
   mustChangePassword: boolean;
 };
+
+export async function findUserById(userId: string) {
+  await init();
+  return prisma.user.findUnique({ where: { id: userId } });
+}
+
+export async function touchUserLogin(userId: string): Promise<void> {
+  await init();
+  await prisma.user.update({
+    where: { id: userId },
+    data: { lastLoginAt: new Date().toISOString() },
+  });
+}
 
 export async function getAuthSetupStatus(): Promise<{ needsSetup: boolean }> {
   const count = await prisma.user.count();
@@ -172,6 +191,7 @@ export async function createUserAdmin(input: {
   password: string;
   department?: string;
   groupCode?: string | null;
+  propertyIds?: string[];
 }): Promise<AdminUserRow> {
   await init();
   const email = input.email.trim().toLowerCase();
@@ -197,6 +217,11 @@ export async function createUserAdmin(input: {
   });
 
   bustReadCaches(DEFAULT_PROPERTY_ID);
+  if (input.propertyIds && input.role !== 'admin') {
+    await setUserPropertyIds(row.id, input.propertyIds);
+  } else {
+    await ensureDefaultPropertyAccess(row.id, input.role);
+  }
   return toAdminRow(row);
 }
 
@@ -222,6 +247,24 @@ function toAdminRow(row: {
     groupCode: row.groupCode,
     active: row.active,
     mustChangePassword: row.mustChangePassword ?? false,
+  };
+}
+
+export async function getUserAdminDetail(userId: string): Promise<(AdminUserRow & {
+  propertyIds: string[];
+  allProperties: boolean;
+  lastLoginAt: string | null;
+}) | null> {
+  await init();
+  const row = await prisma.user.findUnique({ where: { id: userId } });
+  if (!row) return null;
+  const propertyIds = await getUserPropertyIds(userId);
+  const adminRow = toAdminRow(row);
+  return {
+    ...adminRow,
+    propertyIds,
+    allProperties: userHasAllPropertyAccess(row.role),
+    lastLoginAt: row.lastLoginAt ?? null,
   };
 }
 
@@ -292,7 +335,7 @@ export async function ensureReceptionDemoUser(): Promise<void> {
 
 export async function updateUserAdminServer(
   userId: string,
-  data: { department?: string; groupCode?: string | null; active?: boolean },
+  data: { department?: string; groupCode?: string | null; active?: boolean; role?: Role; propertyIds?: string[] },
 ): Promise<AdminUserRow | null> {
   await init();
   const row = await prisma.user.update({
@@ -301,8 +344,49 @@ export async function updateUserAdminServer(
       ...(data.department != null ? { department: data.department } : {}),
       ...(data.groupCode !== undefined ? { groupCode: data.groupCode } : {}),
       ...(data.active != null ? { active: data.active } : {}),
+      ...(data.role != null ? { role: data.role } : {}),
     },
   });
+  if (data.propertyIds !== undefined) {
+    if (row.role === 'admin') {
+      await setUserPropertyIds(userId, []);
+    } else {
+      await setUserPropertyIds(userId, data.propertyIds);
+    }
+  }
   bustReadCaches(DEFAULT_PROPERTY_ID);
   return toAdminRow(row);
+}
+
+export async function deleteUserAdmin(actorId: string, targetUserId: string, actorName: string): Promise<void> {
+  await init();
+  if (actorId === targetUserId) {
+    throw new Error('Kendi hesabınızı silemezsiniz');
+  }
+
+  const target = await prisma.user.findUnique({ where: { id: targetUserId } });
+  if (!target) throw new Error('Kullanıcı bulunamadı');
+
+  if (target.role === 'admin') {
+    const adminCount = await prisma.user.count({ where: { role: 'admin', active: true } });
+    if (adminCount <= 1) {
+      throw new Error('Son aktif yönetici silinemez');
+    }
+  }
+
+  await prisma.user.delete({ where: { id: targetUserId } });
+
+  await appendAuditLog(
+    {
+      module: 'settings',
+      action: 'user_delete',
+      entityType: 'user',
+      entityId: targetUserId,
+      user: actorName,
+      detail: `Kullanıcı silindi: ${target.email}`,
+    },
+    DEFAULT_PROPERTY_ID,
+  );
+
+  bustReadCaches(DEFAULT_PROPERTY_ID);
 }

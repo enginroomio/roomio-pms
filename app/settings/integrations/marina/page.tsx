@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -36,12 +36,11 @@ export default function MarinaSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Marina"
-      title="Marina Yönetimi"
-      description="Rıhtım envanteri, tekne bağlama ve online rezervasyon."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Marina Yönetimi"}
+      title={"Marina Yönetimi"}
+      description={"Rıhtım envanteri, tekne bağlama ve online rezervasyon."}
+      >
       <FormSection title="Marina">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -76,6 +75,6 @@ export default function MarinaSettingsPage() {
         {testMsg ? <p className="roomio-page-desc">{testMsg}</p> : null}
         <p className="roomio-page-desc" style={{ marginTop: 12 }}>Misafir URL: <Link href="/marina">/marina</Link></p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

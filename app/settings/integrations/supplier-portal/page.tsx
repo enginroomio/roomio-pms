@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormGrid, FormSection } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -43,12 +43,11 @@ export default function SupplierPortalSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Tedarikçi Portalı"
-      title="Tedarikçi Portalı"
-      description="Tedarikçi siparişleri, onay akışı ve düşük stok bildirimleri — ElektraWeb tedarik modülü."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Tedarikçi Portalı"}
+      title={"Tedarikçi Portalı"}
+      description={"Tedarikçi siparişleri, onay akışı ve düşük stok bildirimleri — ElektraWeb tedarik modülü."}
+      >
       <FormSection title="Genel">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -91,6 +90,6 @@ export default function SupplierPortalSettingsPage() {
         {orderResult ? <p className="roomio-page-desc">{orderResult.message}</p> : null}
         <p className="roomio-page-desc" style={{ marginTop: 12 }}>{config.suppliers.filter((s) => s.enabled).length} aktif tedarikçi</p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

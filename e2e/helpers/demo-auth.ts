@@ -26,10 +26,19 @@ export async function waitForDemoSession(page: Page, role: DemoRole = 'admin') {
   ]);
 }
 
-/** Demo rolü ayarla, sayfaya git; yan menünün hazır olmasını bekle. */
-export async function gotoWithDemo(page: Page, url: string, role: DemoRole = 'admin') {
+/** Demo rolü ayarla, sayfaya git; kabuk hazır olana kadar bekle. */
+export async function gotoWithDemo(
+  page: Page,
+  url: string,
+  role: DemoRole = 'admin',
+  opts?: { waitForSideNav?: boolean },
+) {
   await useDemoRole(page, role);
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90_000 });
+  await page.goto(url, { waitUntil: 'commit', timeout: 60_000 });
+  if (opts?.waitForSideNav === false) {
+    await page.locator('h1.roomio-page-title, main h1').first().waitFor({ state: 'visible', timeout: 60_000 });
+    return;
+  }
   await page.locator('.roomio-module-side__link, .roomio-module-side__branch').first().waitFor({
     state: 'visible',
     timeout: 60_000,

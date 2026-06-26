@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -44,12 +44,11 @@ export default function GoogleBackupSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Google BigQuery Yedekleme"
-      title="Google BigQuery Yedekleme"
-      description="Otel verilerinin BigQuery'ye periyodik yedeklenmesi."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Google BigQuery Yedekleme"}
+      title={"Google BigQuery Yedekleme"}
+      description={"Otel verilerinin BigQuery'ye periyodik yedeklenmesi."}
+      >
       <FormSection title="Bağlantı">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -81,6 +80,6 @@ export default function GoogleBackupSettingsPage() {
         {backupResult ? <p className="roomio-page-desc">{backupResult.message}{backupResult.rowsExported ? ` (${backupResult.rowsExported} satır)` : ''}</p> : null}
         {testResult ? <p className="roomio-page-desc">{testResult.message}</p> : null}
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

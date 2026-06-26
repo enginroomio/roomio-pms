@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { Phone } from 'lucide-react';
 import { FormActions, FormField, FormGrid, FormSection, Input, Textarea } from '@/components/kit';
 import { Button } from '@/components/ui';
-import { SistemIntegrationActions } from '@/components/sistem/SistemIntegrationActions';
-import { SistemModuleLayout } from '@/components/sistem/SistemModuleLayout';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { roomioFetch } from '@/lib/client/api';
 import {
   DEFAULT_PBX_CONFIG,
@@ -42,12 +41,10 @@ export default function PbxIntegrationPage() {
   }
 
   return (
-    <SistemModuleLayout
-      segment={['Entegrasyonlar', 'Grandstream Santral']}
+    <IntegrationPageLayout
+      segment="Grandstream Santral"
       title={`Grandstream ${UCM6301_DEFAULTS.model}`}
       description="UCM6301 HTTPS API (port 8089) + PMS API — check-in/out, oda durumu, uyandırma."
-      menuSearch=""
-      actions={<SistemIntegrationActions />}
     >
       <div className="roomio-inline-panel" style={{ marginBottom: 16, padding: 12 }}>
         <Phone size={18} style={{ verticalAlign: 'middle', marginRight: 8 }} />
@@ -168,6 +165,6 @@ export default function PbxIntegrationPage() {
           </table>
         </div>
       </FormSection>
-    </SistemModuleLayout>
+    </IntegrationPageLayout>
   );
 }

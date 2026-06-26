@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -29,12 +29,11 @@ export default function WebsiteBuilderSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Web Sitesi"
-      title="Web Sitesi"
-      description="Otel web sitesi — domain, şablon ve rezervasyon motoru entegrasyonu."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Web Sitesi"}
+      title={"Web Sitesi"}
+      description={"Otel web sitesi — domain, şablon ve rezervasyon motoru entegrasyonu."}
+      >
       <FormSection title="Site">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -80,6 +79,6 @@ export default function WebsiteBuilderSettingsPage() {
           Önizleme: <Link href="/hotel">/hotel</Link> · {config.domain}
         </p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

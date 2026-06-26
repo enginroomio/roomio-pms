@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -55,12 +55,11 @@ export default function IdReaderSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Kimlik Okuyucu"
-      title="Kimlik Okuyucu"
-      description="Pasaport ve kimlik kartı tarama — check-in otomatik doldurma."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Kimlik Okuyucu"}
+      title={"Kimlik Okuyucu"}
+      description={"Pasaport ve kimlik kartı tarama — check-in otomatik doldurma."}
+      >
       <FormSection title="Cihazlar">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -125,6 +124,6 @@ export default function IdReaderSettingsPage() {
           </table>
         </div>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

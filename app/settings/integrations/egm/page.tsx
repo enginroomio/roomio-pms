@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -52,16 +52,11 @@ export default function EgmIntegrationPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > EGM Kimlik Bildirimi"
+    <IntegrationPageLayout
+      segment="EGM / KBS Kimlik Bildirimi"
       title="EGM / KBS Kimlik Bildirimi"
       description="Konaklama kimlik bildirimi — rezervasyon ve check-in ile entegre."
-      actions={
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="secondary" href="/reservations?tab=egm">Rezervasyon EGM listesi</Button>
-          <Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>
-        </div>
-      }
+      actions={<Button variant="secondary" href="/reservations?tab=egm">Rezervasyon EGM listesi</Button>}
     >
       <FormSection title="Bağlantı">
         <FormGrid>
@@ -97,6 +92,6 @@ export default function EgmIntegrationPage() {
           WiFi hotspot loglama için <a href="/settings/compliance/5651">5651 modülü</a> ayarlarını kullanın.
         </p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

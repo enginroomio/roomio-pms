@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -42,12 +42,11 @@ export default function TourOperatorSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Tur Operatörü"
-      title="Tur Operatörü Entegrasyonu"
-      description="TUI, Anex, ETS ve diğer operatörlerden allotment ve manifest senkronu."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Tur Operatörü Entegrasyonu"}
+      title={"Tur Operatörü Entegrasyonu"}
+      description={"TUI, Anex, ETS ve diğer operatörlerden allotment ve manifest senkronu."}
+      >
       <FormSection title="Operatörler">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -79,6 +78,6 @@ export default function TourOperatorSettingsPage() {
         {testMsg ? <p className="roomio-page-desc">{testMsg}</p> : null}
         {syncMsg ? <p className="roomio-page-desc">{syncMsg}</p> : null}
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

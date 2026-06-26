@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -34,12 +34,11 @@ export default function WhatsappSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > WhatsApp API"
-      title="WhatsApp Business API"
-      description="Rezervasyon onayı, check-in hatırlatma ve misafir iletişimi — Meta Cloud API."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"WhatsApp Business API"}
+      title={"WhatsApp Business API"}
+      description={"Rezervasyon onayı, check-in hatırlatma ve misafir iletişimi — Meta Cloud API."}
+      >
       <FormSection title="Bağlantı">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -59,6 +58,6 @@ export default function WhatsappSettingsPage() {
         {saved ? <p className="roomio-page-desc">Kaydedildi.</p> : null}
         {testResult ? <p className="roomio-page-desc">{testResult.message}</p> : null}
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

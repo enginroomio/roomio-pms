@@ -6,8 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { FormActions, FormField, FormGrid, FormSection, Input, Textarea } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { TesaModulesPanel } from '@/components/settings/SettingsHubPanels';
-import { SistemIntegrationActions } from '@/components/sistem/SistemIntegrationActions';
-import { SistemModuleLayout } from '@/components/sistem/SistemModuleLayout';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { roomioFetch } from '@/lib/client/api';
 import { DEFAULT_TESA_CONFIG, TESA_DEFAULTS, type TesaConfig } from '@/lib/integrations/tesa/types';
 
@@ -55,26 +54,23 @@ export default function TesaIntegrationPageClient() {
 
   if (tab === 'modules') {
     return (
-      <SistemModuleLayout
-        segment={['Entegrasyonlar', 'TESA Kapı Kartı', 'Ek Modüller']}
+      <IntegrationPageLayout
+        segment={['TESA Kapı Kartı', 'Ek Modüller']}
         title="Ek Modüller"
         description="TESA Hospitality opsiyonel modül listesi"
         menuSearch="?tab=modules"
-        actions={<SistemIntegrationActions />}
       >
         <TesaTabs active="modules" />
         <TesaModulesPanel />
-      </SistemModuleLayout>
+      </IntegrationPageLayout>
     );
   }
 
   return (
-    <SistemModuleLayout
-      segment={['Entegrasyonlar', 'TESA Kapı Kartı']}
+    <IntegrationPageLayout
+      segment="TESA Kapı Kartı"
       title="TESA Hospitality 7.04.03"
       description="HT24 Industry Standard Protocol — PMS Service TCP (varsayılan port 7779)."
-      menuSearch=""
-      actions={<SistemIntegrationActions />}
     >
       <TesaTabs active="connection" />
       <FormSection title="Bağlantı">
@@ -124,6 +120,6 @@ export default function TesaIntegrationPageClient() {
           }}
         />
       </FormSection>
-    </SistemModuleLayout>
+    </IntegrationPageLayout>
   );
 }

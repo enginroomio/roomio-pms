@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormGrid, FormSection } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -51,12 +51,11 @@ export default function InventorySettingsPage() {
   const lowStock = config.items.filter((i) => i.quantity <= i.minLevel);
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Stok & Envanter"
-      title="Stok & Envanter"
-      description="Depo, stok hareket ve maliyet — çoklu depo ve düşük stok uyarıları."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Stok & Envanter"}
+      title={"Stok & Envanter"}
+      description={"Depo, stok hareket ve maliyet — çoklu depo ve düşük stok uyarıları."}
+      >
       <FormSection title="Stok">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -88,6 +87,6 @@ export default function InventorySettingsPage() {
           </p>
         ) : null}
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

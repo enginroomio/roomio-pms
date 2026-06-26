@@ -54,6 +54,12 @@ export const ROLLOUT_PHASES: RolloutPhase[] = [
       { id: 'sys-raporla', label: 'Raporla', href: '/reports' },
       { id: 'sys-servis', label: 'Servis Programları', href: '/settings/integrations/tesa', screenRef: '256-286' },
       { id: 'sys-dil', label: 'Dil Tanımları', href: '/settings?section=language', screenRef: '287-292' },
+      { id: 'sys-hub', label: 'Sistem Merkezi', href: '/tools/sistem' },
+      { id: 'sys-sql', label: 'SQL Mesaj', href: '/tools/sistem?tab=sql' },
+      { id: 'sys-user-rpt', label: 'Kullanıcı Tanımlı Raporlar', href: '/reports?tab=user' },
+      { id: 'sys-forms', label: 'Form Tasarım Listesi', href: '/reports?tab=forms' },
+      { id: 'sys-5651', label: '5651 Hotspot Loglama', href: '/settings/compliance/5651' },
+      { id: 'sys-pbx', label: 'Grandstream Santral', href: '/settings/integrations/pbx' },
     ],
   },
   {

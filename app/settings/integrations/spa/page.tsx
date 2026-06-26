@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -29,12 +29,11 @@ export default function SpaSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > SPA Yönetimi"
-      title="SPA Yönetimi"
-      description="Tedavi kataloğu, çalışma saatleri ve online rezervasyon."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"SPA Yönetimi"}
+      title={"SPA Yönetimi"}
+      description={"Tedavi kataloğu, çalışma saatleri ve online rezervasyon."}
+      >
       <FormSection title="SPA">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -70,6 +69,6 @@ export default function SpaSettingsPage() {
           </table>
         </div>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }
