@@ -60,9 +60,14 @@ export async function POST(req: Request) {
       ...body,
       id: body.id || `srv-${Date.now()}`,
       refNo,
+      adults: body.adults ?? 1,
+      children: body.children ?? 0,
+      mealPlan: body.mealPlan ?? 'BB',
       createdAt: body.createdAt || new Date().toISOString().slice(0, 10),
       currency: body.currency ?? 'TRY',
       status: body.status ?? 'CONFIRMED',
+      agency: body.agency ?? 'DIRECT',
+      market: body.market ?? 'FIT',
       extraData: Object.keys(extraData).length ? extraData : undefined,
     }, propertyId);
     void archiveGuestFromReservation(propertyId, {

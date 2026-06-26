@@ -31,6 +31,7 @@
     "build:mac-apps": "node scripts/build-mac-app.mjs",
     "install-shortcuts": "node scripts/install-desktop-shortcuts.mjs",
     "test:routes": "node scripts/test-routes.mjs",
+    "test:routes:all": "node scripts/test-routes-all.mjs",
     "test:core-flow": "node scripts/test-core-flow.mjs",
     "test:integrations": "node scripts/test-integrations.mjs",
     "test:integrations:live": "node scripts/test-integrations-live.mjs",

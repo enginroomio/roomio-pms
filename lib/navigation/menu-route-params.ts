@@ -71,9 +71,23 @@ export function reportsCategoryFromReportSlug(report: string | null): string | n
 }
 
 /** Kuruluş ?section= menü alias → gerçek panel anahtarı */
+const KURULUS_SECTION_ALIASES: Record<string, string> = {
+  'source-codes': 'sources',
+  'segment-codes': 'segments',
+  'market-codes': 'markets',
+  'oda-tip': 'room-types',
+  'oda-no': 'rooms',
+  'oda-kat': 'floors',
+  'res-type': 'res-types',
+  'meal-plan': 'meal-plans',
+  'rate-plan': 'rate-plans',
+  'company': 'company-list',
+  'otel': 'otel-bilgileri',
+};
+
 export function normalizeKurulusSection(section: string | null): string | null {
   if (!section) return section;
-  return section;
+  return KURULUS_SECTION_ALIASES[section] ?? section;
 }
 
 /** Kuruluş harici yönlendirme (null = panel içi) */

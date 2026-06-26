@@ -264,7 +264,7 @@ export const SIDEBAR_SUBMENU_BY_KEY: Record<string, SidebarSubItem[]> = {
   'rezervasyon:Servis': [
     sub('Canlı Destek', '/guest-relations'),
     sub('Servis / Yardım', '/guest-relations'),
-    sub('Entegrasyonlar', '/settings/integrations/tesa'),
+    sub('Entegrasyonlar', '/settings/integrations'),
     sub('Rapor Tasarım', '/reports?tab=design'),
   ],
   'rezervasyon:Rezervasyon Listesi': [

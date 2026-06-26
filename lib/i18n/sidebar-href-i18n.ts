@@ -9,6 +9,7 @@ const SIDEBAR_HREF_I18N: Record<string, string> = {
   '/reports?tab=management': 'sidebar.item.managementReports',
   '/settings/integrations/tesa': 'sidebar.item.doorIntegration',
   '/settings/integrations/channel-manager': 'sidebar.sub.channelManager',
+  '/settings/integrations': 'sidebar.item.integrationsHub',
   '/settings/licensing': 'sidebar.item.licensing',
   '/settings?section=sync': 'sidebar.sub.syncStatus',
   '/settings?section=lang-forms': 'sidebar.sub.langForms',

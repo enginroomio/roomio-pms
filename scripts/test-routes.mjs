@@ -219,7 +219,27 @@ const ROUTES = [
   '/settings?section=pbx-lookup',
   '/settings?section=lang-forms',
   '/settings?section=language',
+  '/guest-relations/lost-found',
+  '/settings/licensing',
+  '/settings/privacy',
+  '/settings/integrations',
+  '/reports?tab=special',
+  '/reports?tab=daily',
+  '/reports?tab=user',
+  '/rooms?filter=closed',
+  '/rooms?view=new-rack',
+  '/reports?tab=eod&action=audit',
+  '/settings/compliance/5651?tab=devices',
+  '/settings/compliance/5651?tab=logs',
+  '/reception?tab=kasa',
+  '/reception?tab=kimlik',
+  '/reception/inhouse?tab=daily-card',
+  '/reception/arrivals?tab=prepay',
+  '/reception/vacant?tab=deposit-refund',
+  '/reception/inhouse?tab=room-changes',
 ];
+
+export { ROUTES };
 
 function routeTimeout(path) {
   if (INTEGRATION_API_PREFIXES.some((p) => path.startsWith(p))) return INTEGRATION_TIMEOUT_MS;
@@ -285,18 +305,31 @@ async function main() {
     console.log(' tamam\n');
   }
 
+  const offset = Number(process.env.ROUTE_TEST_OFFSET ?? 0);
+  const limit = process.env.ROUTE_TEST_LIMIT ? Number(process.env.ROUTE_TEST_LIMIT) : ROUTES.length;
+  const routesToTest = ROUTES.slice(offset, Math.min(offset + limit, ROUTES.length));
+
+  if (offset > 0 || limit < ROUTES.length) {
+    console.log(`Batch: ${offset}–${offset + routesToTest.length - 1} / ${ROUTES.length}\n`);
+  }
+
   const results = [];
-  for (let i = 0; i < ROUTES.length; i++) {
-    if (i > 0 && i % 25 === 0) {
-      const healthy = await waitForHealth();
+  for (let i = 0; i < routesToTest.length; i++) {
+    const globalIndex = offset + i;
+    if (i > 0 && i % 20 === 0) {
+      const healthy = await waitForHealth(5, 1500);
       if (!healthy) {
-        console.warn(`\n· Sunucu route ${i}/${ROUTES.length} civarında yanıt vermiyor — kalan rotalar atlanıyor\n`);
-        break;
+        console.warn(`\n· Sunucu route ${globalIndex}/${ROUTES.length} civarında yanıt vermiyor — 10 sn bekleniyor\n`);
+        await new Promise((r) => setTimeout(r, 10_000));
+        if (!(await waitForHealth(3, 2000))) {
+          console.warn('· Sunucu hâlâ yanıt vermiyor — kalan rotalar atlanıyor\n');
+          break;
+        }
       }
-      await new Promise((r) => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 800));
     }
-    results.push(await checkWithRetry(ROUTES[i]));
-    await new Promise((r) => setTimeout(r, INTEGRATION_API_PREFIXES.some((p) => ROUTES[i].startsWith(p)) ? 120 : 60));
+    results.push(await checkWithRetry(routesToTest[i]));
+    await new Promise((r) => setTimeout(r, INTEGRATION_API_PREFIXES.some((p) => routesToTest[i].startsWith(p)) ? 120 : 60));
   }
   let failed = 0;
   for (const r of results) {
@@ -305,10 +338,10 @@ async function main() {
     console.log(`${mark} ${r.status} ${r.path}${extra}`);
     if (!r.ok) failed++;
   }
-  const coreCount = Math.min(CORE_ROUTE_COUNT, results.length);
-  const coreOk = results.slice(0, coreCount).filter((r) => r.ok).length;
-  console.log(`\n${results.length - failed}/${results.length} OK (çekirdek ${coreOk}/${coreCount})`);
-  if (coreOk < coreCount) process.exit(1);
+  const coreCount = offset === 0 ? Math.min(CORE_ROUTE_COUNT, results.length) : 0;
+  const coreOk = offset === 0 ? results.slice(0, coreCount).filter((r) => r.ok).length : coreCount;
+  console.log(`\n${results.length - failed}/${results.length} OK${offset === 0 ? ` (çekirdek ${coreOk}/${coreCount})` : ''}`);
+  if (offset === 0 && coreOk < coreCount) process.exit(1);
   if (failed > 0) {
     console.warn(`· ${failed} rota başarısız — çekirdek geçti, devam ediliyor`);
   }
