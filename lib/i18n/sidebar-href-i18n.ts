@@ -75,7 +75,6 @@ const SIDEBAR_HREF_I18N: Record<string, string> = {
   '/settings?section=pbx-calls': 'sidebar.sub.pbxCalls',
   '/settings?section=pbx-lookup': 'sidebar.sub.pbxLookup',
   '/guest-relations?tab=directory': 'sidebar.sub.directory',
-  '/settings/integrations': 'sidebar.sistem.servicePrograms',
   '/settings/compliance/5651': 'sidebar.sistem.hotspot5651',
 };
 
