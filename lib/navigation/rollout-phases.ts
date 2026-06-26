@@ -69,6 +69,11 @@ export const ROLLOUT_PHASES: RolloutPhase[] = [
     description: 'Yeni kayıt, listeler, blokaj, aktarım',
     steps: [
       {
+        id: 'rez-hub',
+        label: 'Rezervasyon Merkezi',
+        href: '/reservations?hub=rezervasyon',
+      },
+      {
         id: 'rez-grafik',
         label: 'Grafikler (F1)',
         href: '/reservations/calendar',
@@ -76,6 +81,8 @@ export const ROLLOUT_PHASES: RolloutPhase[] = [
       },
       { id: 'rez-new', label: 'Yeni Rezervasyon (F2)', href: '/reservations/new' },
       { id: 'rez-list', label: 'Rezervasyon Listesi', href: '/reservations' },
+      { id: 'rez-import', label: 'Acenta Aktarım', href: '/reservations?tab=import' },
+      { id: 'rez-availability', label: 'Müsaitlik / Fiyat', href: '/reservations?tab=availability&prices=1' },
       { id: 'rez-inhouse', label: 'Konaklayanlar Listesi', href: '/reception/inhouse' },
       { id: 'rez-vacant', label: 'Boş Oda Listesi', href: '/reception/vacant' },
       { id: 'rez-block', label: 'Hızlı Blokaj', href: '/rooms?tab=blocking' },

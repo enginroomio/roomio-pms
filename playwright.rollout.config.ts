@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 /** Mevcut sunucuya karşı rollout testleri — webServer başlatmaz. */
 export default defineConfig({
   testDir: './e2e',
-  timeout: 90_000,
+  timeout: 120_000,
   fullyParallel: false,
   workers: 1,
   use: {

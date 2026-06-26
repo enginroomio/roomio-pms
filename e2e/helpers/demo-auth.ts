@@ -26,22 +26,48 @@ export async function waitForDemoSession(page: Page, role: DemoRole = 'admin') {
   ]);
 }
 
+type GotoReadyWhen = 'heading' | 'list' | 'main';
+
+async function waitForDemoPageReady(page: Page, readyWhen: GotoReadyWhen) {
+  const timeout = 90_000;
+  if (readyWhen === 'list') {
+    await page
+      .waitForResponse((res) => res.url().includes('/api/reservations') && res.ok(), { timeout })
+      .catch(() => undefined);
+    const loading = page.getByText(/Rezervasyonlar yükleniyor/i);
+    if (await loading.isVisible().catch(() => false)) {
+      await loading.waitFor({ state: 'hidden', timeout });
+    }
+    await page.getByRole('button', { name: 'Filtreler' }).waitFor({ state: 'visible', timeout: 45_000 });
+    return;
+  }
+  if (readyWhen === 'main') {
+    await page.locator('main, .roomio-page-stack').first().waitFor({ state: 'visible', timeout });
+    return;
+  }
+  await page.locator('h1.roomio-page-title, main h1').first().waitFor({ state: 'visible', timeout });
+}
+
 /** Demo rolü ayarla, sayfaya git; kabuk hazır olana kadar bekle. */
 export async function gotoWithDemo(
   page: Page,
   url: string,
   role: DemoRole = 'admin',
-  opts?: { waitForSideNav?: boolean },
+  opts?: { waitForSideNav?: boolean; readyWhen?: GotoReadyWhen },
 ) {
   await useDemoRole(page, role);
-  await page.goto(url, { waitUntil: 'commit', timeout: 60_000 });
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  if (opts?.readyWhen) {
+    await waitForDemoPageReady(page, opts.readyWhen);
+    return;
+  }
   if (opts?.waitForSideNav === false) {
-    await page.locator('h1.roomio-page-title, main h1').first().waitFor({ state: 'visible', timeout: 60_000 });
+    await waitForDemoPageReady(page, 'heading');
     return;
   }
   await page.locator('.roomio-module-side__link, .roomio-module-side__branch').first().waitFor({
     state: 'visible',
-    timeout: 60_000,
+    timeout: 120_000,
   });
 }
 

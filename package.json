@@ -44,6 +44,8 @@
     "test:rollout:sistem:e2e": "playwright test e2e/rollout-sistem.spec.ts -c playwright.rollout.config.ts",
     "test:menu-params:e2e": "playwright test e2e/menu-params.spec.ts -c playwright.rollout.config.ts",
     "test:menu-params:sistem:e2e": "playwright test e2e/menu-params-sistem.spec.ts -c playwright.rollout.config.ts",
+    "test:rollout:rezervasyon:e2e": "playwright test e2e/rollout-rezervasyon.spec.ts -c playwright.rollout.config.ts",
+    "test:menu-params:rezervasyon:e2e": "playwright test e2e/menu-params-rezervasyon.spec.ts -c playwright.rollout.config.ts",
     "test:elektra-modules:live": "node scripts/test-elektra-modules-live.mjs",
     "test:faz4": "node scripts/test-faz4-steps.mjs",
     "test:faz5": "node scripts/test-faz5-steps.mjs",
