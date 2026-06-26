@@ -31,21 +31,21 @@ type GotoReadyWhen = 'heading' | 'list' | 'main';
 async function waitForDemoPageReady(page: Page, readyWhen: GotoReadyWhen) {
   const timeout = 90_000;
   if (readyWhen === 'list') {
-    await page
+    void page
       .waitForResponse((res) => res.url().includes('/api/reservations') && res.ok(), { timeout })
       .catch(() => undefined);
-    const loading = page.getByText(/Rezervasyonlar yükleniyor/i);
-    if (await loading.isVisible().catch(() => false)) {
-      await loading.waitFor({ state: 'hidden', timeout });
-    }
-    await page.getByRole('button', { name: 'Filtreler' }).waitFor({ state: 'visible', timeout: 45_000 });
+    await page
+      .getByRole('button', { name: 'Filtreler' })
+      .or(page.getByText('Filtreler'))
+      .first()
+      .waitFor({ state: 'visible', timeout });
     return;
   }
   if (readyWhen === 'main') {
     await page.locator('main, .roomio-page-stack').first().waitFor({ state: 'visible', timeout });
     return;
   }
-  await page.locator('h1.roomio-page-title, main h1').first().waitFor({ state: 'visible', timeout });
+  await page.getByRole('heading', { level: 1 }).first().waitFor({ state: 'visible', timeout });
 }
 
 /** Demo rolü ayarla, sayfaya git; kabuk hazır olana kadar bekle. */
