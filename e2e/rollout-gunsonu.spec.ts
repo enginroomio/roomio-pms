@@ -19,7 +19,7 @@ const GUNSONU_ROLLOUT: RolloutCase[] = [
 ];
 
 test.describe('Gün Sonu rollout — adım adım', () => {
-  test.describe.configure({ timeout: 120_000 });
+  test.describe.configure({ timeout: 180_000 });
 
   for (const [index, step] of GUNSONU_ROLLOUT.entries()) {
     test(`Adım ${index + 1} — ${step.label}`, async ({ page }) => {

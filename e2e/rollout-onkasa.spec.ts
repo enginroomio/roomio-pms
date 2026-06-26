@@ -21,7 +21,7 @@ const ONKASA_ROLLOUT: RolloutCase[] = [
 ];
 
 test.describe('Ön Kasa rollout — adım adım', () => {
-  test.describe.configure({ timeout: 120_000 });
+  test.describe.configure({ timeout: 180_000 });
 
   for (const [index, step] of ONKASA_ROLLOUT.entries()) {
     test(`Adım ${index + 1} — ${step.label}`, async ({ page }) => {

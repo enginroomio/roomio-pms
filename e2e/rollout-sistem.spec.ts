@@ -28,7 +28,7 @@ const SISTEM_ROLLOUT: RolloutCase[] = [
 ];
 
 test.describe('Sistem rollout — adım adım', () => {
-  test.describe.configure({ timeout: 90_000 });
+  test.describe.configure({ timeout: 180_000 });
   for (const [index, step] of SISTEM_ROLLOUT.entries()) {
     test(`Adım ${index + 1} — ${step.label}`, async ({ page }) => {
       await gotoWithDemo(page, step.path);

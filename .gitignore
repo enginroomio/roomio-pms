@@ -16,3 +16,7 @@ test-results/
 .roomio-data/
 .roomio/
 tsconfig.tsbuildinfo
+.verify-rollout-last.txt
+.verify-menu-params-last.txt
+.route-failures.txt
+.route-test-last.txt

@@ -12,6 +12,7 @@ const EXTRA_SECTION_KEYS: Record<string, string> = {
   'lang-menus': 'sidebar.sub.langMenus',
   'lang-reports': 'sidebar.sub.langReports',
   nationalities: 'nav.kurulus.nationalities',
+  sync: 'nav.kurulus.sync',
   'rate-plans': 'nav.kontrat.rate-plans',
   agencies: 'nav.kontrat.agencies',
   extras: 'nav.kontrat.extras',

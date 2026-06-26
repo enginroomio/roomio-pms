@@ -24,15 +24,15 @@ const SISTEM_MENU_ROUTES: { path: string; heading: RegExp | string }[] = [
   { path: '/settings/integrations/booking-engine', heading: /Rezervasyon Motoru/i },
   { path: '/settings/compliance/5651', heading: /5651 Hotspot/i },
   { path: '/settings?section=language', heading: /Dil Tanımları/i },
-  { path: '/settings?section=lang-forms', heading: /Form Metin/i },
-  { path: '/settings?section=lang-menus', heading: /Menü Metin/i },
-  { path: '/settings?section=lang-reports', heading: /Rapor Metin/i },
-  { path: '/settings?section=nationalities', heading: /Uyruk/i },
-  { path: '/settings?section=sync', heading: /Sync|Senkron/i },
+  { path: '/settings?section=lang-forms', heading: /Form Metinleri/i },
+  { path: '/settings?section=lang-menus', heading: /Menü Metinleri/i },
+  { path: '/settings?section=lang-reports', heading: /Rapor Metinleri/i },
+  { path: '/settings?section=nationalities', heading: /Uyruk Tanımları/i },
+  { path: '/settings?section=sync', heading: /Entegrasyon Sync|Sync Durumu/i },
   { path: '/settings?section=users', heading: /Kullanıcı Tanımları/i },
-  { path: '/settings?section=rate-plans', heading: /Fiyat/i },
-  { path: '/settings?tab=room-types', heading: /Oda Tip/i },
-  { path: '/settings?section=inventory', heading: /Ürün/i },
+  { path: '/settings?section=rate-plans', heading: /Fiyat Listeleri/i },
+  { path: '/settings?tab=room-types', heading: /Oda Tanımları/i },
+  { path: '/settings?section=inventory', heading: /Ürün Kartları/i },
 ];
 
 test.describe('Sistem menü URL parametreleri', () => {
@@ -40,8 +40,10 @@ test.describe('Sistem menü URL parametreleri', () => {
 
   for (const { path, heading } of SISTEM_MENU_ROUTES) {
     test(`${path} açılır`, async ({ page }) => {
-      await gotoWithDemo(page, path, 'admin', { waitForSideNav: false });
-      await expect(page.getByRole('heading', { name: heading }).first()).toBeVisible({ timeout: 60_000 });
+      await gotoWithDemo(page, path, 'admin', { waitForSideNav: false, readyWhen: 'heading' });
+      await expect(page.getByRole('heading', { name: heading, level: 1 }).first()).toBeVisible({
+        timeout: 60_000,
+      });
     });
   }
 });

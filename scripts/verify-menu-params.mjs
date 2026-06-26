@@ -1,30 +1,26 @@
 #!/usr/bin/env node
 /**
- * Tüm rollout-*.spec.ts E2E (chromium gerekli).
- * verify:ui alt kümesini genişletir: günsonu, kat, misafir, raporlar, sistem dahil.
- * Kullanım: npm run verify:rollout
+ * Tüm menu-params*.spec.ts E2E (chromium gerekli).
+ * Kullanım: npm run verify:menu-params
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+const MENU_PARAMS_SPECS = [
+  'e2e/menu-params-sistem.spec.ts',
+  'e2e/menu-params-rezervasyon.spec.ts',
+  'e2e/menu-params-resepsiyon.spec.ts',
+  'e2e/menu-params-onkasa.spec.ts',
+  'e2e/menu-params-kat.spec.ts',
+  'e2e/menu-params-misafir.spec.ts',
+  'e2e/menu-params-raporlar.spec.ts',
+  'e2e/menu-params-gunsonu.spec.ts',
+];
 const ROOT = process.cwd();
-const PORT = process.env.VERIFY_PORT ?? '3117';
+const PORT = process.env.VERIFY_PORT ?? '3119';
 const BASE = `http://127.0.0.1:${PORT}`;
 const REUSE = process.env.PLAYWRIGHT_REUSE_SERVER === '1';
-
-const ROLLOUT_SPECS = [
-  'e2e/rollout-shell.spec.ts',
-  'e2e/rollout-home.spec.ts',
-  'e2e/rollout-rezervasyon.spec.ts',
-  'e2e/rollout-resepsiyon.spec.ts',
-  'e2e/rollout-onkasa.spec.ts',
-  'e2e/rollout-gunsonu.spec.ts',
-  'e2e/rollout-kat.spec.ts',
-  'e2e/rollout-misafir.spec.ts',
-  'e2e/rollout-raporlar.spec.ts',
-  'e2e/rollout-sistem.spec.ts',
-];
 
 function chromiumInstalled() {
   const r = spawnSync(
@@ -53,33 +49,12 @@ function killPort() {
   spawnSync(`lsof -ti :${PORT} 2>/dev/null | xargs kill -9 2>/dev/null; true`, { shell: true, stdio: 'ignore' });
 }
 
-const HEALTH_PROBE_PATHS = ['/', '/rooms?tab=blocking', '/reservations'];
-
-async function waitHealth(maxMs = 180_000, { deep = false } = {}) {
+async function waitHealth(maxMs = 180_000) {
   const start = Date.now();
   while (Date.now() - start < maxMs) {
     try {
-      const paths = deep ? HEALTH_PROBE_PATHS : ['/'];
-      let allOk = true;
-      for (const path of paths) {
-        const res = await fetch(`${BASE}${path}`, { signal: AbortSignal.timeout(25_000) });
-        if (!res.ok) {
-          allOk = false;
-          break;
-        }
-      }
-      if (!allOk) throw new Error('probe failed');
-      if (deep) {
-        try {
-          const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(10_000) });
-          if (res.ok) {
-            const j = await res.json();
-            if (j.ok) return true;
-          }
-        } catch {
-          /* dev derlemesinde /api/health geçici yanıt vermeyebilir */
-        }
-      }
+      const home = await fetch(`${BASE}/`, { signal: AbortSignal.timeout(20_000) });
+      if (!home.ok) throw new Error(`home ${home.status}`);
       return true;
     } catch {
       /* retry */
@@ -96,8 +71,8 @@ async function main() {
   }
 
   console.log('════════════════════════════════════════');
-  console.log('  Roomio — verify:rollout (tüm rollout E2E)');
-  console.log(`  Port: ${PORT} — ${ROLLOUT_SPECS.length} spec`);
+  console.log('  Roomio — verify:menu-params (tüm URL E2E)');
+  console.log(`  Port: ${PORT} — ${MENU_PARAMS_SPECS.length} spec`);
   console.log('════════════════════════════════════════');
 
   let server = null;
@@ -115,9 +90,8 @@ async function main() {
       console.error('✗ Sunucu hazır değil');
       process.exit(1);
     }
-    await waitHealth(120_000, { deep: true });
   } else if (!(await waitHealth())) {
-    console.error(`✗ Mevcut sunucu hazır değil (${BASE}) — önce dev sunucuyu başlatın veya PLAYWRIGHT_REUSE_SERVER=0 kullanın`);
+    console.error(`✗ Mevcut sunucu hazır değil (${BASE})`);
     process.exit(1);
   }
 
@@ -128,7 +102,7 @@ async function main() {
     ROOMIO_AUTH_REQUIRED: '0',
   };
 
-  for (const spec of ROLLOUT_SPECS) {
+  for (const spec of MENU_PARAMS_SPECS) {
     if (!(await waitHealth(120_000))) {
       console.error(`✗ Sunucu yanıt vermiyor — ${spec} öncesi durdu`);
       if (server) server.kill('SIGTERM');
@@ -144,8 +118,8 @@ async function main() {
   }
 
   console.log('\n════════════════════════════════════════');
-  console.log('  ✓ verify:rollout tamamlandı');
-  console.log(`    · ${ROLLOUT_SPECS.length} rollout spec`);
+  console.log('  ✓ verify:menu-params tamamlandı');
+  console.log(`    · ${MENU_PARAMS_SPECS.length} menu-params spec`);
   console.log('════════════════════════════════════════\n');
 }
 
