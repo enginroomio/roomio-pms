@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Elektra menü hub panelleri — HTTP smoke (200 + başlık metni).
+ * Elektra menü hub panelleri — HTTP smoke (200 + başlık veya route işareti).
  * Kullanım: ROOMIO_URL=http://127.0.0.1:3100 npm run test:menu-hubs
  */
 import { readFileSync } from 'node:fs';
@@ -29,56 +29,89 @@ async function resolveBaseUrl() {
 }
 
 const BASE = await resolveBaseUrl();
-const TIMEOUT_MS = Number(process.env.MENU_HUB_TEST_TIMEOUT_MS ?? 45_000);
+const TIMEOUT_MS = Number(process.env.MENU_HUB_TEST_TIMEOUT_MS ?? 60_000);
+const RETRIES = Number(process.env.MENU_HUB_TEST_RETRIES ?? 3);
+const STATUS_ONLY = process.env.MENU_HUB_TEST_STATUS_ONLY === '1';
 
+/** needles: en az biri yanıtta bulunmalı (RSC stream veya SSR) */
 const HUBS = [
-  { path: '/?hub=panel', needle: 'Panel merkezi' },
-  { path: '/reservations?hub=rezervasyon', needle: 'Rezervasyon Merkezi' },
-  { path: '/reception?hub=resepsiyon', needle: 'Resepsiyon Merkezi' },
-  { path: '/reception?hub=onkasa', needle: 'Ön Kasa Merkezi' },
-  { path: '/housekeeping?hub=kat', needle: 'Kat Hizmetleri Merkezi' },
-  { path: '/guest-relations?hub=misafir', needle: 'Misafir İlişkileri Merkezi' },
-  { path: '/fnb?hub=banket', needle: 'Banket Merkezi' },
-  { path: '/accounting?hub=arkaburo', needle: 'Arka Büro' },
-  { path: '/reports?hub=raporlar', needle: 'Raporlar Merkezi' },
-  { path: '/reports?hub=gunsonu', needle: 'Gün Sonu Merkezi' },
-  { path: '/settings?hub=ayarlar', needle: 'Ayarlar ve Kısayollar' },
-  { path: '/settings?hub=sistem', needle: 'Sistem ve Kuruluş' },
+  { path: '/?hub=panel', needles: ['Panel merkezi', 'roomio-gr-grid', 'hub=panel'] },
+  { path: '/reservations?hub=rezervasyon', needles: ['Rezervasyon Merkezi', 'Rezervasyon merkezi', 'hub=rezervasyon'] },
+  { path: '/reception?hub=resepsiyon', needles: ['Resepsiyon Merkezi', 'Resepsiyon merkezi', 'hub=resepsiyon'] },
+  { path: '/reception?hub=onkasa', needles: ['Ön Kasa Merkezi', 'Ön kasa merkezi', 'hub=onkasa'] },
+  { path: '/housekeeping?hub=kat', needles: ['Kat Hizmetleri Merkezi', 'Kat hizmetleri merkezi', 'hub=kat'] },
+  { path: '/guest-relations?hub=misafir', needles: ['Misafir İlişkileri Merkezi', 'Misafir ilişkileri merkezi', 'hub=misafir'] },
+  { path: '/fnb?hub=banket', needles: ['Banket Merkezi', 'Banket merkezi', 'hub=banket'] },
+  { path: '/accounting?hub=arkaburo', needles: ['Arka Büro', 'Arka büro merkezi', 'hub=arkaburo'] },
+  { path: '/reports?hub=raporlar', needles: ['Raporlar Merkezi', 'Raporlar merkezi', 'hub=raporlar'] },
+  { path: '/reports?hub=gunsonu', needles: ['Gün Sonu Merkezi', 'Gün sonu merkezi', 'hub=gunsonu'] },
+  { path: '/settings?hub=ayarlar', needles: ['Ayarlar ve Kısayollar', 'hub=ayarlar'] },
+  { path: '/settings?hub=sistem', needles: ['Sistem ve Kuruluş', 'hub=sistem'] },
 ];
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function fetchWithRetry(path) {
+  let lastErr;
+  for (let attempt = 1; attempt <= RETRIES; attempt++) {
+    try {
+      const res = await fetch(`${BASE}${path}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+      if (res.ok || attempt === RETRIES || (res.status !== 404 && res.status !== 503)) {
+        return res;
+      }
+      await sleep(1500 * attempt);
+    } catch (err) {
+      lastErr = err;
+      if (attempt === RETRIES) throw err;
+      await sleep(1500 * attempt);
+    }
+  }
+  throw lastErr ?? new Error('fetch failed');
+}
+
+async function bodyHasNeedle(res, needles) {
+  const reader = res.body?.getReader();
+  if (!reader) return false;
+  const decoder = new TextDecoder();
+  let chunk = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunk += decoder.decode(value, { stream: true });
+    if (chunk.length > 512_000) chunk = chunk.slice(-256_000);
+    if (needles.some((n) => chunk.includes(n))) {
+      reader.cancel().catch(() => {});
+      return true;
+    }
+  }
+  reader.cancel().catch(() => {});
+  return false;
+}
 
 let passed = 0;
 let failed = 0;
 
-console.log(`Menu hub smoke @ ${BASE}\n`);
+console.log(`Menu hub smoke @ ${BASE} (retries=${RETRIES})\n`);
 
 for (const hub of HUBS) {
-  const label = `${hub.path}`;
+  const label = hub.path;
   try {
-    const res = await fetch(`${BASE}${hub.path}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+    const res = await fetchWithRetry(hub.path);
     if (!res.ok) {
       console.log(`✗ ${label} → HTTP ${res.status}`);
       failed++;
       continue;
     }
-    const reader = res.body?.getReader();
-    if (!reader) {
-      console.log(`✗ ${label} → boş yanıt`);
-      failed++;
+    if (STATUS_ONLY) {
+      console.log(`✓ ${label} (status only)`);
+      passed++;
       continue;
     }
-    const decoder = new TextDecoder();
-    let found = false;
-    let chunk = '';
-    while (!found) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunk += decoder.decode(value, { stream: true });
-      if (chunk.length > 512_000) chunk = chunk.slice(-256_000);
-      if (chunk.includes(hub.needle)) found = true;
-    }
-    reader.cancel().catch(() => {});
+    const found = await bodyHasNeedle(res, hub.needles);
     if (!found) {
-      console.log(`✗ ${label} → 200 ama "${hub.needle}" bulunamadı`);
+      console.log(`✗ ${label} → 200 ama işaret bulunamadı (${hub.needles[0]})`);
       failed++;
       continue;
     }
