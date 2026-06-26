@@ -45,7 +45,7 @@ async function waitForDemoPageReady(page: Page, readyWhen: GotoReadyWhen) {
     await page.locator('main, .roomio-page-stack').first().waitFor({ state: 'visible', timeout });
     return;
   }
-  await page.getByRole('heading', { level: 1 }).first().waitFor({ state: 'visible', timeout });
+  await page.locator('h1.roomio-page-title, main h1').first().waitFor({ state: 'visible', timeout });
 }
 
 /** Demo rolü ayarla, sayfaya git; kabuk hazır olana kadar bekle. */

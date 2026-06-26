@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { gotoWithDemo } from './helpers/demo-auth';
 
 test.describe('Ana Sayfa rollout — adım adım', () => {
   test.beforeEach(async ({ page }) => {
@@ -42,7 +43,9 @@ test.describe('Ana Sayfa rollout — adım adım', () => {
   });
 
   test('Adım 5 — Tam oda rack (F12)', async ({ page }) => {
-    await page.goto('/rooms', { waitUntil: 'domcontentloaded', timeout: 90_000 });
-    await expect(page.getByRole('heading', { name: /Room Rack/i }).first()).toBeVisible({ timeout: 30_000 });
+    await gotoWithDemo(page, '/rooms', 'admin', { waitForSideNav: false, readyWhen: 'heading' });
+    await expect(page.getByRole('heading', { name: /Room Rack \(F12\)/i }).first()).toBeVisible({
+      timeout: 30_000,
+    });
   });
 });

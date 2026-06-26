@@ -2,9 +2,8 @@ import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
 import { appendAuditLog } from '@/lib/server/audit-log';
 import {
-  folioBalance,
+  countReservationsWithCompanyFolioBalance,
   getCashRegistersServer,
-  getFolioLinesServer,
 } from '@/lib/server/folio-cash';
 import { getDepositsServer } from '@/lib/server/cash-deposit';
 import {
@@ -57,11 +56,10 @@ export async function runNightAuditPreCloseChecks(
 
   const reservations = await getAllReservationsServer(prop);
   const inHouse = reservations.filter((r) => r.status === 'CHECKED_IN');
-  let companyFolioOpen = 0;
-  for (const r of inHouse) {
-    const lines = await getFolioLinesServer(r.id, prop, 'company');
-    if (folioBalance(lines) > 0) companyFolioOpen += 1;
-  }
+  const companyFolioOpen = await countReservationsWithCompanyFolioBalance(
+    inHouse.map((r) => r.id),
+    prop,
+  );
   checks.push({
     id: 'company-folio',
     category: 'Folyo',
