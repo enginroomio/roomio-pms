@@ -21,7 +21,7 @@ const REZERVASYON_ROLLOUT: RolloutCase[] = [
   { label: 'Durum Takip', path: '/reservations?track=1', listAssert: true, trackBanner: true, readyWhen: 'list' },
   { label: 'Konaklayanlar', path: '/reception/inhouse', heading: /Konaklayanlar/i, readyWhen: 'heading' },
   { label: 'Boş Oda Listesi', path: '/reception/vacant', heading: /Boş Oda/i, readyWhen: 'heading' },
-  { label: 'Hızlı Blokaj', path: '/rooms?tab=blocking', heading: /Hızlı Blokaj/i, readyWhen: 'main' },
+  { label: 'Hızlı Blokaj', path: '/rooms?tab=blocking', heading: /Hızlı Blokaj/i, readyWhen: 'heading' },
 ];
 
 test.describe('Rezervasyon rollout — adım adım', () => {
