@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      DATABASE_URL: file:.roomio-data/ci-rollout.db
+      DATABASE_URL: file:${{ github.workspace }}/.roomio-data/ci-rollout.db
       ROOMIO_JWT_SECRET: ci-test-secret-at-least-32-characters-long
       ROOMIO_AUTH_REQUIRED: '0'
       ROOMIO_DEMO_AUTH: '1'
@@ -26,6 +26,7 @@ jobs:
       ROOMIO_URL: http://127.0.0.1:3100
       PLAYWRIGHT_REUSE_SERVER: '1'
       NODE_OPTIONS: --max-old-space-size=4096
+      CI: true
 
     steps:
       - uses: actions/checkout@v4
@@ -50,23 +51,14 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Start server
-        run: |
-          if [ -f .next/standalone/server.js ]; then
-            (cd .next/standalone && PORT=3100 HOSTNAME=127.0.0.1 node server.js) &
-          else
-            npx next start -H 127.0.0.1 -p 3100 &
-          fi
+        run: npx next start -H 127.0.0.1 -p 3100 &
         env:
           NODE_ENV: production
-          DATABASE_URL: file:.roomio-data/ci-rollout.db
-          ROOMIO_JWT_SECRET: ci-test-secret-at-least-32-characters-long
-          ROOMIO_AUTH_REQUIRED: '0'
-          ROOMIO_DEMO_AUTH: '1'
 
       - name: Wait for health
         run: |
           for i in $(seq 1 60); do
-            if curl -sf http://127.0.0.1:3100/api/health >/dev/null; then exit 0; fi
+            if curl -sf http://127.0.0.1:3100/api/health | grep -q '"ok":true'; then exit 0; fi
             sleep 2
           done
           echo "Server did not become healthy" >&2
