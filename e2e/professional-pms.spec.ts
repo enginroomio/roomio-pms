@@ -70,7 +70,7 @@ test.describe('Profesyonel PMS — Opera/Fidelio parity', () => {
   test('reception UI — queue and guest profile pages', async ({ page }) => {
     await page.goto('/reception/queue');
     await expect(page.getByRole('heading', { name: 'Oda Bekleme Kuyruğu' })).toBeVisible();
-    await expect(page.getByText('Kuyruğa Ekle')).toBeVisible();
+    await expect(page.getByText('Kuyruğa Ekle').first()).toBeVisible();
 
     await page.goto('/reception/guest-profile');
     await expect(page.getByRole('heading', { name: /Misafir Profil/i })).toBeVisible();

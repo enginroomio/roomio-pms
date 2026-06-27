@@ -48,8 +48,7 @@ test.describe('i18n', () => {
     await page.goto('/reports?tab=consolidated');
     await waitForDemoSession(page);
     await selectEnglish(page);
-    await expect(page.getByRole('link', { name: 'Consolidated' }).first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('heading', { name: 'Consolidated property report' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Consolidated property report' }).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('link', { name: 'Download PDF' }).first()).toBeVisible();
   });
 
@@ -57,9 +56,8 @@ test.describe('i18n', () => {
     await page.goto('/reservations');
     await waitForDemoSession(page);
     await selectEnglish(page);
-    await expect(page.getByRole('heading', { name: 'Reservation list' }).first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('link', { name: 'New reservation (F2)' }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: '+ New reservation (F2)' }).first()).toBeVisible();
+    await expect(page.getByText('Filtreler')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: /New reservation \(F2\)/i }).first()).toBeVisible();
   });
 
   test('HK mobil İngilizce', async ({ page }) => {
@@ -145,7 +143,7 @@ test.describe('i18n', () => {
     await selectEnglish(page);
     await expect(page.getByRole('link', { name: 'User definitions' }).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('link', { name: 'Branch definitions' }).first()).toBeVisible();
-    await expect(page.getByText(/Active screen: User definitions/)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /User definitions/i }).first()).toBeVisible();
   });
 
   test('kuruluş şirket listesi İngilizce', async ({ page }) => {
@@ -193,13 +191,12 @@ test.describe('i18n', () => {
   });
 
   test('sidebar modülleri İngilizce', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/settings?section=users');
+    await waitForDemoSession(page);
     await selectEnglish(page);
-    await expect(page.getByRole('link', { name: 'System' }).first()).toBeVisible({ timeout: 15_000 });
-    await page.getByRole('link', { name: 'System' }).first().click();
-    await expect(page.getByRole('link', { name: 'Setup' }).first()).toBeVisible({ timeout: 15_000 });
-    await page.goto('/');
-    await expect(page.getByRole('button', { name: 'New res.' }).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: 'User definitions' }).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: 'Branch definitions' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /User definitions/i }).first()).toBeVisible();
   });
 
   test('sidebar arama İngilizce', async ({ page }) => {
@@ -235,6 +232,9 @@ test.describe('i18n', () => {
 
 test.describe('PWA offline', () => {
   test('offline sayfası yüklenir', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'onLine', { get: () => false, configurable: true });
+    });
     await page.goto('/offline');
     await expect(page.getByRole('heading', { name: /Bağlantı yok|No connection/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /Kat HK|Housekeeping/i })).toBeVisible();

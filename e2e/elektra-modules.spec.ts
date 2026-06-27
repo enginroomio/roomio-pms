@@ -446,9 +446,9 @@ test.describe('Elektra modülleri — UI', () => {
 
   test('/restaurant, /carbon, /staff ve /hr sayfaları', async ({ page }) => {
     await page.goto('/restaurant');
-    await expect(page.locator('.roomio-public-portal__brand strong')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('.roomio-public-portal__brand strong').first()).toBeVisible({ timeout: 15_000 });
     await page.goto('/carbon');
-    await expect(page.locator('.roomio-public-portal__brand strong')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('.roomio-public-portal__brand strong').first()).toBeVisible({ timeout: 15_000 });
     await page.goto('/staff');
     await expect(page.getByText(/Personel mobil uygulaması|Lite Mobile/i).first()).toBeVisible({ timeout: 15_000 });
     await page.goto('/hr');

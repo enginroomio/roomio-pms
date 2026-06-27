@@ -10,9 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      DATABASE_URL: file:.roomio-data/ci.db
+      DATABASE_URL: file:${{ github.workspace }}/.roomio-data/ci.db
       ROOMIO_JWT_SECRET: ci-test-secret-at-least-32-characters-long
       ROOMIO_AUTH_REQUIRED: '0'
+      ROOMIO_DEMO_AUTH: '1'
+      CI: true
 
     steps:
       - uses: actions/checkout@v4
@@ -42,15 +44,12 @@ jobs:
         run: npx next start -H 127.0.0.1 -p 3100 &
         env:
           NODE_ENV: production
-          ROOMIO_AUTH_REQUIRED: '0'
           ROOMIO_DEMO_AUTH: '1'
-          DATABASE_URL: file:.roomio-data/ci.db
-          ROOMIO_JWT_SECRET: ci-test-secret-at-least-32-characters-long
 
       - name: Wait for health
         run: |
           for i in $(seq 1 60); do
-            if curl -sf http://127.0.0.1:3100/api/health >/dev/null; then exit 0; fi
+            if curl -sf http://127.0.0.1:3100/api/health | grep -q '"ok":true'; then exit 0; fi
             sleep 2
           done
           echo "Server did not become healthy" >&2
