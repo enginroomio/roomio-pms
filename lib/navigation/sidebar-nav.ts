@@ -42,10 +42,11 @@ function slug(text: string): string {
 function subToNav(id: string, item: SidebarSubItem): SidebarNavItem {
   if (item.separator) return { id: `${id}-sep`, label: '', icon: 'minus', separator: true };
   const children = item.children?.map((c, i) => subToNav(`${id}-${i}`, c));
+  const href = item.href && item.href !== '#' ? item.href : undefined;
   return {
     id,
     label: item.label,
-    href: children?.length ? undefined : item.href,
+    href,
     icon: children?.length ? 'folder' : 'file-text',
     i18nKey: item.i18nKey,
     children,
@@ -59,7 +60,6 @@ function attachSubmenus(items: SidebarNavItem[], groupId: string): SidebarNavIte
     if (!raw?.length) return item;
     return {
       ...item,
-      href: undefined,
       icon: 'folder',
       children: raw.map((r, i) => subToNav(`${item.id}-sub-${i}`, r)),
     };
