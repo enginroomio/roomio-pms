@@ -359,16 +359,6 @@
   color: var(--roomio-sidebar-muted);
 }
 
-a.roomio-pro-flyout-heading {
-  display: block;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-a.roomio-pro-flyout-heading:hover {
-  color: rgba(226, 232, 240, 0.95);
-}
-
 .roomio-pro-flyout-heading.active {
   color: #93c5fd;
 }

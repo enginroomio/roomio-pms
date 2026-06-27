@@ -70,16 +70,9 @@ function FlyoutBranch({
   const active = navItemActive(pathname, item, search);
 
   if (hasChildren) {
-    const headingClass = `roomio-pro-flyout-heading depth-${depth}${active ? ' active' : ''}`;
     return (
       <div className="roomio-pro-flyout-group">
-        {item.href && item.href !== '#' ? (
-          <Link href={item.href} className={headingClass} onClick={onNavigate}>
-            {item.label}
-          </Link>
-        ) : (
-          <div className={headingClass}>{item.label}</div>
-        )}
+        <div className={`roomio-pro-flyout-heading depth-${depth}${active ? ' active' : ''}`}>{item.label}</div>
         {item.children!.map((child) => (
           <FlyoutBranch key={child.id} item={child} pathname={pathname} search={search} depth={depth + 1} onNavigate={onNavigate} />
         ))}

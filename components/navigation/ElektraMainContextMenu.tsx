@@ -35,13 +35,11 @@ type Props = {
 function ContextMenuBranch({
   className,
   label,
-  href,
   children,
   onClose,
 }: {
   className?: string;
   label: React.ReactNode;
-  href?: string;
   children: React.ReactNode;
   onClose?: () => void;
 }) {
@@ -58,17 +56,10 @@ function ContextMenuBranch({
       className={`roomio-ctx-branch${flip ? ' is-flip-left' : ''}${className ? ` ${className}` : ''}`}
       onMouseEnter={onEnter}
     >
-      {href && href !== '#' ? (
-        <Link href={href} className="roomio-ctx-item roomio-ctx-item--branch" role="menuitem" onClick={onClose}>
-          <span>{label}</span>
-          <ChevronRight size={14} aria-hidden className={flip ? 'roomio-ctx-chevron--flip' : undefined} />
-        </Link>
-      ) : (
-        <button type="button" className="roomio-ctx-item roomio-ctx-item--branch" tabIndex={-1}>
-          <span>{label}</span>
-          <ChevronRight size={14} aria-hidden className={flip ? 'roomio-ctx-chevron--flip' : undefined} />
-        </button>
-      )}
+      <button type="button" className="roomio-ctx-item roomio-ctx-item--branch" tabIndex={-1}>
+        <span>{label}</span>
+        <ChevronRight size={14} aria-hidden className={flip ? 'roomio-ctx-chevron--flip' : undefined} />
+      </button>
       <div className="roomio-ctx-flyout" role="menu" onClick={onClose}>
         {children}
       </div>
@@ -89,7 +80,7 @@ function ContextMenuLeaf({
 
   if (item.children?.length) {
     return (
-      <ContextMenuBranch label={item.label} href={item.href} onClose={onClose}>
+      <ContextMenuBranch label={item.label}>
         {item.children.map((child) => (
           <ContextMenuLeaf key={child.id} item={child} onClose={onClose} />
         ))}
