@@ -18,5 +18,6 @@ test-results/
 tsconfig.tsbuildinfo
 .verify-rollout-last.txt
 .verify-menu-params-last.txt
+.verify-ci-last.txt
 .route-failures.txt
 .route-test-last.txt
