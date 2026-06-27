@@ -231,16 +231,14 @@ test.describe('i18n', () => {
 });
 
 test.describe('PWA offline', () => {
-  test('offline sayfası yüklenir', async ({ page }) => {
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, 'onLine', { get: () => false, configurable: true });
-    });
+  test('offline sayfası yüklenir', async ({ page, context }) => {
+    await context.setOffline(true);
     await page.goto('/offline');
     const offline = page.locator('.roomio-offline-page');
     await expect(offline.getByRole('heading', { name: /Bağlantı yok|No connection/i })).toBeVisible();
-    await expect(offline.locator('a[href="/housekeeping/mobile"]')).toBeVisible();
-    await expect(offline.locator('a[href="/accounting"]')).toBeVisible();
-    await expect(offline.locator('a[href="/reports"]')).toBeVisible();
+    await expect(offline.getByRole('link', { name: /Kat HK|Housekeeping/i })).toBeVisible();
+    await expect(offline.getByRole('link', { name: /Muhasebe|Accounting/i })).toBeVisible();
+    await expect(offline.getByRole('link', { name: /Raporlar|Reports/i })).toBeVisible();
   });
 
   test('service worker kayıtlı', async ({ page }) => {

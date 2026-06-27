@@ -9,22 +9,21 @@ import { useI18n } from '@/components/i18n/I18nProvider';
 export function OfflinePage() {
   const router = useRouter();
   const { t } = useI18n();
-  const [online, setOnline] = useState(true);
+  const [online, setOnline] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setOnline(navigator.onLine);
-    const on = () => setOnline(true);
-    const off = () => setOnline(false);
-    window.addEventListener('online', on);
-    window.addEventListener('offline', off);
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    window.addEventListener('online', sync);
+    window.addEventListener('offline', sync);
     return () => {
-      window.removeEventListener('online', on);
-      window.removeEventListener('offline', off);
+      window.removeEventListener('online', sync);
+      window.removeEventListener('offline', sync);
     };
   }, []);
 
   useEffect(() => {
-    if (online) router.replace('/');
+    if (online === true) router.replace('/');
   }, [online, router]);
 
   return (
