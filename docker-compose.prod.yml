@@ -1,0 +1,55 @@
+services:
+  app:
+    build: .
+    image: roomio-pms:local
+    container_name: roomio-app
+    ports:
+      - "3100:3100"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: file:/data/roomio.db
+      ROOMIO_JWT_SECRET: ${ROOMIO_JWT_SECRET:-change-me-in-production}
+      REDIS_URL: redis://redis:6379
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    volumes:
+      - roomio_app_data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3100/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: roomio-postgres-prod
+    environment:
+      POSTGRES_USER: roomio
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-roomio}
+      POSTGRES_DB: roomio
+    volumes:
+      - roomio_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roomio -d roomio"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: roomio-redis-prod
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - roomio_redis_data:/data
+
+volumes:
+  roomio_app_data:
+  roomio_pg_data:
+  roomio_redis_data:

@@ -1,0 +1,27 @@
+name: Live integrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      roomio_url:
+        description: 'Roomio base URL'
+        required: true
+        default: 'http://127.0.0.1:3100'
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Live integration tests
+        run: node scripts/test-integrations-live.mjs
+        env:
+          ROOMIO_INTEGRATION_LIVE: '1'
+          ROOMIO_URL: ${{ inputs.roomio_url }}

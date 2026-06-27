@@ -1,0 +1,46 @@
+# Render Blueprint — Node runtime (free tier Docker build OOM önlemi)
+services:
+  - type: web
+    name: roomio-pms
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: node scripts/render-build.mjs
+    startCommand: node scripts/render-start.mjs
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=512
+      - key: HOSTNAME
+        value: 0.0.0.0
+      # Kalıcı veri için Render Dashboard → PostgreSQL (roomio-db) → Internal URL
+      # npm run render:postgres:setup — aşağıdaki sqlite yalnızca geçici /tmp
+      - key: DATABASE_URL
+        value: file:/tmp/roomio.db
+      - key: ROOMIO_DATA_DIR
+        value: /tmp
+      - key: ROOMIO_PUSH_STORE
+        value: /tmp/push-subscriptions.json
+      - key: ROOMIO_PBX_CONFIG
+        value: /tmp/pbx-config.json
+      - key: ROOMIO_TESA_CONFIG
+        value: /tmp/tesa-config.json
+      - key: ROOMIO_5651_STORE
+        value: /tmp/hotspot-5651.enc
+      - key: ROOMIO_JWT_SECRET
+        generateValue: true
+      - key: ROOMIO_AUTH_REQUIRED
+        value: "1"
+      - key: ROOMIO_DEMO_AUTH
+        value: "0"
+      - key: ROOMIO_SKIP_DEMO_SEED
+        value: "1"
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:hk@hotelsapphire.com

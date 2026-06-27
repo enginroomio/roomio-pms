@@ -1,0 +1,712 @@
+/* Sidebar — Professional single-column */
+.roomio-sidebar {
+  position: relative;
+  width: 272px;
+  background: var(--roomio-sidebar);
+  color: var(--roomio-sidebar-text);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 40;
+}
+
+.roomio-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.roomio-brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #2dd4bf, #0d9488);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  padding: 6px;
+  flex-shrink: 0;
+}
+
+.roomio-brand-mark span {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 2px;
+}
+
+.roomio-brand-text strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.roomio-brand-text small {
+  opacity: 0.55;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+
+.roomio-sidebar-pro {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px;
+}
+
+.roomio-pro-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 10px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: var(--roomio-sidebar-muted);
+}
+
+.roomio-pro-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--roomio-sidebar-text);
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.roomio-pro-search input::placeholder {
+  color: var(--roomio-sidebar-muted);
+}
+
+.roomio-pro-search kbd {
+  font-size: 0.62rem;
+  font-family: inherit;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--roomio-sidebar-muted);
+  white-space: nowrap;
+}
+
+.roomio-pro-quick {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.roomio-pro-quick-btn {
+  display: block;
+  padding: 7px 4px;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.18);
+  border: 1px solid rgba(37, 99, 235, 0.28);
+  color: #dbeafe;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.roomio-pro-quick-btn:hover {
+  background: rgba(37, 99, 235, 0.32);
+  border-color: rgba(37, 99, 235, 0.45);
+}
+
+.roomio-pro-modules {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.roomio-pro-module {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--roomio-sidebar-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.roomio-pro-module span {
+  font-size: 0.62rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.roomio-pro-module:hover {
+  background: var(--roomio-sidebar-hover);
+  color: var(--roomio-sidebar-text);
+}
+
+.roomio-pro-module.selected {
+  background: rgba(37, 99, 235, 0.22);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.35);
+}
+
+.roomio-pro-nav {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.roomio-pro-nav-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 4px 8px;
+}
+
+.roomio-pro-nav-head span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--roomio-sidebar-muted);
+}
+
+.roomio-pro-nav-head small {
+  font-size: 0.62rem;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.roomio-pro-nav-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+  margin-right: -2px;
+}
+
+.roomio-pro-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  margin-bottom: 1px;
+  border: none;
+  border-radius: 8px;
+  border-left: 3px solid transparent;
+  background: transparent;
+  color: rgba(226, 232, 240, 0.88);
+  font-size: 0.8125rem;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.roomio-pro-link:hover {
+  background: var(--roomio-sidebar-hover);
+  color: #fff;
+}
+
+.roomio-pro-link.active {
+  background: rgba(37, 99, 235, 0.16);
+  border-left-color: var(--roomio-sidebar-active);
+  color: #fff;
+  font-weight: 500;
+}
+
+.roomio-pro-link.open {
+  background: rgba(37, 99, 235, 0.22);
+  border-left-color: var(--roomio-sidebar-active);
+}
+
+.roomio-pro-link-text {
+  flex: 1;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roomio-pro-chevron {
+  opacity: 0.45;
+  flex-shrink: 0;
+}
+
+.roomio-pro-link--branch:hover .roomio-pro-chevron,
+.roomio-pro-link.open .roomio-pro-chevron {
+  opacity: 0.85;
+}
+
+.roomio-pro-sep {
+  height: 1px;
+  margin: 6px 8px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.roomio-pro-empty {
+  padding: 16px 8px;
+  font-size: 0.8125rem;
+  color: var(--roomio-sidebar-muted);
+}
+
+.roomio-pro-show-all {
+  display: block;
+  width: calc(100% - 4px);
+  margin: 10px 2px 4px;
+  padding: 9px 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: transparent;
+  color: #93c5fd;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.roomio-pro-show-all:hover {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.roomio-pro-show-all.muted {
+  color: var(--roomio-sidebar-muted);
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.roomio-pro-show-all.muted:hover {
+  color: var(--roomio-sidebar-text);
+}
+
+.roomio-pro-flyout-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  border: none;
+  background: rgba(15, 23, 42, 0.35);
+  cursor: default;
+}
+
+.roomio-pro-flyout {
+  position: fixed;
+  top: 0;
+  left: 272px;
+  z-index: 50;
+  width: min(300px, calc(100vw - 280px));
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #1e2433;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.28);
+}
+
+.roomio-pro-flyout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.roomio-pro-flyout-header strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.roomio-pro-flyout-close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--roomio-sidebar-text);
+  cursor: pointer;
+}
+
+.roomio-pro-flyout-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.roomio-pro-flyout-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 10px 20px;
+}
+
+.roomio-pro-flyout-heading {
+  padding: 10px 10px 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--roomio-sidebar-muted);
+}
+
+a.roomio-pro-flyout-heading {
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.roomio-pro-flyout-heading:hover {
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.roomio-pro-flyout-heading.active {
+  color: #93c5fd;
+}
+
+.roomio-pro-flyout-link {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 7px;
+  color: rgba(226, 232, 240, 0.9);
+  font-size: 0.8125rem;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+
+.roomio-pro-flyout-link.depth-1 {
+  padding-left: 18px;
+}
+
+.roomio-pro-flyout-link.depth-2 {
+  padding-left: 26px;
+  font-size: 0.78rem;
+}
+
+.roomio-pro-flyout-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.roomio-pro-flyout-link.active {
+  background: rgba(37, 99, 235, 0.22);
+  color: #fff;
+}
+
+.roomio-pro-flyout-sep {
+  height: 1px;
+  margin: 6px 8px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.roomio-sidebar-footer {
+  flex-shrink: 0;
+  padding: 10px 12px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.roomio-pro-footer-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--roomio-sidebar-muted);
+  font-size: 0.8125rem;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.roomio-pro-footer-link:hover {
+  background: var(--roomio-sidebar-hover);
+  color: var(--roomio-sidebar-text);
+}
+
+/* Legacy nav (command palette / other) */
+.roomio-nav-link,
+.roomio-nav-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 2px;
+  font-size: 0.875rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+
+.roomio-nav-link:hover,
+.roomio-nav-toggle:hover {
+  background: var(--roomio-sidebar-hover);
+}
+
+.roomio-nav-toggle.depth-0.active,
+.roomio-nav-toggle.depth-1.active {
+  background: var(--roomio-sidebar-active);
+  color: #fff;
+  font-weight: 600;
+}
+
+.roomio-nav-link.depth-0.active {
+  background: var(--roomio-sidebar-active);
+  color: #fff;
+  font-weight: 600;
+}
+
+.roomio-nav-link.depth-1.active,
+.roomio-nav-link.depth-2.active,
+.roomio-nav-link.depth-3.active {
+  background: var(--roomio-sidebar-active-leaf);
+  color: #fff;
+  font-weight: 500;
+}
+
+.roomio-nav-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.9;
+  flex-shrink: 0;
+  stroke-width: 1.75;
+}
+
+/* Header — beyaz üst bar */
+.roomio-header {
+  background: var(--roomio-header);
+  color: var(--roomio-text);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  min-height: 56px;
+  border-bottom: 1px solid var(--roomio-border);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+.roomio-header-search {
+  flex: 1;
+  max-width: 360px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--roomio-surface);
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--roomio-text-muted);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.roomio-header-search span {
+  flex: 1;
+  text-align: left;
+}
+
+.roomio-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.roomio-header-hotel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--roomio-surface);
+  border: 1px solid var(--roomio-border);
+  font-size: 0.82rem;
+  color: var(--roomio-text);
+}
+
+.roomio-header-hotel-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roomio-header-hotel--select {
+  position: relative;
+  cursor: pointer;
+  padding-right: 28px;
+}
+
+.roomio-header-hotel-select {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  max-width: 200px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.roomio-locale-switch {
+  min-width: 52px;
+}
+
+.roomio-header-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--roomio-text-muted);
+  cursor: pointer;
+  position: relative;
+}
+
+.roomio-header-icon-btn:hover {
+  background: var(--roomio-surface);
+  color: var(--roomio-text);
+}
+
+.roomio-header-bell .roomio-header-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+}
+
+.roomio-header-search kbd {
+  margin-left: auto;
+  font-size: 0.72rem;
+  opacity: 0.85;
+  background: #fff;
+  border: 1px solid var(--roomio-border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-header-property {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  opacity: 0.95;
+}
+
+.roomio-header-meta {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.roomio-role-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-role-switch__label {
+  white-space: nowrap;
+}
+
+.roomio-select--sm {
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  min-width: 120px;
+}
+
+.roomio-btn--xs {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+}
+
+.roomio-login-popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: var(--roomio-card);
+  border: 1px solid var(--roomio-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  min-width: 220px;
+}
+
+.roomio-role-switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--roomio-text-muted);
+}
+
+.roomio-row-warn td {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.roomio-table--compact td,
+.roomio-table--compact th {
+  padding: 6px 8px;
+  font-size: 0.82rem;
+}
+
+.roomio-header-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--roomio-text);
+}
+
+.roomio-header-user > div > div:last-child {
+  color: var(--roomio-text-muted);
+}
+
+.roomio-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--roomio-accent);
+  color: #042f2e;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+

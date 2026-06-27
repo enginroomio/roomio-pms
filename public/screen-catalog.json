@@ -1,0 +1,247 @@
+{
+  "generatedAt": "2026-06-21T03:06:07.861Z",
+  "assetsPath": "/Users/Engin/Projects/roomio-pms/references/assets",
+  "publicBase": "/mockups/",
+  "total": 30,
+  "queue": {
+    "brand": "Roomio",
+    "completed": true,
+    "totalScreens": 402,
+    "range": "screen-000 … screen-401",
+    "sections": {
+      "anaMenu": "000-246 (Elektra referans)",
+      "roomioDeep": "247-401 (Roomio modern teal UI)",
+      "grAlt": "247-251",
+      "agAlt": "252-255",
+      "servisProgramlari": "256-286",
+      "dilTanimlari": "287-292",
+      "raporlarDetay": "293-358",
+      "gunSonuEOD": "359-401"
+    },
+    "location": "/Users/Engin/.cursor/projects/empty-window/assets/"
+  },
+  "byPhase": {
+    "shell": 0,
+    "home": 1,
+    "sistem": 0,
+    "rezervasyon": 0,
+    "resepsiyon": 0,
+    "onkasa": 0,
+    "kat": 0,
+    "misafir": 0,
+    "raporlar": 0,
+    "gunsonu": 0
+  },
+  "screens": [
+    {
+      "file": "alternatif2-sapphire-dashboard.png",
+      "url": "/mockups/alternatif2-sapphire-dashboard.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "alternatif2-sapphire-dashboard"
+    },
+    {
+      "file": "alternatif2-sapphire-executive.png",
+      "url": "/mockups/alternatif2-sapphire-executive.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "alternatif2-sapphire-executive"
+    },
+    {
+      "file": "app-icon-source.png",
+      "url": "/mockups/app-icon-source.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "app-icon-source"
+    },
+    {
+      "file": "elephan-pms-nextgen-a-enterprise.png",
+      "url": "/mockups/elephan-pms-nextgen-a-enterprise.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "elephan-pms-nextgen-a-enterprise"
+    },
+    {
+      "file": "elephan-pms-nextgen-b-minimal.png",
+      "url": "/mockups/elephan-pms-nextgen-b-minimal.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "elephan-pms-nextgen-b-minimal"
+    },
+    {
+      "file": "elephan-pms-nextgen-c-operations.png",
+      "url": "/mockups/elephan-pms-nextgen-c-operations.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "elephan-pms-nextgen-c-operations"
+    },
+    {
+      "file": "elephan-vision-icon.png",
+      "url": "/mockups/elephan-vision-icon.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "elephan-vision-icon"
+    },
+    {
+      "file": "konak-pms-oneri-1-evolution.png",
+      "url": "/mockups/konak-pms-oneri-1-evolution.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "konak-pms-oneri-1-evolution"
+    },
+    {
+      "file": "konak-pms-oneri-2-modern-saas.png",
+      "url": "/mockups/konak-pms-oneri-2-modern-saas.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "konak-pms-oneri-2-modern-saas"
+    },
+    {
+      "file": "pms-lucide-style-ui-kit.png",
+      "url": "/mockups/pms-lucide-style-ui-kit.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "pms-lucide-style-ui-kit"
+    },
+    {
+      "file": "pms-professional-ui-kit.png",
+      "url": "/mockups/pms-professional-ui-kit.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "pms-professional-ui-kit"
+    },
+    {
+      "file": "roomio-alt-1-operasyon-merkezi.png",
+      "url": "/mockups/roomio-alt-1-operasyon-merkezi.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-alt-1-operasyon-merkezi"
+    },
+    {
+      "file": "roomio-alt-2-executive-light.png",
+      "url": "/mockups/roomio-alt-2-executive-light.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-alt-2-executive-light"
+    },
+    {
+      "file": "roomio-alt-3-saha-kompakt.png",
+      "url": "/mockups/roomio-alt-3-saha-kompakt.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-alt-3-saha-kompakt"
+    },
+    {
+      "file": "roomio-alt-4-kart-tabanli.png",
+      "url": "/mockups/roomio-alt-4-kart-tabanli.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-alt-4-kart-tabanli"
+    },
+    {
+      "file": "roomio-alt-5-ust-menu-elektra-modern.png",
+      "url": "/mockups/roomio-alt-5-ust-menu-elektra-modern.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-alt-5-ust-menu-elektra-modern"
+    },
+    {
+      "file": "roomio-alternatifler-karsilastirma.png",
+      "url": "/mockups/roomio-alternatifler-karsilastirma.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-alternatifler-karsilastirma"
+    },
+    {
+      "file": "roomio-ana-ekran-mockup.png",
+      "url": "/mockups/roomio-ana-ekran-mockup.png",
+      "screenId": null,
+      "phase": "home",
+      "slug": "roomio-ana-ekran-mockup"
+    },
+    {
+      "file": "roomio-ana-sayfa-alt-A-dark-topnav.png",
+      "url": "/mockups/roomio-ana-sayfa-alt-A-dark-topnav.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-ana-sayfa-alt-A-dark-topnav"
+    },
+    {
+      "file": "roomio-ana-sayfa-alt-B-hybrid.png",
+      "url": "/mockups/roomio-ana-sayfa-alt-B-hybrid.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-ana-sayfa-alt-B-hybrid"
+    },
+    {
+      "file": "roomio-ana-sayfa-alt-C-light-enterprise.png",
+      "url": "/mockups/roomio-ana-sayfa-alt-C-light-enterprise.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-ana-sayfa-alt-C-light-enterprise"
+    },
+    {
+      "file": "roomio-ana-sayfa-alt-D-field-ops.png",
+      "url": "/mockups/roomio-ana-sayfa-alt-D-field-ops.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-ana-sayfa-alt-D-field-ops"
+    },
+    {
+      "file": "roomio-ana-sayfa-alt-E-topmenu-cascade.png",
+      "url": "/mockups/roomio-ana-sayfa-alt-E-topmenu-cascade.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-ana-sayfa-alt-E-topmenu-cascade"
+    },
+    {
+      "file": "roomio-ana-sayfa-alternatives-overview.png",
+      "url": "/mockups/roomio-ana-sayfa-alternatives-overview.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-ana-sayfa-alternatives-overview"
+    },
+    {
+      "file": "roomio-ana-sayfa-arda-v3-compact.png",
+      "url": "/mockups/roomio-ana-sayfa-arda-v3-compact.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-ana-sayfa-arda-v3-compact"
+    },
+    {
+      "file": "roomio-ana-sayfa-arda-v4-premium.png",
+      "url": "/mockups/roomio-ana-sayfa-arda-v4-premium.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-ana-sayfa-arda-v4-premium"
+    },
+    {
+      "file": "roomio-ana-sayfa-arda-v5-white-menu.png",
+      "url": "/mockups/roomio-ana-sayfa-arda-v5-white-menu.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-ana-sayfa-arda-v5-white-menu"
+    },
+    {
+      "file": "roomio-sidebar-alternatives-abc.png",
+      "url": "/mockups/roomio-sidebar-alternatives-abc.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-sidebar-alternatives-abc"
+    },
+    {
+      "file": "roomio-sidebar-layout-alternatives-def.png",
+      "url": "/mockups/roomio-sidebar-layout-alternatives-def.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-sidebar-layout-alternatives-def"
+    },
+    {
+      "file": "roomio-sidebar-pro-mockup.png",
+      "url": "/mockups/roomio-sidebar-pro-mockup.png",
+      "screenId": null,
+      "phase": "other",
+      "slug": "roomio-sidebar-pro-mockup"
+    }
+  ]
+}

@@ -1,0 +1,259 @@
+/* Tema ekranı — kompakt araç çubuğu + tam önizleme, kaydırma yok */
+.roomio-theme-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
+.roomio-main:has(.roomio-theme-screen) .roomio-status-footer {
+  display: none;
+}
+
+.roomio-content:has(.roomio-theme-screen) {
+  padding: 4px 8px 4px !important;
+}
+
+.roomio-one-screen-fit__body--page:has(.roomio-theme-screen) {
+  gap: 4px;
+}
+
+/* Kompakt tek satır araç çubuğu */
+.roomio-theme-screen__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--roomio-border);
+  border-radius: var(--roomio-radius-md);
+  background: var(--roomio-card);
+  box-shadow: var(--roomio-shadow-sm);
+}
+
+.roomio-theme-screen__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.roomio-theme-screen__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.roomio-theme-screen__toolbar-mid {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+}
+
+.roomio-theme-screen__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.roomio-theme-screen__themes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.roomio-theme-screen__select-wrap {
+  display: flex;
+  min-width: 0;
+}
+
+.roomio-theme-screen__select {
+  max-width: 200px;
+}
+
+.roomio-theme-screen__select--wide {
+  max-width: min(360px, 42vw);
+}
+
+.roomio-theme-screen__theme-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--roomio-border);
+  background: var(--roomio-surface-alt);
+  color: var(--roomio-text);
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+  white-space: nowrap;
+}
+
+.roomio-theme-screen__theme-btn:hover {
+  border-color: var(--roomio-accent-dark);
+  background: var(--roomio-accent-soft);
+}
+
+.roomio-theme-screen__theme-btn.is-active {
+  border-color: var(--roomio-accent-dark);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.18), rgba(37, 99, 235, 0.08));
+  font-weight: 600;
+}
+
+.roomio-theme-screen__theme-btn--fixed.is-active {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: var(--roomio-brand-blue);
+}
+
+/* Önizleme — kalan tüm yükseklik */
+.roomio-theme-screen__preview {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--roomio-border);
+  border-radius: var(--roomio-radius-md);
+  background: var(--roomio-card);
+  box-shadow: var(--roomio-shadow-sm);
+}
+
+.roomio-theme-preview-fit {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.roomio-theme-preview-fit__body {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  will-change: transform;
+  transform-origin: top center;
+}
+
+.roomio-theme-screen__preview-img-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 4px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(20, 184, 166, 0.04), transparent 40%),
+    var(--roomio-surface-alt);
+}
+
+.roomio-theme-screen__preview-img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: var(--roomio-shadow-md);
+}
+
+.roomio-theme-screen__preview-live {
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.roomio-theme-screen__preview-live > * {
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.roomio-theme-screen__preview-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 5px 10px;
+  border-top: 1px solid var(--roomio-border);
+  flex-shrink: 0;
+  font-size: 0.76rem;
+}
+
+.roomio-theme-screen__preview-hint {
+  color: var(--roomio-text-muted);
+  font-size: 0.72rem;
+}
+
+.roomio-theme-screen__preview-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  color: var(--roomio-text-muted);
+  font-size: 0.82rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+html[data-fit='1'] .roomio-theme-screen__title {
+  font-size: 0.88rem;
+}
+
+html[data-fit='1'] .roomio-theme-screen__toolbar {
+  padding: 4px 8px;
+}
+
+html[data-fit='1'] .roomio-theme-screen__preview-meta {
+  padding: 4px 8px;
+}
+
+@media (max-width: 1100px) {
+  .roomio-theme-screen__toolbar {
+    flex-wrap: wrap;
+  }
+
+  .roomio-theme-screen__toolbar-mid {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .roomio-theme-screen__select {
+    max-width: 160px;
+  }
+
+  .roomio-theme-screen__select--wide {
+    max-width: min(280px, 55vw);
+  }
+}

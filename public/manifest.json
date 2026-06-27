@@ -1,0 +1,44 @@
+{
+  "name": "Roomio PMS",
+  "short_name": "Roomio",
+  "description": "Otel yönetim sistemi — çevrimdışı HK ve ön büro",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f1419",
+  "theme_color": "#1a6b4a",
+  "lang": "tr",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ana sayfa",
+      "url": "/",
+      "description": "Ön büro dashboard"
+    },
+    {
+      "name": "Kat HK mobil",
+      "url": "/housekeeping/mobile",
+      "description": "Çevrimdışı oda panosu"
+    },
+    {
+      "name": "Room Rack",
+      "url": "/rooms",
+      "description": "Oda rack F12"
+    }
+  ]
+}

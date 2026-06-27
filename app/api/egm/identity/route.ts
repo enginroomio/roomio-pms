@@ -1,0 +1,43 @@
+import { NextResponse } from 'next/server';
+import { getEgmIdentities, sendEgmIdentity, upsertEgmIdentity } from '@/lib/server/pms-store';
+import { propertyIdFromRequest } from '@/lib/server/property-context';
+import { hasPermission } from '@/lib/auth/roles';
+import { resolveApiUser } from '@/lib/auth/require-api-user';
+import { requireApiPermission } from '@/lib/auth/require-permission';
+import type { EgmIdentityForm } from '@/lib/egm/types';
+import { logApiError } from '@/lib/server/api-error';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(req: Request) {
+  const auth = await requireApiPermission(req, 'identity.read');
+  if (auth instanceof NextResponse) return auth;
+
+  const propertyId = propertyIdFromRequest(req);
+  const records = await getEgmIdentities(propertyId);
+  return NextResponse.json({ ok: true, records });
+}
+
+export async function POST(req: Request) {
+  const propertyId = propertyIdFromRequest(req);
+  const user = await resolveApiUser(req);
+  if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 });
+  if (!hasPermission(user, 'identity.notify')) {
+    return NextResponse.json({ error: 'Yetkisiz' }, { status: 403 });
+  }
+
+  try {
+    const body = (await req.json()) as { action?: 'send'; id?: string; form?: EgmIdentityForm };
+    if (body.action === 'send' && body.id) {
+      const record = await sendEgmIdentity(body.id);
+      if (!record) return NextResponse.json({ error: 'Gönderilemedi — eksik alan veya kayıt yok' }, { status: 400 });
+      return NextResponse.json({ ok: true, record });
+    }
+    if (!body.form) return NextResponse.json({ error: 'form required' }, { status: 400 });
+    const record = await upsertEgmIdentity(body.form, propertyId);
+    return NextResponse.json({ ok: true, record });
+  } catch (err) {
+    logApiError('POST /api/egm/identity', err);
+    return NextResponse.json({ error: 'failed' }, { status: 500 });
+  }
+}

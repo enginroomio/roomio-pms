@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Roomio">
+  <rect width="512" height="512" rx="112" fill="#0f1419"/>
+  <rect x="32" y="32" width="448" height="448" rx="96" fill="#1a6b4a"/>
+  <path fill="#fff" d="M96 160h320v48H96zm0 112h320v48H96zm0 112h224v48H96z"/>
+  <circle cx="384" cy="384" r="56" fill="#7dd3a8"/>
+</svg>

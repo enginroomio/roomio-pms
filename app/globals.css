@@ -1,0 +1,22 @@
+/**
+ * Roomio global styles — modüler import hub
+ * Sıra önemli: base → layout → dashboard → rack → forms → modules → polish
+ */
+@import './styles/base.css';
+@import './styles/layout-shell.css';
+@import './styles/one-screen.css';
+@import './styles/layout-nav.css';
+@import './styles/dashboard.css';
+@import './styles/rack.css';
+@import './styles/forms.css';
+@import './styles/housekeeping.css';
+@import './styles/reservations.css';
+@import './styles/modules.css';
+@import './styles/hk-mobile.css';
+@import './styles/hk-operations-mockup.css';
+@import './styles/hk-assign-mockup.css';
+@import './styles/hk-ops-pro.css';
+@import './styles/theme-screen.css';
+@import './styles/elektra-context-menu.css';
+@import './styles/login.css';
+@import './styles/pwa.css';

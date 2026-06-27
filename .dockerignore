@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+.git
+.roomio
+.roomio-data
+.env
+.env.*
+!.env.production.example
+*.log
+.DS_Store
+Thumbs.db
+coverage
+references
+.cursor
+*.md
+!README.md
