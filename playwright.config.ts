@@ -15,6 +15,7 @@ export default defineConfig({
   ],
   fullyParallel: false,
   workers: 1,
+  retries: process.env.CI ? 2 : 0,
   use: {
     baseURL: e2eBaseUrl,
     trace: 'on-first-retry',
