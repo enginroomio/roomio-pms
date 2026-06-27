@@ -1,7 +1,14 @@
 import { test, expect } from '@playwright/test';
 import { gotoWithDemo } from './helpers/demo-auth';
 
-const MENU_ROUTES: { path: string; heading: RegExp | string }[] = [
+type MenuRoute = {
+  path: string;
+  heading?: RegExp | string;
+  assert?: 'list';
+  readyWhen?: 'heading' | 'list' | 'main';
+};
+
+const MENU_ROUTES: MenuRoute[] = [
   // Hub merkezleri
   { path: '/reservations?hub=rezervasyon', heading: /Rezervasyon Merkezi/i },
   { path: '/reception?hub=resepsiyon', heading: /Resepsiyon Merkezi/i },
@@ -15,7 +22,7 @@ const MENU_ROUTES: { path: string; heading: RegExp | string }[] = [
   { path: '/reports?hub=gunsonu', heading: /Gün Sonu Merkezi/i },
   // URL parametreli alt menüler
   { path: '/reservations?tab=import', heading: /Acenta Rezervasyon Aktarım/i },
-  { path: '/reservations?status=OPTION', heading: /Rezervasyon|Bekleme/i },
+  { path: '/reservations?status=OPTION', assert: 'list', readyWhen: 'list' },
   { path: '/reservations?tab=availability&prices=1', heading: /Müsaitlik|Fiyat/i },
   { path: '/settings/integrations/egm', heading: /EGM|Kimlik Bildirimi/i },
   { path: '/fnb?tab=definitions', heading: /Banket|Tanım/i },
@@ -63,10 +70,15 @@ const MENU_ROUTES: { path: string; heading: RegExp | string }[] = [
 
 test.describe('Menü URL parametreleri', () => {
   test.describe.configure({ timeout: 120_000 });
-  for (const { path, heading } of MENU_ROUTES) {
+  for (const { path, heading, assert, readyWhen } of MENU_ROUTES) {
     test(`${path} açılır`, async ({ page }) => {
-      await gotoWithDemo(page, path, 'admin', { waitForSideNav: false });
-      await expect(page.getByRole('heading', { name: heading }).first()).toBeVisible({ timeout: 45_000 });
+      await gotoWithDemo(page, path, 'admin', { waitForSideNav: false, readyWhen });
+      if (assert === 'list') {
+        await expect(page.getByRole('button', { name: 'Filtreler' })).toBeVisible({ timeout: 45_000 });
+        await expect(page.getByRole('region', { name: /Rezervasyon listesi/i })).toBeVisible();
+        return;
+      }
+      await expect(page.getByRole('heading', { name: heading! }).first()).toBeVisible({ timeout: 45_000 });
     });
   }
 });
