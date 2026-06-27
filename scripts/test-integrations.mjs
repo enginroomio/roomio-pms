@@ -103,12 +103,12 @@ const tests = [
     name: 'reception check-in auto PBX',
     run: async () => {
       const r = await json('POST', '/api/reception/check-in', {
-        reservationId: '3',
+        reservationId: 'rez-04',
         roomNo: '201',
         guestName: 'PBX Test',
-        checkIn: '2026-06-21',
-        checkOut: '2026-06-23',
-        reservationRef: 'REF-3',
+        checkIn: '2026-06-26',
+        checkOut: '2026-06-29',
+        reservationRef: '4',
         tesa: false,
         pbx: true,
       });
@@ -127,7 +127,7 @@ const tests = [
       const r = await json('POST', '/api/reception/checkout', {
         roomNo: '201',
         guestName: 'PBX Test',
-        reservationId: '3',
+        reservationId: 'rez-04',
       });
       return (
         r.ok

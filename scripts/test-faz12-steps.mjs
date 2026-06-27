@@ -80,12 +80,12 @@ if (shouldRun('12.3')) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        reservationId: '3',
+        reservationId: 'rez-04',
         roomNo: '301',
         guestName: 'Faz 12 Live',
-        checkIn: '2026-06-21',
-        checkOut: '2026-06-23',
-        reservationRef: 'REF-12',
+        checkIn: '2026-06-26',
+        checkOut: '2026-06-29',
+        reservationRef: '4',
       }),
     });
     const checkBody = await checkIn.json().catch(() => ({}));

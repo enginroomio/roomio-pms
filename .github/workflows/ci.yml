@@ -44,6 +44,7 @@ jobs:
           NODE_ENV: production
           ROOMIO_AUTH_REQUIRED: '0'
           ROOMIO_DEMO_AUTH: '1'
+          ROOMIO_DISABLE_RATE_LIMIT: '1'
           DATABASE_URL: file:.roomio-data/ci.db
           ROOMIO_JWT_SECRET: ci-test-secret-at-least-32-characters-long
 
