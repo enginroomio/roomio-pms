@@ -7,7 +7,6 @@ export async function setDemoRole(page: Page, role: DemoRole = 'admin') {
   await page.context().clearCookies();
   await page.addInitScript((r: string) => {
     localStorage.setItem('roomio-demo-role', r);
-    localStorage.setItem('roomio-locale', 'tr');
     localStorage.removeItem('roomio-token');
   }, role);
 }

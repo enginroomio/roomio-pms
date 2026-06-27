@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import tr from '@/lib/i18n/tr.json';
 import en from '@/lib/i18n/en.json';
 import {
@@ -14,6 +14,13 @@ import { roomioFetch } from '@/lib/client/api';
 
 const CLIENT_LOCALE_KEY = 'roomio-locale';
 const BASE: Record<Locale, Record<string, string>> = { tr, en };
+
+function readStoredLocale(): Locale {
+  if (typeof window === 'undefined') return 'tr';
+  const stored = localStorage.getItem(CLIENT_LOCALE_KEY);
+  if (stored && isLocale(stored)) return stored;
+  return detectBrowserLocale();
+}
 
 type I18nContextValue = {
   locale: Locale;
@@ -30,10 +37,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [remote, setRemote] = useState<Record<string, string>>({});
   const [ready, setReady] = useState(false);
 
-  useEffect(() => {
-    const stored = localStorage.getItem(CLIENT_LOCALE_KEY);
-    const initial = stored && isLocale(stored) ? stored : detectBrowserLocale();
-    setLocaleState(initial);
+  useLayoutEffect(() => {
+    setLocaleState(readStoredLocale());
     setReady(true);
   }, []);
 

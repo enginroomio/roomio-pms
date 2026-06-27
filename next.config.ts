@@ -30,9 +30,10 @@ const nextConfig: NextConfig = {
     // (a) clickjacking/frame-ancestors, (b) harici script/obje yüklemesi,
     // (c) mixed-content, (d) form hijacking (form-action).
     const cspHeaderName = 'Content-Security-Policy';
+    const isDev = process.env.NODE_ENV === 'development';
     const cspHeader = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",

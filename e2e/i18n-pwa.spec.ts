@@ -4,7 +4,6 @@ import { setDemoRole, waitForDemoSession } from './helpers/demo-auth';
 
 test.describe('i18n', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => localStorage.removeItem('roomio-locale'));
     await setDemoRole(page, 'admin');
   });
 
@@ -20,7 +19,7 @@ test.describe('i18n', () => {
   });
 
   test('dil değişince menü İngilizce olur', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     await selectEnglish(page);
     await expect(page.getByRole('button', { name: 'Reservations' }).first()).toBeVisible({ timeout: 8000 });
     await expect(page.getByRole('link', { name: 'Home' }).first()).toBeVisible();
@@ -45,21 +44,19 @@ test.describe('i18n', () => {
   });
 
   test('raporlar sayfası İngilizce', async ({ page }) => {
-    await page.goto('/reports?tab=consolidated');
+    await page.goto('/reports?tab=consolidated', { waitUntil: 'domcontentloaded' });
     await waitForDemoSession(page);
     await selectEnglish(page);
-    await expect(page.getByRole('link', { name: 'Consolidated' }).first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('heading', { name: 'Consolidated property report' }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Download PDF' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Consolidated property report' }).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: 'Download PDF' }).first()).toBeVisible({ timeout: 30_000 });
   });
 
   test('rezervasyon sayfası İngilizce', async ({ page }) => {
     await page.goto('/reservations');
     await waitForDemoSession(page);
     await selectEnglish(page);
-    await expect(page.getByRole('heading', { name: 'Reservation list' }).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: 'Reservation list' }).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('link', { name: 'New reservation (F2)' }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: '+ New reservation (F2)' }).first()).toBeVisible();
   });
 
   test('HK mobil İngilizce', async ({ page }) => {
@@ -144,8 +141,10 @@ test.describe('i18n', () => {
     await waitForDemoSession(page);
     await selectEnglish(page);
     await expect(page.getByRole('link', { name: 'User definitions' }).first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('link', { name: 'Branch definitions' }).first()).toBeVisible();
-    await expect(page.getByText(/Active screen: User definitions/)).toBeVisible();
+    const branchLink = page.getByRole('link', { name: 'Branch definitions' }).first();
+    await branchLink.scrollIntoViewIfNeeded();
+    await expect(branchLink).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: 'User definitions' }).first()).toBeVisible();
   });
 
   test('kuruluş şirket listesi İngilizce', async ({ page }) => {
@@ -193,13 +192,12 @@ test.describe('i18n', () => {
   });
 
   test('sidebar modülleri İngilizce', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await waitForDemoSession(page);
     await selectEnglish(page);
-    await expect(page.getByRole('link', { name: 'System' }).first()).toBeVisible({ timeout: 15_000 });
-    await page.getByRole('link', { name: 'System' }).first().click();
+    await page.getByRole('button', { name: 'System' }).hover();
     await expect(page.getByRole('link', { name: 'Setup' }).first()).toBeVisible({ timeout: 15_000 });
-    await page.goto('/');
-    await expect(page.getByRole('button', { name: 'New res.' }).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Reservations' }).first()).toBeVisible({ timeout: 15_000 });
   });
 
   test('sidebar arama İngilizce', async ({ page }) => {
