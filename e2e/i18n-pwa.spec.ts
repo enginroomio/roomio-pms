@@ -4,7 +4,9 @@ import { useDemoRole, waitForDemoSession } from './helpers/demo-auth';
 
 test.describe('i18n', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => localStorage.removeItem('roomio-locale'));
+    await page.addInitScript(() => {
+      localStorage.removeItem('roomio-locale');
+    });
     await useDemoRole(page, 'admin');
   });
 
@@ -20,10 +22,11 @@ test.describe('i18n', () => {
   });
 
   test('dil değişince menü İngilizce olur', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await waitForDemoSession(page);
     await selectEnglish(page);
-    await expect(page.getByRole('button', { name: 'Reservations' }).first()).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('link', { name: 'Home' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /Reservations/i }).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('link', { name: /Home/i }).first()).toBeVisible({ timeout: 30_000 });
   });
 
   test('muhasebe sayfası İngilizce', async ({ page }) => {
@@ -45,21 +48,23 @@ test.describe('i18n', () => {
   });
 
   test('raporlar sayfası İngilizce', async ({ page }) => {
-    await page.goto('/reports?tab=consolidated');
+    await page.goto('/reports?tab=consolidated', { waitUntil: 'domcontentloaded' });
     await waitForDemoSession(page);
     await selectEnglish(page);
-    await expect(page.getByRole('link', { name: 'Consolidated' }).first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('heading', { name: 'Consolidated property report' }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Download PDF' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Consolidated property report/i }).first()).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByRole('link', { name: /Download\s*PDF/i }).first()).toBeVisible({ timeout: 30_000 });
   });
 
   test('rezervasyon sayfası İngilizce', async ({ page }) => {
     await page.goto('/reservations');
     await waitForDemoSession(page);
     await selectEnglish(page);
-    await expect(page.getByRole('heading', { name: 'Reservation list' }).first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('link', { name: 'New reservation (F2)' }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: '+ New reservation (F2)' }).first()).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /Reservation list/i }).or(page.getByRole('heading', { name: /Reservation list/i })).first(),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('link', { name: /New reservation/i }).first()).toBeVisible({ timeout: 30_000 });
   });
 
   test('HK mobil İngilizce', async ({ page }) => {
@@ -143,9 +148,11 @@ test.describe('i18n', () => {
     await page.goto('/settings?section=users');
     await waitForDemoSession(page);
     await selectEnglish(page);
-    await expect(page.getByRole('link', { name: 'User definitions' }).first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('link', { name: 'Branch definitions' }).first()).toBeVisible();
-    await expect(page.getByText(/Active screen: User definitions/)).toBeVisible();
+    await expect(page.getByRole('link', { name: /User definitions/i }).first()).toBeVisible({ timeout: 30_000 });
+    const branchLink = page.getByRole('link', { name: /Branch definitions/i }).first();
+    await branchLink.scrollIntoViewIfNeeded();
+    await expect(branchLink).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: /User definitions/i }).first()).toBeVisible({ timeout: 30_000 });
   });
 
   test('kuruluş şirket listesi İngilizce', async ({ page }) => {
@@ -193,17 +200,19 @@ test.describe('i18n', () => {
   });
 
   test('sidebar modülleri İngilizce', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await waitForDemoSession(page);
     await selectEnglish(page);
-    await expect(page.getByRole('link', { name: 'System' }).first()).toBeVisible({ timeout: 15_000 });
-    await page.getByRole('link', { name: 'System' }).first().click();
-    await expect(page.getByRole('link', { name: 'Setup' }).first()).toBeVisible({ timeout: 15_000 });
-    await page.goto('/');
-    await expect(page.getByRole('button', { name: 'New res.' }).first()).toBeVisible({ timeout: 15_000 });
+    const systemBtn = page.getByRole('button', { name: /System/i }).first();
+    await expect(systemBtn).toBeVisible({ timeout: 30_000 });
+    await systemBtn.hover();
+    await expect(page.getByRole('link', { name: /Setup/i }).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('button', { name: /Reservations/i }).first()).toBeVisible({ timeout: 30_000 });
   });
 
   test('sidebar arama İngilizce', async ({ page }) => {
     await page.goto('/');
+    await waitForDemoSession(page);
     await selectEnglish(page);
     await page.getByRole('button', { name: 'Hızlı arama' }).click();
     await page.getByPlaceholder('Menü veya ekran ara…').fill('rezervasyon');

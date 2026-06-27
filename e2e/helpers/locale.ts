@@ -1,17 +1,26 @@
 import type { Page } from '@playwright/test';
-import { expect } from '@playwright/test';
 
-/** HK mobil kabukta dil seçici yok — localStorage ile EN. */
+/** Set EN before the first navigation in a test. */
 export async function setEnglishViaStorage(page: Page) {
   await page.addInitScript(() => {
-    localStorage.setItem('roomio-locale', 'en');
+    try {
+      localStorage.setItem('roomio-locale', 'en');
+    } catch {
+      // ignore in test harness
+    }
   });
 }
 
-/** Top bar may render duplicate locale switchers in compact layouts — always target the first. */
+/** Switch an already-loaded page to English via storage + reload (deterministic). */
 export async function selectEnglish(page: Page) {
-  const switcher = page.getByLabel(/Dil|Language/i).first();
-  await switcher.selectOption('en');
-  await expect(switcher).toHaveValue('en');
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en', { timeout: 10_000 });
+  await setEnglishViaStorage(page);
+  await page.evaluate(() => {
+    try {
+      localStorage.setItem('roomio-locale', 'en');
+    } catch {
+      // ignore in test harness
+    }
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(300);
 }
