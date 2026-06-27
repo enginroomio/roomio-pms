@@ -53,7 +53,7 @@ const HUBS = [
   { path: '/reports?hub=raporlar', needles: ['Raporlar Merkezi', 'Raporlar merkezi', 'hub=raporlar'] },
   { path: '/reports?hub=gunsonu', needles: ['Gün Sonu Merkezi', 'Gün sonu merkezi', 'hub=gunsonu'] },
   { path: '/settings?hub=ayarlar', needles: ['Ayarlar ve Kısayollar', 'hub=ayarlar'] },
-  { path: '/settings?hub=sistem', needles: ['Sistem ve Kuruluş', 'hub=sistem'] },
+  { path: '/settings?hub=sistem', needles: ['Sistem Merkezi', 'hub=sistem'] },
 ];
 
 function sleep(ms) {
