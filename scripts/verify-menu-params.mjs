@@ -8,14 +8,13 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const MENU_PARAMS_SPECS = [
+  'e2e/menu-params.spec.ts',
   'e2e/menu-params-sistem.spec.ts',
   'e2e/menu-params-rezervasyon.spec.ts',
   'e2e/menu-params-resepsiyon.spec.ts',
   'e2e/menu-params-onkasa.spec.ts',
   'e2e/menu-params-kat.spec.ts',
   'e2e/menu-params-misafir.spec.ts',
-  'e2e/menu-params-raporlar.spec.ts',
-  'e2e/menu-params-gunsonu.spec.ts',
 ];
 const ROOT = process.cwd();
 const PORT = process.env.VERIFY_PORT ?? '3119';
@@ -53,6 +52,8 @@ async function waitHealth(maxMs = 180_000) {
   const start = Date.now();
   while (Date.now() - start < maxMs) {
     try {
+      const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) throw new Error(`health ${res.status}`);
       const home = await fetch(`${BASE}/`, { signal: AbortSignal.timeout(20_000) });
       if (!home.ok) throw new Error(`home ${home.status}`);
       return true;
@@ -80,23 +81,16 @@ async function main() {
     killPort();
     mkdirSync(join(ROOT, '.roomio/runtime'), { recursive: true });
     writeFileSync(join(ROOT, '.roomio/runtime/active-port.txt'), PORT);
-    server = spawn(
-      'npx',
-      process.env.VERIFY_BUILD === '1'
-        ? ['next', 'start', '-p', PORT, '-H', '127.0.0.1']
-        : ['next', 'dev', '-p', PORT, '-H', '127.0.0.1'],
-      {
-        cwd: ROOT,
-        stdio: 'ignore',
-        env: {
-          ...process.env,
-          ROOMIO_AUTH_REQUIRED: '0',
-          WATCHPACK_POLLING: 'true',
-          NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=4096',
-          ...(process.env.VERIFY_BUILD === '1' ? { NODE_ENV: 'production' } : {}),
-        },
+    server = spawn('npx', ['next', 'dev', '-p', PORT, '-H', '127.0.0.1'], {
+      cwd: ROOT,
+      stdio: 'ignore',
+      env: {
+        ...process.env,
+        ROOMIO_AUTH_REQUIRED: '0',
+        ROOMIO_DEMO_AUTH: '1',
+        WATCHPACK_POLLING: 'true',
       },
-    );
+    });
     if (!(await waitHealth())) {
       server.kill('SIGTERM');
       console.error('✗ Sunucu hazır değil');
