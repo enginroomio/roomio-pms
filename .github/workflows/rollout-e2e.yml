@@ -52,7 +52,7 @@ jobs:
       - name: Start server
         run: |
           if [ -f .next/standalone/server.js ]; then
-            PORT=3100 HOSTNAME=127.0.0.1 node .next/standalone/server.js &
+            (cd .next/standalone && PORT=3100 HOSTNAME=127.0.0.1 node server.js) &
           else
             npx next start -H 127.0.0.1 -p 3100 &
           fi
