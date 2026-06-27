@@ -49,10 +49,20 @@ function NavBranch({
   if (item.children?.length) {
     return (
       <div className="roomio-module-side__branch">
-        <div className={`roomio-module-side__label${active ? ' is-active' : ''}`}>
-          {item.label}
-          <ChevronRight size={13} />
-        </div>
+        {item.href && item.href !== '#' ? (
+          <Link
+            href={item.href}
+            className={`roomio-module-side__link${active ? ' is-active' : ''}`}
+          >
+            {item.label}
+            <ChevronRight size={13} />
+          </Link>
+        ) : (
+          <div className={`roomio-module-side__label${active ? ' is-active' : ''}`}>
+            {item.label}
+            <ChevronRight size={13} />
+          </div>
+        )}
         <div className="roomio-module-side__children">
           {item.children.map((child) => (
             <NavBranch key={child.id} item={child} depth={depth + 1} pathname={pathname} search={search} />
