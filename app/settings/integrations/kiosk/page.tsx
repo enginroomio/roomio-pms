@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -29,12 +29,11 @@ export default function KioskSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Check-in Kiosk"
-      title="Check-in Kiosk"
-      description="Lobi self check-in terminali — kimlik tarama ve oda kartı yazdırma."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Check-in Kiosk"}
+      title={"Check-in Kiosk"}
+      description={"Lobi self check-in terminali — kimlik tarama ve oda kartı yazdırma."}
+      >
       <FormSection title="Terminal">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -64,6 +63,6 @@ export default function KioskSettingsPage() {
           Kiosk URL: <Link href="/kiosk">/kiosk</Link> · Diller: {config.languages.join(', ')}
         </p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

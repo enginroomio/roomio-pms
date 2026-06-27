@@ -35,6 +35,15 @@ export async function authedGet(request: APIRequestContext, path: string) {
   return request.get(path, { headers: authHeaders(token) });
 }
 
+export async function authedGetAsAdmin(request: APIRequestContext, path: string) {
+  const token = await loginApiTokenWith(request, ADMIN_EMAIL, DEMO_PASSWORD);
+  return request.get(path, { headers: authHeaders(token) });
+}
+
+export async function loginAdminToken(request: APIRequestContext): Promise<string> {
+  return loginApiTokenWith(request, ADMIN_EMAIL, DEMO_PASSWORD);
+}
+
 export async function authedPost(request: APIRequestContext, path: string, data: unknown) {
   const token = await loginApiToken(request);
   return request.post(path, { headers: authHeaders(token), data });

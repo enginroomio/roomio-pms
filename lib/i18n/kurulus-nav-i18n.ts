@@ -2,11 +2,17 @@ import { KURULUS_NAV, type KurulusNavEntry } from '@/lib/navigation/kurulus-nav'
 import type { ModuleNavItem } from '@/lib/navigation/module-menus';
 import type { SidebarNavItem } from '@/lib/navigation/sidebar-nav';
 import { sidebarHrefI18nKey } from '@/lib/i18n/sidebar-href-i18n';
+import { normalizeKurulusSection } from '@/lib/navigation/menu-route-params';
 
 type TFn = (key: string, params?: Record<string, string | number>, fallback?: string) => string;
 
 const EXTRA_SECTION_KEYS: Record<string, string> = {
   language: 'nav.kurulus.language',
+  'lang-forms': 'sidebar.sub.langForms',
+  'lang-menus': 'sidebar.sub.langMenus',
+  'lang-reports': 'sidebar.sub.langReports',
+  nationalities: 'nav.kurulus.nationalities',
+  sync: 'nav.kurulus.sync',
   'rate-plans': 'nav.kontrat.rate-plans',
   agencies: 'nav.kontrat.agencies',
   extras: 'nav.kontrat.extras',
@@ -37,12 +43,18 @@ function walkNav(entries: KurulusNavEntry[], href: string): KurulusNavEntry | un
 }
 
 export function findKurulusNavTitle(t: TFn, section: string | null, tab: string | null): string {
-  if (section && EXTRA_SECTION_KEYS[section]) {
-    return t(EXTRA_SECTION_KEYS[section]);
+  const normalizedSection = section ? normalizeKurulusSection(section) : null;
+  if (normalizedSection && EXTRA_SECTION_KEYS[normalizedSection]) {
+    return t(EXTRA_SECTION_KEYS[normalizedSection]);
   }
-  const href = section ? `/settings?section=${section}` : tab ? `/settings?tab=${tab}` : '/settings';
+  const href = normalizedSection
+    ? `/settings?section=${normalizedSection}`
+    : tab
+      ? `/settings?tab=${tab}`
+      : '/settings';
   const match = walkNav(KURULUS_NAV, href);
   if (match) return kurulusNavLabel(t, match);
+  if (!section && !tab) return t('nav.settings.title');
   return t('nav.kurulus.otel-bilgileri');
 }
 

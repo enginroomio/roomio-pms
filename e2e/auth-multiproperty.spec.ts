@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { authedGet, loginApiToken, authHeaders } from './helpers/api-auth';
+import {
+  authedGetAsAdmin,
+  loginAdminToken,
+  authHeaders,
+} from './helpers/api-auth';
+import { useDemoRole, waitForDemoSession } from './helpers/demo-auth';
 
 test.describe('JWT oturum', () => {
   test('login API token döner', async ({ request }) => {
@@ -25,7 +30,7 @@ test.describe('JWT oturum', () => {
 
 test.describe('Çoklu şube', () => {
   test('properties API iki tesis döner', async ({ request }) => {
-    const res = await authedGet(request, '/api/properties');
+    const res = await authedGetAsAdmin(request, '/api/properties');
     expect(res.ok()).toBeTruthy();
     const j = (await res.json()) as { properties: Array<{ city: string }> };
     expect(j.properties.length).toBeGreaterThanOrEqual(2);
@@ -34,12 +39,14 @@ test.describe('Çoklu şube', () => {
   });
 
   test('şube değişince dashboard verisi güncellenir', async ({ page, request }) => {
-    const propsRes = await authedGet(request, '/api/properties');
+    const propsRes = await authedGetAsAdmin(request, '/api/properties');
     const props = ((await propsRes.json()) as { properties: Array<{ id: string; city: string }> }).properties;
     const ant = props.find((p) => p.city === 'Antalya');
     expect(ant).toBeTruthy();
 
+    await useDemoRole(page, 'admin');
     await page.goto('/');
+    await waitForDemoSession(page);
     const select = page.getByLabel('Otel seçimi');
     await select.selectOption(ant!.id);
     await page.waitForTimeout(800);
@@ -48,13 +55,13 @@ test.describe('Çoklu şube', () => {
 
   test('konsolide rapor sekmesi', async ({ page }) => {
     await page.goto('/reports?tab=consolidated');
-    await expect(page.getByRole('heading', { name: /Konsolide Tesis Raporu/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /Konsolide Tesis Raporu/i }).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/Konsolide/i).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /CSV indir/i })).toBeVisible();
   });
 
   test('konsolide PDF export', async ({ request }) => {
-    const token = await loginApiToken(request);
+    const token = await loginAdminToken(request);
     const res = await request.get('/api/reports/consolidated?format=pdf', { headers: authHeaders(token) });
     expect(res.ok()).toBeTruthy();
     expect(res.headers()['content-type']).toContain('pdf');

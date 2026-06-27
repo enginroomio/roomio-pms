@@ -1,0 +1,71 @@
+name: Rollout E2E
+
+on:
+  pull_request:
+    paths:
+      - 'e2e/**'
+      - 'lib/navigation/**'
+      - 'components/**'
+      - 'app/**'
+      - 'scripts/verify-rollout.mjs'
+      - 'scripts/verify-menu-params.mjs'
+      - 'playwright.rollout.config.ts'
+      - '.github/workflows/rollout-e2e.yml'
+  workflow_dispatch:
+
+jobs:
+  rollout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: file:${{ github.workspace }}/.roomio-data/ci-rollout.db
+      ROOMIO_JWT_SECRET: ci-test-secret-at-least-32-characters-long
+      ROOMIO_AUTH_REQUIRED: '0'
+      ROOMIO_DEMO_AUTH: '1'
+      VERIFY_PORT: '3100'
+      ROOMIO_URL: http://127.0.0.1:3100
+      PLAYWRIGHT_REUSE_SERVER: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      CI: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync database schema
+        run: mkdir -p .roomio-data && npm run db:push && npm run db:seed
+
+      - name: Production build
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Start server
+        run: npx next start -H 127.0.0.1 -p 3100 &
+        env:
+          NODE_ENV: production
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:3100/api/health | grep -q '"ok":true'; then exit 0; fi
+            sleep 2
+          done
+          echo "Server did not become healthy" >&2
+          exit 1
+
+      - name: Rollout E2E
+        run: npm run verify:rollout
+
+      - name: Menu params E2E
+        run: npm run verify:menu-params

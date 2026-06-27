@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { authedGet, authHeaders, loginApiToken } from './helpers/api-auth';
+import { authedGetAsAdmin, authHeaders, loginAdminToken } from './helpers/api-auth';
 
 test.describe('Çoklu şube — canlı veri', () => {
   test('properties API iki şehir döner', async ({ request }) => {
-    const res = await authedGet(request, '/api/properties');
+    const res = await authedGetAsAdmin(request, '/api/properties');
     expect(res.ok()).toBeTruthy();
     const j = (await res.json()) as { properties: Array<{ id: string; city: string | null }> };
     expect(j.properties.length).toBeGreaterThanOrEqual(2);
@@ -12,10 +12,10 @@ test.describe('Çoklu şube — canlı veri', () => {
   });
 
   test('şube header ile dashboard propertyId değişir', async ({ request }) => {
-    const token = await loginApiToken(request);
+    const token = await loginAdminToken(request);
     const headers = authHeaders(token);
 
-    const props = ((await (await authedGet(request, '/api/properties')).json()) as {
+    const props = ((await (await authedGetAsAdmin(request, '/api/properties')).json()) as {
       properties: Array<{ id: string; city: string; totalRooms?: number }>;
     }).properties;
     const ist = props.find((p) => p.city === 'İstanbul');
@@ -50,7 +50,7 @@ test.describe('Çoklu şube — canlı veri', () => {
   });
 
   test('konsolide rapor her iki şubeyi içerir', async ({ request }) => {
-    const token = await loginApiToken(request);
+    const token = await loginAdminToken(request);
     const res = await request.get('/api/reports/consolidated', { headers: authHeaders(token) });
     expect(res.ok()).toBeTruthy();
     const j = (await res.json()) as {
@@ -63,9 +63,9 @@ test.describe('Çoklu şube — canlı veri', () => {
   });
 
   test('rezervasyon listesi şube bazlı filtrelenir', async ({ request }) => {
-    const token = await loginApiToken(request);
+    const token = await loginAdminToken(request);
     const headers = authHeaders(token);
-    const props = ((await (await authedGet(request, '/api/properties')).json()) as {
+    const props = ((await (await authedGetAsAdmin(request, '/api/properties')).json()) as {
       properties: Array<{ id: string; city: string; totalRooms?: number }>;
     }).properties;
     const ist = props.find((p) => p.city === 'İstanbul')!;

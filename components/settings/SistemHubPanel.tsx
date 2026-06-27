@@ -24,7 +24,7 @@ export function SistemHubPanel() {
   return (
     <div style={{ marginTop: 16 }}>
       <div className="roomio-card" style={{ padding: 20, marginBottom: 16 }}>
-        <h2 className="roomio-card-title">Sistem ve kuruluş</h2>
+        <h2 className="roomio-card-title">Sistem Merkezi</h2>
         <p className="roomio-page-desc" style={{ marginTop: 8 }}>
           Elektra SİSTEM menüsü — kuruluş tanımları, rapor tasarım, entegrasyonlar ve uyumluluk.
         </p>

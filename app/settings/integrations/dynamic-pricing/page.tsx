@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -45,12 +45,11 @@ export default function DynamicPricingSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Dinamik Fiyatlandırma"
-      title="Dinamik Fiyatlandırma"
-      description="Doluluk, lead-time ve saat kuralları — kanal yöneticisine otomatik gönderim."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Dinamik Fiyatlandırma"}
+      title={"Dinamik Fiyatlandırma"}
+      description={"Doluluk, lead-time ve saat kuralları — kanal yöneticisine otomatik gönderim."}
+      >
       <FormSection title="Genel">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -115,6 +114,6 @@ export default function DynamicPricingSettingsPage() {
           </table>
         </div>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

@@ -92,6 +92,32 @@ export async function getFolioLinesServer(
   return rows.map(mapFolio);
 }
 
+export async function countReservationsWithCompanyFolioBalance(
+  reservationIds: string[],
+  propertyId?: string,
+): Promise<number> {
+  if (!reservationIds.length) return 0;
+  await init();
+  const rows = await prisma.folioLine.findMany({
+    where: {
+      propertyId: pid(propertyId),
+      reservationId: { in: reservationIds },
+      window: 'company',
+    },
+  });
+  const map: Record<string, FolioLine[]> = {};
+  for (const row of rows) {
+    const list = map[row.reservationId] ?? [];
+    list.push(mapFolio(row));
+    map[row.reservationId] = list;
+  }
+  let open = 0;
+  for (const id of reservationIds) {
+    if (folioBalance(map[id] ?? []) > 0) open += 1;
+  }
+  return open;
+}
+
 export async function getFolioBalancesServer(
   reservationIds: string[],
   propertyId?: string,

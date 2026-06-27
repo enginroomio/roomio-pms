@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { isAuthRequired, AUTH_COOKIE } from '@/lib/auth/config';
-import { verifyToken } from '@/lib/auth/jwt';
+import { verifyTokenEdge } from '@/lib/auth/jwt-edge';
 
 const PUBLIC_PATHS = [
   '/login',
@@ -94,7 +94,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const payload = await verifyToken(token);
+  const payload = await verifyTokenEdge(token);
   if (!payload) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ ok: false, error: 'Yetkisiz' }, { status: 401 });

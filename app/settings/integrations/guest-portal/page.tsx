@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormGrid, FormSection } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -38,12 +38,11 @@ export default function GuestPortalSettingsPage() {
   ];
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Misafir Portalı"
-      title="Misafir Self-Servis Portalı"
-      description="QR / token ile check-in, folyo ve e-fatura — ElektraWeb misafir uygulaması web sürümü."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Misafir Self-Servis Portalı"}
+      title={"Misafir Self-Servis Portalı"}
+      description={"QR / token ile check-in, folyo ve e-fatura — ElektraWeb misafir uygulaması web sürümü."}
+      >
       <FormSection title="Özellikler">
         <FormGrid>
           {toggles.map((t) => (
@@ -66,6 +65,6 @@ export default function GuestPortalSettingsPage() {
           Misafir URL: <Link href="/guest">/guest</Link> · Online rezervasyon sonrası otomatik token üretilir.
         </p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

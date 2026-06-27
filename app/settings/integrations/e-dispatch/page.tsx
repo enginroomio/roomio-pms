@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -38,12 +38,11 @@ export default function EdispatchSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > e-İrsaliye"
-      title="e-İrsaliye"
-      description="GİB uyumlu sevk irsaliyesi — test ve canlı ortam."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"e-İrsaliye"}
+      title={"e-İrsaliye"}
+      description={"GİB uyumlu sevk irsaliyesi — test ve canlı ortam."}
+      >
       <FormSection title="Bağlantı">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -76,6 +75,6 @@ export default function EdispatchSettingsPage() {
         {saved ? <p className="roomio-page-desc">Kaydedildi.</p> : null}
         {testResult ? <p className="roomio-page-desc">{testResult.message}</p> : null}
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

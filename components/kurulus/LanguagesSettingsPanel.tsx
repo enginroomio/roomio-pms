@@ -57,6 +57,14 @@ export function LanguagesSettingsPanel() {
             <Button onClick={() => setShowForm((v) => !v)}>{showForm ? t('kurulus.cancel') : t('kurulus.languages.new')}</Button>
           </KurulusAdminGate>
         </div>
+        {!loading && languages.length > 0 ? (
+          <p className="roomio-page-desc" style={{ marginTop: 8 }}>
+            {t('dil.languageSummary', {
+              active: String(languages.filter((l) => l.active).length),
+              defaultLang: languages.find((l) => l.defaultLang)?.code?.toUpperCase() ?? '—',
+            })}
+          </p>
+        ) : null}
         {showForm ? (
           <KurulusAdminGate>
           <form className="roomio-form" onSubmit={(e) => void save(e)} style={{ marginTop: 12 }}>

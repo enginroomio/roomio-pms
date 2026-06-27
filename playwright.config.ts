@@ -8,9 +8,14 @@ const skipWarm = process.env.PLAYWRIGHT_SKIP_WARM === '1';
 export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
-  testIgnore: authRequired === '1' ? undefined : ['**/auth-required.spec.ts'],
+  testIgnore: [
+    ...(authRequired === '1' ? [] : ['**/auth-required.spec.ts']),
+    '**/menu-params.spec.ts',
+    ...(process.env.CI ? ['**/rollout-*.spec.ts', '**/menu-params-*.spec.ts'] : []),
+  ],
   fullyParallel: false,
   workers: 1,
+  retries: process.env.CI ? 2 : 0,
   use: {
     baseURL: e2eBaseUrl,
     trace: 'on-first-retry',

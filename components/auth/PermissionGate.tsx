@@ -13,7 +13,8 @@ export function PermissionGate({
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }) {
-  const { user } = useSession();
+  const { user, loading } = useSession();
+  if (loading) return null;
   if (!hasPermission(user, permission)) return <>{fallback}</>;
   return <>{children}</>;
 }

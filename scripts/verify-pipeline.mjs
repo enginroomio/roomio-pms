@@ -8,12 +8,13 @@
  *   3. Production build smoke — build + next start + kritik E2E
  *   4. Auth-required smoke — ROOMIO_AUTH_REQUIRED=1 + JWT 401/403
  *   5. Tam rollout E2E — tüm rollout-*.spec.ts
- *   6. Docker deploy smoke — test:docker
- *   7. Canlı URL checklist — ROOMIO_PUBLIC_URL varsa
+ *   6. Menü URL parametreleri E2E — menu-params-*.spec.ts
+ *   7. Docker deploy smoke — test:docker
+ *   8. Canlı URL checklist — ROOMIO_PUBLIC_URL varsa
  *
  * Kullanım: npm run verify:pipeline
  * Atlama: VERIFY_SKIP_UI=1 VERIFY_SKIP_PROD=1 VERIFY_SKIP_AUTH=1
- *         VERIFY_SKIP_ROLLOUT=1 VERIFY_SKIP_DOCKER=1 VERIFY_SKIP_LIVE=1
+ *         VERIFY_SKIP_ROLLOUT=1 VERIFY_SKIP_MENU_PARAMS=1 VERIFY_SKIP_DOCKER=1 VERIFY_SKIP_LIVE=1
  */
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
@@ -124,7 +125,7 @@ function main() {
   console.log('════════════════════════════════════════');
   console.log('\nAşamalar (ardışık, bekleme yok):');
   console.log('  1 API tam → 2 UI rollout → 3 Prod build');
-  console.log('  4 Auth-required → 5 Tam rollout → 6 Docker → 7 Canlı URL\n');
+  console.log('  4 Auth-required → 5 Tam rollout → 6 Menü URL → 7 Docker → 8 Canlı URL\n');
 
   killPort(DEV_PORT);
   killPort(PROD_PORT);
@@ -183,19 +184,30 @@ function main() {
     killPort(DEV_PORT);
   }
 
-  if (process.env.VERIFY_SKIP_DOCKER === '1') {
-    skipStage(6, 'Docker deploy smoke', 'VERIFY_SKIP_DOCKER=1');
+  if (process.env.VERIFY_SKIP_MENU_PARAMS === '1') {
+    skipStage(6, 'Menü URL parametreleri E2E', 'VERIFY_SKIP_MENU_PARAMS=1');
+  } else if (!chromiumInstalled()) {
+    skipStage(6, 'Menü URL parametreleri E2E', 'chromium kurulu değil');
   } else {
-    runNpmStage(6, 'Docker deploy smoke', 'test:docker');
+    runStage(6, 'Menü URL parametreleri E2E', 'scripts/verify-menu-params.mjs', {
+      VERIFY_PORT: DEV_PORT,
+    });
+    killPort(DEV_PORT);
+  }
+
+  if (process.env.VERIFY_SKIP_DOCKER === '1') {
+    skipStage(7, 'Docker deploy smoke', 'VERIFY_SKIP_DOCKER=1');
+  } else {
+    runNpmStage(7, 'Docker deploy smoke', 'test:docker');
   }
 
   const liveUrl = process.env.ROOMIO_PUBLIC_URL?.trim();
   if (process.env.VERIFY_SKIP_LIVE === '1') {
-    skipStage(7, 'Canlı URL checklist', 'VERIFY_SKIP_LIVE=1');
+    skipStage(8, 'Canlı URL checklist', 'VERIFY_SKIP_LIVE=1');
   } else if (!liveUrl) {
-    skipStage(7, 'Canlı URL checklist', 'ROOMIO_PUBLIC_URL ayarlanmadı');
+    skipStage(8, 'Canlı URL checklist', 'ROOMIO_PUBLIC_URL ayarlanmadı');
   } else {
-    runNpmStage(7, 'Canlı URL checklist', 'deploy:checklist', {
+    runNpmStage(8, 'Canlı URL checklist', 'deploy:checklist', {
       ROOMIO_PUBLIC_URL: liveUrl,
       ROOMIO_URL: liveUrl,
     });

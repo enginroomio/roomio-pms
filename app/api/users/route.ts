@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { ROLE_LABELS, type Role } from '@/lib/auth/roles';
 import { listUsers } from '@/lib/server/pms-store';
-import { updateUserAdminServer, createUserAdmin, adminResetUserPassword } from '@/lib/server/users-admin';
+import { updateUserAdminServer, createUserAdmin, adminResetUserPassword, deleteUserAdmin } from '@/lib/server/users-admin';
+import { getUserPropertyIds, userHasAllPropertyAccess } from '@/lib/server/user-properties';
 import { requireApiAnyPermission, requireApiPermission } from '@/lib/auth/require-permission';
 
 export const dynamic = 'force-dynamic';
@@ -30,23 +31,28 @@ export async function GET(req: Request) {
 
   try {
     const rows = await listUsers();
+    const users = await Promise.all(rows.map(async (u) => {
+      const role = u.role as Role;
+      const propertyIds = await getUserPropertyIds(u.id);
+      return {
+        id: u.id,
+        email: u.email,
+        username: u.email.split('@')[0] ?? u.email,
+        fullName: u.name,
+        role: ROLE_LABELS[role] ?? u.role,
+        roleId: u.role,
+        department: u.department ?? DEPARTMENT_BY_ROLE[role] ?? '—',
+        groupCode: u.groupCode ?? GROUP_BY_ROLE[role],
+        active: u.active,
+        propertyIds,
+        allProperties: userHasAllPropertyAccess(u.role),
+        lastLoginAt: u.lastLoginAt ?? null,
+      };
+    }));
     return NextResponse.json({
       ok: true,
-      count: rows.length,
-      users: rows.map((u) => {
-        const role = u.role as Role;
-        return {
-          id: u.id,
-          email: u.email,
-          username: u.email.split('@')[0] ?? u.email,
-          fullName: u.name,
-          role: ROLE_LABELS[role] ?? u.role,
-          roleId: u.role,
-          department: u.department ?? DEPARTMENT_BY_ROLE[role] ?? '—',
-          groupCode: u.groupCode ?? GROUP_BY_ROLE[role],
-          active: u.active,
-        };
-      }),
+      count: users.length,
+      users,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Kullanıcı listesi alınamadı';
@@ -59,17 +65,31 @@ export async function POST(req: Request) {
   if (auth instanceof NextResponse) return auth;
 
   const body = (await req.json()) as {
-    action?: 'update' | 'create' | 'reset-password';
+    action?: 'update' | 'create' | 'reset-password' | 'delete';
     id?: string;
     department?: string;
     groupCode?: string | null;
     active?: boolean;
+    role?: Role;
+    propertyIds?: string[];
     email?: string;
     name?: string;
-    role?: Role;
     password?: string;
     newPassword?: string;
   };
+
+  if (body.action === 'delete') {
+    if (!body.id) {
+      return NextResponse.json({ error: 'id gerekli' }, { status: 400 });
+    }
+    try {
+      await deleteUserAdmin(auth.user.id, body.id, auth.user.name);
+      return NextResponse.json({ ok: true });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Kullanıcı silinemedi';
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+  }
 
   if (body.action === 'create') {
     if (!body.email || !body.name || !body.role || !body.password) {
@@ -83,6 +103,7 @@ export async function POST(req: Request) {
         password: body.password,
         department: body.department,
         groupCode: body.groupCode,
+        propertyIds: body.propertyIds,
       });
       return NextResponse.json({ ok: true, user });
     } catch (err) {
@@ -112,6 +133,8 @@ export async function POST(req: Request) {
       department: body.department,
       groupCode: body.groupCode,
       active: body.active,
+      role: body.role,
+      propertyIds: body.propertyIds,
     });
     return NextResponse.json({ ok: true, user });
   } catch {

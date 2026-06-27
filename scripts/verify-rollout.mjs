@@ -53,19 +53,38 @@ function killPort() {
   spawnSync(`lsof -ti :${PORT} 2>/dev/null | xargs kill -9 2>/dev/null; true`, { shell: true, stdio: 'ignore' });
 }
 
-async function waitHealth(maxMs = 120_000) {
+const HEALTH_PROBE_PATHS = ['/', '/rooms?tab=blocking', '/reservations'];
+
+async function waitHealth(maxMs = 180_000, { deep = false } = {}) {
   const start = Date.now();
   while (Date.now() - start < maxMs) {
     try {
-      const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(8000) });
-      if (res.ok) {
-        const j = await res.json();
-        if (j.ok) return true;
+      const paths = deep ? HEALTH_PROBE_PATHS : ['/'];
+      let allOk = true;
+      for (const path of paths) {
+        const res = await fetch(`${BASE}${path}`, { signal: AbortSignal.timeout(25_000) });
+        if (!res.ok) {
+          allOk = false;
+          break;
+        }
       }
+      if (!allOk) throw new Error('probe failed');
+      if (deep) {
+        try {
+          const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(10_000) });
+          if (res.ok) {
+            const j = await res.json();
+            if (j.ok) return true;
+          }
+        } catch {
+          /* dev derlemesinde /api/health geçici yanıt vermeyebilir */
+        }
+      }
+      return true;
     } catch {
       /* retry */
     }
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 2000));
   }
   return false;
 }
@@ -86,16 +105,32 @@ async function main() {
     killPort();
     mkdirSync(join(ROOT, '.roomio/runtime'), { recursive: true });
     writeFileSync(join(ROOT, '.roomio/runtime/active-port.txt'), PORT);
-    server = spawn('npx', ['next', 'dev', '-p', PORT, '-H', '127.0.0.1'], {
-      cwd: ROOT,
-      stdio: 'ignore',
-      env: { ...process.env, ROOMIO_AUTH_REQUIRED: '0', WATCHPACK_POLLING: 'true' },
-    });
+    server = spawn(
+      'npx',
+      process.env.VERIFY_BUILD === '1'
+        ? ['next', 'start', '-p', PORT, '-H', '127.0.0.1']
+        : ['next', 'dev', '-p', PORT, '-H', '127.0.0.1'],
+      {
+        cwd: ROOT,
+        stdio: 'ignore',
+        env: {
+          ...process.env,
+          ROOMIO_AUTH_REQUIRED: '0',
+          WATCHPACK_POLLING: 'true',
+          NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=4096',
+          ...(process.env.VERIFY_BUILD === '1' ? { NODE_ENV: 'production' } : {}),
+        },
+      },
+    );
     if (!(await waitHealth())) {
       server.kill('SIGTERM');
       console.error('✗ Sunucu hazır değil');
       process.exit(1);
     }
+    await waitHealth(120_000, { deep: true });
+  } else if (!(await waitHealth())) {
+    console.error(`✗ Mevcut sunucu hazır değil (${BASE}) — önce dev sunucuyu başlatın veya PLAYWRIGHT_REUSE_SERVER=0 kullanın`);
+    process.exit(1);
   }
 
   const e2eEnv = {
@@ -106,8 +141,13 @@ async function main() {
   };
 
   for (const spec of ROLLOUT_SPECS) {
+    if (!(await waitHealth(120_000))) {
+      console.error(`✗ Sunucu yanıt vermiyor — ${spec} öncesi durdu`);
+      if (server) server.kill('SIGTERM');
+      process.exit(1);
+    }
     const label = `E2E — ${spec.replace('e2e/', '').replace('.spec.ts', '')}`;
-    run(label, 'npm', ['run', 'test:e2e', '--', spec], e2eEnv);
+    run(label, 'npx', ['playwright', 'test', '--config=playwright.rollout.config.ts', spec], e2eEnv);
   }
 
   if (server) {

@@ -43,6 +43,35 @@ export async function appendAuditLog(
   });
 }
 
+export async function getAuditLogsForUser(
+  userName: string,
+  userId: string,
+  limit = 50,
+): Promise<AuditEntry[]> {
+  await init();
+  const rows = await prisma.auditLog.findMany({
+    where: {
+      OR: [
+        { user: userName },
+        { entityType: 'user', entityId: userId },
+      ],
+    },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    businessDate: r.businessDate,
+    createdAt: r.createdAt,
+    module: r.module as AuditModule,
+    action: r.action,
+    entityType: r.entityType ?? undefined,
+    entityId: r.entityId ?? undefined,
+    user: r.user,
+    detail: r.detail ?? undefined,
+  }));
+}
+
 export async function getAuditLogsServer(
   propertyId?: string,
   opts: { businessDate?: string; module?: string; limit?: number } = {},

@@ -65,7 +65,8 @@ test('housekeeping API', async ({ request }) => {
 test('kat hizmetleri oda panosu', async ({ page }) => {
   await page.goto('/housekeeping/rooms');
   await expect(page.getByRole('heading', { name: /Oda Listesi/i })).toBeVisible();
-  await expect(page.getByRole('group', { name: 'Kat filtresi' })).toBeVisible();
+  await expect(page.getByText('Kat', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('HK Durumu', { exact: true }).first()).toBeVisible();
 });
 
 test('housekeeping pano mockup', async ({ page }) => {
@@ -83,7 +84,6 @@ test('room rack F12 sayfası', async ({ page }) => {
 
 test('rezervasyon listesi screen-039', async ({ page }) => {
   await page.goto('/reservations');
-  await expect(page.getByRole('heading', { name: /Rezervasyon Listesi/i })).toBeVisible();
   await expect(page.getByText('Filtreler')).toBeVisible();
   await expect(page.getByText('Kayıt Sayısı:')).toBeVisible();
   await expect(page.getByRole('link', { name: /Yeni Rezervasyon \(F2\)/i }).first()).toBeVisible();

@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { SessionUser, Role, Permission } from '@/lib/auth/roles';
-import { getDemoSession } from '@/lib/auth/roles';
+import { getDemoSession, isRole, normalizeRole } from '@/lib/auth/roles';
 
 type SessionContextValue = {
   user: SessionUser;
@@ -55,18 +55,37 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setAuthRequired(Boolean(cfg.authRequired));
       setDemoAuth(Boolean(cfg.demoAuth));
 
-      const role = localStorage.getItem(ROLE_STORAGE) as Role | null;
       const token = localStorage.getItem(TOKEN_STORAGE);
-      const useDemoRole = cfg.demoAuth && role && !token;
-      const url = useDemoRole ? `/api/auth/session?role=${role}` : '/api/auth/session';
 
-      const r = await fetch(url, { headers: authHeaders(), credentials: 'include' });
+      // Önce gerçek oturum (JWT cookie veya Bearer) — demo role ile ezilmesin
+      const r = await fetch('/api/auth/session', { headers: authHeaders(), credentials: 'include' });
       if (r.status === 401 && cfg.authRequired) {
         setAuthenticated(false);
         setLoading(false);
         return;
       }
       const j = (await r.json()) as { user?: ApiUser; authenticated?: boolean };
+      if (j.authenticated && j.user) {
+        setUser(toSessionUser(j.user));
+        setAuthenticated(true);
+        setMustChangePassword(Boolean(j.user.mustChangePassword));
+        return;
+      }
+
+      if (cfg.demoAuth && !token) {
+        const roleRaw = localStorage.getItem(ROLE_STORAGE);
+        if (roleRaw && !isRole(roleRaw)) localStorage.removeItem(ROLE_STORAGE);
+        const role = normalizeRole(roleRaw, 'fo_manager');
+        const demoRes = await fetch(`/api/auth/session?role=${role}`, { credentials: 'include' });
+        const demoJ = (await demoRes.json()) as { user?: ApiUser; authenticated?: boolean };
+        if (demoJ.user) {
+          setUser(toSessionUser(demoJ.user));
+          setAuthenticated(false);
+          setMustChangePassword(false);
+        }
+        return;
+      }
+
       if (j.user) {
         setUser(toSessionUser(j.user));
         setAuthenticated(Boolean(j.authenticated));

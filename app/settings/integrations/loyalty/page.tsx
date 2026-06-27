@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -39,16 +39,11 @@ export default function LoyaltySettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Sadakat"
+    <IntegrationPageLayout
+      segment="Sadakat & Acente Bonus"
       title="Sadakat & Acente Bonus"
       description="Misafir puanları, kademe indirimleri ve acente komisyon bonusları."
-      actions={
-        <>
-          <Button variant="secondary" href="/loyalty">Sadakat Merkezi →</Button>
-          <Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>
-        </>
-      }
+      actions={<Button variant="secondary" href="/loyalty">Sadakat Merkezi →</Button>}
     >
       <FormSection title="Puan Kuralları">
         <FormGrid>
@@ -84,6 +79,6 @@ export default function LoyaltySettingsPage() {
           </table>
         </div>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

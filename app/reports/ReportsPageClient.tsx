@@ -13,7 +13,7 @@ import type { FormTemplateDraft } from '@/components/forms/FormDesignEditor';
 import { FORM_PAGES, defaultFormLayout } from '@/lib/forms/form-catalog';
 import { REPORT_MODULES } from '@/lib/reports/field-catalog';
 import { roomioFetch } from '@/lib/client/api';
-import { SIDEBAR_NAV } from '@/lib/navigation/sidebar-nav';
+import { SIDEBAR_NAV, type SidebarNavItem } from '@/lib/navigation/sidebar-nav';
 import { CATEGORY_REPORTS } from '@/lib/data/eod';
 import { EodOperationsHub } from '@/components/reports/EodOperationsHub';
 import {
@@ -51,6 +51,8 @@ import {
 } from '@/components/housekeeping/HkReportPanels';
 import { UserReportsPanel } from '@/components/reports/UserReportsPanel';
 import { GunSonuHubPanel, RaporlarHubPanel } from '@/components/reports/MenuHubPanels';
+import { SistemModuleLayout } from '@/components/sistem/SistemModuleLayout';
+import { SistemReportTabs, type SistemReportTabId } from '@/components/sistem/SistemReportTabs';
 import {
   ReportsConsolidatedTabContent,
   ReportsDesignTabContent,
@@ -83,9 +85,23 @@ function tabFromParams(tab: string | null, category: string | null): Tab {
   return 'hub';
 }
 
+function categoryNavItems(items: SidebarNavItem[]): SidebarNavItem[] {
+  return items.filter(
+    (item) =>
+      !item.separator &&
+      (item.href?.includes('category=') ||
+        item.children?.some((child) => child.href?.includes('category='))),
+  );
+}
+
+function categoryMatches(item: SidebarNavItem, category: string): boolean {
+  if (item.href?.includes(`category=${category}`)) return true;
+  return item.children?.some((child) => child.href?.includes(`category=${category}`)) ?? false;
+}
+
 function reportCategories() {
   const section = SIDEBAR_NAV.find((s) => s.id === 'raporlar');
-  return (section?.items ?? []).filter((i) => i.href?.includes('category='));
+  return categoryNavItems(section?.items ?? []);
 }
 
 export function ReportsPageClient({
@@ -108,7 +124,7 @@ export function ReportsPageClient({
   const { reservations, loading: rezLoading } = useReservations();
   const activeTab = tabFromParams(tab, category);
   const categories = reportCategories();
-  const activeCategory = categories.find((c) => c.href?.includes(`category=${category}`));
+  const activeCategory = categories.find((c) => category && categoryMatches(c, category));
   const [businessDate, setBusinessDate] = useState('2026-06-18');
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [editing, setEditing] = useState<ReportTemplate | null>(null);
@@ -267,15 +283,6 @@ export function ReportsPageClient({
       setTplMsg('Form şablonu silindi.');
     }
   }
-
-  const tabs: { id: Tab; label: string; href: string }[] = [
-    { id: 'hub', label: t('reports.tab.hub'), href: '/reports' },
-    { id: 'design', label: t('reports.design'), href: '/reports?tab=design' },
-    { id: 'forms', label: t('reports.tab.forms'), href: '/reports?tab=forms' },
-    { id: 'user', label: t('reports.tab.user'), href: '/reports?tab=user' },
-    { id: 'eod', label: t('reports.tab.eod'), href: '/reports?tab=eod' },
-    { id: 'consolidated', label: t('reports.tab.consolidated'), href: '/reports?tab=consolidated' },
-  ];
 
   const consolidatedMenuSearch = propertyCode ? `?tab=consolidated&property=${propertyCode}` : '?tab=consolidated';
 
@@ -510,6 +517,19 @@ export function ReportsPageClient({
 
   const mgmtTabs = new Set(['prepare', 'cube', 'occupancy', '3year', 'dept', 'management']);
   if (tab && mgmtTabs.has(tab)) {
+    if (tab === 'management') {
+      return (
+        <SistemModuleLayout
+          segment="Yönetim Raporları"
+          title="Yönetim Raporu"
+          description="Gelir, doluluk ve departman analizleri"
+          menuSearch="?tab=management"
+        >
+          <SistemReportTabs active="management" />
+          <ManagementSummaryPanel variant={tab} />
+        </SistemModuleLayout>
+      );
+    }
     return (
       <ModuleLayout
         breadcrumb="Arka Büro › Yönetim Raporu"
@@ -609,15 +629,15 @@ export function ReportsPageClient({
 
   if (tab === 'special') {
     return (
-      <ModuleLayout
-        breadcrumb="Raporlar › Özel"
+      <SistemModuleLayout
+        segment="Özel Raporlar"
         title="Özel Raporlar"
         description="Sık kullanılan özel rapor kısayolları"
-        sideTitle={t('nav.reports')}
         menuSearch="?tab=special"
       >
+        <SistemReportTabs active="special" />
         <SpecialReportsPanel />
-      </ModuleLayout>
+      </SistemModuleLayout>
     );
   }
 
@@ -637,46 +657,41 @@ export function ReportsPageClient({
 
   if (tab === 'daily') {
     return (
-      <ModuleLayout
-        breadcrumb="Sistem › Günlük Raporlar"
+      <SistemModuleLayout
+        segment="Günlük Raporlar"
         title="DL — Günlük Raporlar"
         description="In-house listeleri ve günlük özet raporları"
-        sideTitle={t('nav.reports')}
         menuSearch="?tab=daily"
       >
+        <SistemReportTabs active="daily" />
         <ReportCategoryHub category="gunluk" label="Günlük Raporlar (InHouse Lists)" />
-      </ModuleLayout>
+      </SistemModuleLayout>
     );
   }
 
   if (tab === 'user') {
     return (
-      <ModuleLayout
-        breadcrumb="Sistem › Kullanıcı Raporları"
+      <SistemModuleLayout
+        segment="Kullanıcı Raporları"
         title="Kullanıcı Tanımlı Raporlar"
         description="Kayıtlı özel rapor şablonları"
-        sideTitle={t('nav.reports')}
         menuSearch="?tab=user"
       >
+        <SistemReportTabs active="user" />
         <UserReportsPanel propertyId={propertyId} />
-      </ModuleLayout>
+      </SistemModuleLayout>
     );
   }
 
   if (tab === 'design' && !report && !category) {
     return (
-      <ModuleLayout
-        breadcrumb="Sistem › Rapor Tasarım"
+      <SistemModuleLayout
+        segment="Rapor Tasarım"
         title={t('reports.design')}
         description="Sürükle-bırak rapor şablon editörü"
-        sideTitle={t('nav.reports')}
         menuSearch="?tab=design"
       >
-        <div className="roomio-form-actions" style={{ marginTop: 0, marginBottom: 8 }}>
-          <Button variant="secondary" href="/reports">Raporlama programı</Button>
-          <Button variant="ghost" href="/reports?tab=forms">Form tasarım</Button>
-          <Button variant="ghost" href="/reports?tab=user">Kullanıcı raporları</Button>
-        </div>
+        <SistemReportTabs active="design" />
         <ReportsDesignTabContent
           t={t}
           activePropertyName={activeProperty?.name}
@@ -690,21 +705,20 @@ export function ReportsPageClient({
           onTplMsg={setTplMsg}
           exportTemplateHref={exportTemplateHref}
         />
-      </ModuleLayout>
+      </SistemModuleLayout>
     );
   }
 
   if (tab === 'forms' && !report && !category) {
     return (
-      <ModuleLayout
-        breadcrumb="Sistem › Form Tasarım"
+      <SistemModuleLayout
+        segment="Form Tasarım"
         title={t('reports.tab.forms')}
         description="Rezervasyon ve form sihirbazı düzeni"
-        sideTitle={t('nav.reports')}
         menuSearch="?tab=forms"
       >
+        <SistemReportTabs active="forms" />
         <div className="roomio-form-actions" style={{ marginTop: 0, marginBottom: 8 }}>
-          <Button variant="secondary" href="/reports?tab=design">Rapor tasarım</Button>
           <Button variant="ghost" href="/reservations/new">Rezervasyon formu</Button>
         </div>
         <ReportsFormsTabContent
@@ -717,7 +731,7 @@ export function ReportsPageClient({
           onDelete={(id) => void handleDeleteFormTemplate(id)}
           onTplMsg={setTplMsg}
         />
-      </ModuleLayout>
+      </SistemModuleLayout>
     );
   }
 
@@ -830,33 +844,28 @@ export function ReportsPageClient({
     );
   }
 
+  const hubMenuSearch =
+    tab === 'consolidated' && propertyCode
+      ? consolidatedMenuSearch
+      : tab
+        ? `?tab=${tab}`
+        : category
+          ? `?category=${category}`
+          : '';
+
+  const hubReportTab: SistemReportTabId =
+    activeTab === 'design' || activeTab === 'forms' || activeTab === 'user' || activeTab === 'special'
+      ? activeTab
+      : 'hub';
+
   return (
-    <ModuleLayout
-      breadcrumb="Sistem › Raporlar"
+    <SistemModuleLayout
+      segment={activeTab === 'design' ? 'Rapor Tasarım' : activeCategory?.label ?? 'Raporlama Programı'}
       title={activeTab === 'design' ? t('reports.design') : activeCategory?.label ?? t('reports.hub')}
       description="Rapor kategorileri, şablon tasarımı ve gün sonu raporları."
-      sideTitle={t('nav.reports')}
-      menuSearch={
-        tab === 'consolidated' && propertyCode
-          ? consolidatedMenuSearch
-          : tab
-            ? `?tab=${tab}`
-            : category
-              ? `?category=${category}`
-              : ''
-      }
+      menuSearch={hubMenuSearch}
     >
-      <div className="roomio-tabs">
-        {tabs.map((item) => (
-          <Link
-            key={item.id}
-            href={item.href}
-            className={`roomio-tab${activeTab === item.id ? ' is-active' : ''}`}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </div>
+      <SistemReportTabs active={hubReportTab} />
 
       {activeTab === 'hub' ? (
         <div className="roomio-reports-hub">
@@ -979,6 +988,6 @@ export function ReportsPageClient({
         {' · '}
         <Link href="/settings">Kuruluş</Link>
       </p>
-    </ModuleLayout>
+    </SistemModuleLayout>
   );
 }

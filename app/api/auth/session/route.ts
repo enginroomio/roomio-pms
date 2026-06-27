@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isAuthRequired } from '@/lib/auth/config';
 import { getJwtPayloadFromRequest } from '@/lib/auth/request-token';
-import { ROLE_LABELS, getDemoSession, hasPermission } from '@/lib/auth/roles';
-import type { Role } from '@/lib/auth/roles';
+import { ROLE_LABELS, getDemoSession, hasPermission, normalizeRole } from '@/lib/auth/roles';
 import { buildSessionUserFromAuth } from '@/lib/auth/session-user';
 import { revokeToken } from '@/lib/auth/session-store';
 import { isRedisConfigured } from '@/lib/server/redis';
@@ -54,7 +53,7 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const role = (searchParams.get('role') ?? 'fo_manager') as Role;
+  const role = normalizeRole(searchParams.get('role'));
   const user = getDemoSession(role);
   const [invoices, stock, ledger] = await Promise.all([
     getInvoices(propertyId),

@@ -3,6 +3,8 @@ type RedisHandle = {
   ping: () => Promise<string>;
   setEx: (key: string, seconds: number, value: string) => Promise<unknown>;
   get: (key: string) => Promise<string | null>;
+  keys: (pattern: string) => Promise<string[]>;
+  del: (key: string) => Promise<unknown>;
   on: (event: string, listener: (...args: unknown[]) => void) => void;
 };
 

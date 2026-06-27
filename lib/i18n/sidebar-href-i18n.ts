@@ -9,6 +9,7 @@ const SIDEBAR_HREF_I18N: Record<string, string> = {
   '/reports?tab=management': 'sidebar.item.managementReports',
   '/settings/integrations/tesa': 'sidebar.item.doorIntegration',
   '/settings/integrations/channel-manager': 'sidebar.sub.channelManager',
+  '/settings/integrations': 'sidebar.item.integrationsHub',
   '/settings/licensing': 'sidebar.item.licensing',
   '/settings?section=sync': 'sidebar.sub.syncStatus',
   '/settings?section=lang-forms': 'sidebar.sub.langForms',
@@ -74,7 +75,6 @@ const SIDEBAR_HREF_I18N: Record<string, string> = {
   '/settings?section=pbx-calls': 'sidebar.sub.pbxCalls',
   '/settings?section=pbx-lookup': 'sidebar.sub.pbxLookup',
   '/guest-relations?tab=directory': 'sidebar.sub.directory',
-  '/settings/integrations': 'sidebar.sistem.servicePrograms',
   '/settings/compliance/5651': 'sidebar.sistem.hotspot5651',
 };
 

@@ -15,7 +15,7 @@ export function HkMobileFrame({ title, eyebrow = 'Kat Hizmetleri', actions, chil
       <header className="roomio-hk-mobile__header roomio-hk-mobile__header--compact">
         <div>
           <p className="roomio-hk-mobile__eyebrow">{eyebrow}</p>
-          <h1>{title}</h1>
+          <h1 className="roomio-page-title">{title}</h1>
         </div>
         {actions}
       </header>

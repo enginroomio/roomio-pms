@@ -1,34 +1,50 @@
 import { test, expect } from '@playwright/test';
+import { gotoWithDemo } from './helpers/demo-auth';
+
+type RolloutCase = {
+  label: string;
+  path: string;
+  heading: RegExp | string;
+  activeNav?: RegExp | string;
+  tableAssert?: boolean;
+  readyWhen?: 'heading' | 'list' | 'main';
+};
+
+const RESEPSIYON_ROLLOUT: RolloutCase[] = [
+  { label: 'Resepsiyon özeti', path: '/reception', heading: /Resepsiyon & Ön Kasa/i },
+  { label: 'Konaklayanlar', path: '/reception/inhouse', heading: /Konaklayanlar/i },
+  { label: 'Bugün giriş', path: '/reception/arrivals', heading: /Bugün Giriş Yapacaklar/i, tableAssert: true },
+  { label: 'Bugün çıkış', path: '/reception/departures', heading: /Bugün Çıkış Yapacaklar/i, tableAssert: true },
+  { label: 'Boş odalar', path: '/reception/vacant', heading: /Boş Oda/i },
+  { label: 'Info Rack', path: '/guest-relations/info-rack', heading: /Info Rack/i, tableAssert: true },
+  { label: 'Takip listesi', path: '/guest-relations/traces', heading: /Takip Listesi/i },
+  { label: 'Arıza & şikayet', path: '/guest-relations/complaints', heading: /Arıza ve Şikayet Listesi/i, tableAssert: true },
+  { label: 'Kayıp & bulunan', path: '/guest-relations/lost-found', heading: /Kayıp ve Bulunan/i },
+];
 
 test.describe('Resepsiyon rollout — adım adım', () => {
-  test('Adım 1 — Resepsiyon özeti', async ({ page }) => {
-    await page.goto('/reception');
-    await expect(page.getByRole('heading', { name: /Resepsiyon & Ön Kasa/i })).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText('Konaklayan').first()).toBeVisible();
-    await expect(page.getByText('Kasa Defteri — bugün')).toBeVisible();
-  });
+  test.describe.configure({ timeout: 180_000 });
 
-  test('Adım 2 — Bugün giriş', async ({ page }) => {
-    await page.goto('/reception/arrivals');
-    await expect(page.getByRole('heading', { name: /Bugün Giriş Yapacaklar/i })).toBeVisible();
-    await expect(page.getByRole('table')).toBeVisible();
-  });
-
-  test('Adım 3 — Bugün çıkış', async ({ page }) => {
-    await page.goto('/reception/departures');
-    await expect(page.getByRole('heading', { name: /Bugün Çıkış Yapacaklar/i })).toBeVisible();
-    await expect(page.getByRole('table')).toBeVisible();
-  });
-
-  test('Adım 4 — Info Rack', async ({ page }) => {
-    await page.goto('/guest-relations/info-rack');
-    await expect(page.getByRole('heading', { name: /Info Rack/i })).toBeVisible();
-    await expect(page.getByRole('table')).toBeVisible();
-  });
-
-  test('Adım 5 — Arıza & şikayet', async ({ page }) => {
-    await page.goto('/guest-relations/complaints');
-    await expect(page.getByRole('heading', { name: /Arıza ve Şikayet Listesi/i })).toBeVisible();
-    await expect(page.getByRole('table')).toBeVisible();
-  });
+  for (const [index, step] of RESEPSIYON_ROLLOUT.entries()) {
+    test(`Adım ${index + 1} — ${step.label}`, async ({ page }) => {
+      await gotoWithDemo(page, step.path, 'admin', {
+        waitForSideNav: false,
+        readyWhen: step.readyWhen ?? 'heading',
+      });
+      await expect(page.getByRole('heading', { name: step.heading }).first()).toBeVisible({ timeout: 45_000 });
+      if (step.activeNav) {
+        await expect(page.getByRole('link', { name: step.activeNav }).first()).toHaveClass(/is-active/);
+      }
+      if (step.path === '/reception') {
+        await expect(page.getByText('Konaklayan').first()).toBeVisible();
+        await expect(page.getByText('Kasa Defteri — bugün')).toBeVisible();
+      }
+      if (step.tableAssert) {
+        await expect(page.getByRole('table').first()).toBeVisible({ timeout: 20_000 });
+      }
+      if (step.path === '/reception/vacant') {
+        await expect(page.getByText(/Temiz|Check-in hazır/i).first()).toBeVisible();
+      }
+    });
+  }
 });

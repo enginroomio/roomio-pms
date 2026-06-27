@@ -5,6 +5,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 function readActivePort() {
   try {
@@ -18,10 +19,13 @@ function readActivePort() {
 async function resolveBaseUrl() {
   const candidates = [
     process.env.ROOMIO_URL,
-    readActivePort(),
     'http://127.0.0.1:3100',
+    readActivePort(),
   ].filter(Boolean);
+  const seen = new Set();
   for (const base of candidates) {
+    if (seen.has(base)) continue;
+    seen.add(base);
     try {
       const res = await fetch(`${base}/api/health`, { signal: AbortSignal.timeout(5000) });
       if (res.ok) return base;
@@ -29,7 +33,7 @@ async function resolveBaseUrl() {
       // try next candidate
     }
   }
-  return candidates[0] ?? 'http://127.0.0.1:3100';
+  return 'http://127.0.0.1:3100';
 }
 
 const BASE = await resolveBaseUrl();
@@ -219,7 +223,85 @@ const ROUTES = [
   '/settings?section=pbx-lookup',
   '/settings?section=lang-forms',
   '/settings?section=language',
+  '/guest-relations/lost-found',
+  '/settings/licensing',
+  '/settings/privacy',
+  '/settings/integrations',
+  '/reports?tab=special',
+  '/reports?tab=daily',
+  '/reports?tab=user',
+  '/rooms?filter=closed',
+  '/rooms?view=new-rack',
+  '/reports?tab=eod&action=audit',
+  '/settings/compliance/5651?tab=devices',
+  '/settings/compliance/5651?tab=logs',
+  '/reception?tab=kasa',
+  '/reception?tab=kimlik',
+  '/reception/inhouse?tab=daily-card',
+  '/reception/arrivals?tab=prepay',
+  '/reception/vacant?tab=deposit-refund',
+  '/reception/inhouse?tab=room-changes',
+  '/reservations?track=1',
+  '/reservations?status=CHECKED_OUT',
+  '/reservations?tab=import',
+  '/reservations?tab=import-text',
+  '/reservations?tab=email',
+  '/reservations?tab=group-codes',
+  '/reservations?tab=availability&prices=1',
+  '/reports?report=transfer',
+  '/reports?report=room-changes',
+  '/reports?report=departure-change',
+  '/reports?report=arrival-change',
+  '/reports?report=gunluk-maliye',
+  '/guest-relations?tab=messages',
+  '/guest-relations/complaints?new=1',
+  '/guest-relations/reclamations',
+  '/guest-relations/traces?tab=agenda',
+  '/guest-relations/traces?type=wakeup',
+  '/fnb?mode=quick',
+  '/reception?tab=kimlik-new',
+  '/reception/arrivals?tab=collections',
+  '/reception/arrivals?tab=cash-sale',
+  '/reception/departures?tab=rates',
+  '/reception/inhouse?tab=bulk',
+  '/accounting?tab=fiscal',
+  '/housekeeping/rooms',
+  '/housekeeping/tasks',
+  '/fnb?tab=rates',
+  '/settings?section=lang-menus',
+  '/settings?section=lang-reports',
+  '/guest-relations/inhouse',
+  '/guest-relations/restaurant',
+  '/guest-relations/tennis',
+  '/guest-relations/daily-activities',
+  '/guest-relations/guest-activities',
+  '/guest-relations/weather',
+  '/guest-relations/weather-forecast',
+  '/guest-relations/reviews/new',
+  '/guest-relations/repeat-guests',
+  '/guest-relations/repeat-guests?format=fr3',
+  '/guest-relations?tab=directory',
+  '/guest-relations/traces?action=new-note',
+  '/guest-relations/traces?type=yellow',
+  '/guest-relations/traces?view=notes',
+  '/guest-relations/traces?toggle=notes',
+  '/reports?report=enerji',
+  '/reports?report=demirbas',
+  '/reports?report=gunluk-balans',
+  '/reports?report=distribution',
+  '/reports?report=dept-revenue-old',
+  '/reports?report=mgmt-old',
+  '/reports?report=kredi-kontrol',
+  '/reports?report=dept-transfer',
+  '/reports?report=mgmt-eng',
+  '/reports?report=acenta-analiz',
+  '/reports?report=market-rate',
+  '/reservations?status=OPTION',
+  '/reservations?status=CANCELLED',
+  '/reservations?status=NO_SHOW',
 ];
+
+export { ROUTES };
 
 function routeTimeout(path) {
   if (INTEGRATION_API_PREFIXES.some((p) => path.startsWith(p))) return INTEGRATION_TIMEOUT_MS;
@@ -285,18 +367,31 @@ async function main() {
     console.log(' tamam\n');
   }
 
+  const offset = Number(process.env.ROUTE_TEST_OFFSET ?? 0);
+  const limit = process.env.ROUTE_TEST_LIMIT ? Number(process.env.ROUTE_TEST_LIMIT) : ROUTES.length;
+  const routesToTest = ROUTES.slice(offset, Math.min(offset + limit, ROUTES.length));
+
+  if (offset > 0 || limit < ROUTES.length) {
+    console.log(`Batch: ${offset}–${offset + routesToTest.length - 1} / ${ROUTES.length}\n`);
+  }
+
   const results = [];
-  for (let i = 0; i < ROUTES.length; i++) {
-    if (i > 0 && i % 25 === 0) {
-      const healthy = await waitForHealth();
+  for (let i = 0; i < routesToTest.length; i++) {
+    const globalIndex = offset + i;
+    if (i > 0 && i % 20 === 0) {
+      const healthy = await waitForHealth(5, 1500);
       if (!healthy) {
-        console.warn(`\n· Sunucu route ${i}/${ROUTES.length} civarında yanıt vermiyor — kalan rotalar atlanıyor\n`);
-        break;
+        console.warn(`\n· Sunucu route ${globalIndex}/${ROUTES.length} civarında yanıt vermiyor — 10 sn bekleniyor\n`);
+        await new Promise((r) => setTimeout(r, 10_000));
+        if (!(await waitForHealth(3, 2000))) {
+          console.warn('· Sunucu hâlâ yanıt vermiyor — kalan rotalar atlanıyor\n');
+          break;
+        }
       }
-      await new Promise((r) => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 800));
     }
-    results.push(await checkWithRetry(ROUTES[i]));
-    await new Promise((r) => setTimeout(r, INTEGRATION_API_PREFIXES.some((p) => ROUTES[i].startsWith(p)) ? 120 : 60));
+    results.push(await checkWithRetry(routesToTest[i]));
+    await new Promise((r) => setTimeout(r, INTEGRATION_API_PREFIXES.some((p) => routesToTest[i].startsWith(p)) ? 120 : 60));
   }
   let failed = 0;
   for (const r of results) {
@@ -305,13 +400,15 @@ async function main() {
     console.log(`${mark} ${r.status} ${r.path}${extra}`);
     if (!r.ok) failed++;
   }
-  const coreCount = Math.min(CORE_ROUTE_COUNT, results.length);
-  const coreOk = results.slice(0, coreCount).filter((r) => r.ok).length;
-  console.log(`\n${results.length - failed}/${results.length} OK (çekirdek ${coreOk}/${coreCount})`);
-  if (coreOk < coreCount) process.exit(1);
+  const coreCount = offset === 0 ? Math.min(CORE_ROUTE_COUNT, results.length) : 0;
+  const coreOk = offset === 0 ? results.slice(0, coreCount).filter((r) => r.ok).length : coreCount;
+  console.log(`\n${results.length - failed}/${results.length} OK${offset === 0 ? ` (çekirdek ${coreOk}/${coreCount})` : ''}`);
+  if (offset === 0 && coreOk < coreCount) process.exit(1);
   if (failed > 0) {
     console.warn(`· ${failed} rota başarısız — çekirdek geçti, devam ediliyor`);
   }
 }
 
-main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}

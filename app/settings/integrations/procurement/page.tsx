@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -28,12 +28,11 @@ export default function ProcurementSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Satın Alma"
-      title="Satın Alma"
-      description="Departman talepleri, onay eşiği ve tedarikçi yönlendirme."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Satın Alma"}
+      title={"Satın Alma"}
+      description={"Departman talepleri, onay eşiği ve tedarikçi yönlendirme."}
+      >
       <FormSection title="Satın Alma">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -78,6 +77,6 @@ export default function ProcurementSettingsPage() {
           </table>
         </div>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

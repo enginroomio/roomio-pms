@@ -77,6 +77,7 @@ async function main() {
       market: 'FIT',
       rate: 1200,
       adults: 2,
+      mealPlan: 'BB',
     }),
   });
   const reservation = create.json.reservation;

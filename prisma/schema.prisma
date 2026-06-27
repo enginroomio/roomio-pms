@@ -82,6 +82,7 @@ model Property {
   queueRooms            QueueRoom[]
   loyaltyAccounts       LoyaltyAccount[]
   loyaltyTransactions   LoyaltyTransaction[]
+  userProperties        UserProperty[]
 }
 
 model AppState {
@@ -92,15 +93,26 @@ model AppState {
 }
 
 model User {
-  id                 String  @id
-  email              String  @unique
+  id                 String         @id
+  email              String         @unique
   name               String
   role               String
   passwordHash       String
   department         String?
   groupCode          String?
-  active             Boolean @default(true)
-  mustChangePassword Boolean @default(false)
+  active             Boolean        @default(true)
+  mustChangePassword Boolean        @default(false)
+  lastLoginAt        String?
+  properties         UserProperty[]
+}
+
+model UserProperty {
+  userId     String
+  propertyId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@id([userId, propertyId])
 }
 
 model Reservation {

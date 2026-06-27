@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -37,12 +37,11 @@ export default function HrPortalSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > IK Mobil Portalı"
-      title="Elektraweb IK Mobil"
-      description="Personel izin, vardiya değişimi, bordro görüntüleme ve eğitim — mobil IK portalı."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Elektraweb IK Mobil"}
+      title={"Elektraweb IK Mobil"}
+      description={"Personel izin, vardiya değişimi, bordro görüntüleme ve eğitim — mobil IK portalı."}
+      >
       <FormSection title="Portal">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -84,6 +83,6 @@ export default function HrPortalSettingsPage() {
         {testResult ? <p className="roomio-page-desc">{testResult.message}</p> : null}
         <p className="roomio-page-desc" style={{ marginTop: 12 }}>Personel URL: <Link href="/hr">/hr</Link></p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

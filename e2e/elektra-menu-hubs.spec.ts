@@ -13,7 +13,7 @@ const HUBS = [
   { path: '/reports?hub=raporlar', title: /Raporlar [Mm]erkezi/i },
   { path: '/reports?hub=gunsonu', title: /Gün [Ss]onu [Mm]erkezi/i },
   { path: '/settings?hub=ayarlar', title: /Ayarlar ve Kısayollar/i },
-  { path: '/settings?hub=sistem', title: /Sistem ve Kuruluş/i },
+  { path: '/settings?hub=sistem', title: /Sistem Merkezi/i },
 ] as const;
 
 test.describe('Elektra menü hub panelleri', () => {

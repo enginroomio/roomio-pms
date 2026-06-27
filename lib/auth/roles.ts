@@ -52,8 +52,17 @@ const ROLE_LABELS: Record<Role, string> = {
   viewer: 'Salt Okunur',
 };
 
+export function isRole(value: string | null | undefined): value is Role {
+  return Boolean(value && Object.prototype.hasOwnProperty.call(ROLE_PERMISSIONS, value));
+}
+
+export function normalizeRole(value: string | null | undefined, fallback: Role = 'fo_manager'): Role {
+  return isRole(value) ? value : fallback;
+}
+
 /** Demo oturum — production'da JWT/session ile değiştirilir */
 export function getDemoSession(role: Role = 'fo_manager'): SessionUser {
+  const safeRole = normalizeRole(role);
   const ids: Record<Role, string> = {
     admin: 'user-admin',
     fo_manager: 'user-arda',
@@ -71,16 +80,16 @@ export function getDemoSession(role: Role = 'fo_manager'): SessionUser {
     viewer: 'Deniz Salt',
   };
   return {
-    id: ids[role],
-    name: names[role],
-    role,
-    roleLabel: ROLE_LABELS[role],
-    permissions: ROLE_PERMISSIONS[role],
+    id: ids[safeRole],
+    name: names[safeRole],
+    role: safeRole,
+    roleLabel: ROLE_LABELS[safeRole],
+    permissions: ROLE_PERMISSIONS[safeRole],
   };
 }
 
 export function hasPermission(user: SessionUser, permission: Permission): boolean {
-  return user.permissions.includes(permission);
+  return Array.isArray(user.permissions) && user.permissions.includes(permission);
 }
 
 export const SETTINGS_IDENTITY_SECTIONS = new Set(['users', 'user-groups']);

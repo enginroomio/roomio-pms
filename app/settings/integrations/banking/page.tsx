@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormGrid, FormSection } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -37,12 +37,11 @@ export default function BankingSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Banka Entegrasyonları"
-      title="Banka Entegrasyonları"
-      description="Hesap bakiyeleri ve otomatik mutabakat — Ziraat, İş Bankası ve diğerleri."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Banka Entegrasyonları"}
+      title={"Banka Entegrasyonları"}
+      description={"Hesap bakiyeleri ve otomatik mutabakat — Ziraat, İş Bankası ve diğerleri."}
+      >
       <FormSection title="Hesaplar">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -71,6 +70,6 @@ export default function BankingSettingsPage() {
         {saved ? <p className="roomio-page-desc">Kaydedildi.</p> : null}
         {syncMsg ? <p className="roomio-page-desc">{syncMsg}</p> : null}
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

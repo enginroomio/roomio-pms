@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -42,12 +42,11 @@ export default function QualitySettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Kalite Yönetimi"
-      title="Kalite Yönetimi"
-      description="ISO 9001 doküman yönetimi, prosedürler ve periyodik denetim."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Kalite Yönetimi"}
+      title={"Kalite Yönetimi"}
+      description={"ISO 9001 doküman yönetimi, prosedürler ve periyodik denetim."}
+      >
       <FormSection title="Kalite">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -86,6 +85,6 @@ export default function QualitySettingsPage() {
         {saved ? <p className="roomio-page-desc">Kaydedildi.</p> : null}
         {auditResult ? <p className="roomio-page-desc">{auditResult.message}</p> : null}
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

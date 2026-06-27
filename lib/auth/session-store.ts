@@ -29,6 +29,42 @@ export async function revokeToken(jti: string, expiresIn = '8h'): Promise<void> 
   await redis.setEx(`${REVOKED_PREFIX}${jti}`, sessionTtlSeconds(expiresIn), '1');
 }
 
+export async function revokeAllUserSessions(userId: string, exceptJti?: string): Promise<number> {
+  if (!isRedisConfigured()) return 0;
+  const redis = await getRedis();
+  if (!redis) return 0;
+  const pattern = `${SESSION_PREFIX}${userId}:*`;
+  const keys = await redis.keys(pattern);
+  let count = 0;
+  for (const key of keys) {
+    const jti = key.slice(`${SESSION_PREFIX}${userId}:`.length);
+    if (exceptJti && jti === exceptJti) continue;
+    await redis.del(key);
+    await revokeToken(jti);
+    count += 1;
+  }
+  return count;
+}
+
+export type UserSessionRow = {
+  jti: string;
+  startedAt: string;
+};
+
+export async function listUserSessions(userId: string): Promise<UserSessionRow[]> {
+  if (!isRedisConfigured()) return [];
+  const redis = await getRedis();
+  if (!redis) return [];
+  const keys = await redis.keys(`${SESSION_PREFIX}${userId}:*`);
+  const rows: UserSessionRow[] = [];
+  for (const key of keys) {
+    const jti = key.slice(`${SESSION_PREFIX}${userId}:`.length);
+    const startedAt = (await redis.get(key)) ?? '';
+    rows.push({ jti, startedAt });
+  }
+  return rows.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+}
+
 export async function isTokenRevoked(jti: string): Promise<boolean> {
   if (!isRedisConfigured()) return false;
   const redis = await getRedis();

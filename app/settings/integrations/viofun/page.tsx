@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -36,12 +36,11 @@ export default function ViofunSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Viofun"
-      title="Viofun Aktivite Platformu"
-      description="Otel içi eğlence, su sporları ve aktivite rezervasyonları."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Viofun Aktivite Platformu"}
+      title={"Viofun Aktivite Platformu"}
+      description={"Otel içi eğlence, su sporları ve aktivite rezervasyonları."}
+      >
       <FormSection title="Bağlantı">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -65,6 +64,6 @@ export default function ViofunSettingsPage() {
         {testMsg ? <p className="roomio-page-desc">{testMsg}</p> : null}
         <p className="roomio-page-desc" style={{ marginTop: 12 }}>Misafir URL: <Link href="/viofun">/viofun</Link> · {config.activities.filter((a) => a.available).length} aktivite</p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

@@ -22,10 +22,15 @@ function navActive(pathname: string, search: string, href: string): boolean {
     return current === href || current.startsWith(`${href}&`);
   }
   if (base === '/') return pathname === '/';
-  if (base === '/reception' || base === '/housekeeping' || base === '/settings') {
+  if (base === '/reception' || base === '/housekeeping' || base === '/settings' || base === '/reports') {
     return pathname === base && !search;
   }
   return pathname === base || pathname.startsWith(`${base}/`);
+}
+
+function branchActive(item: ModuleNavItem, pathname: string, search: string): boolean {
+  if (!item.separator && navActive(pathname, search, item.href)) return true;
+  return item.children?.some((child) => branchActive(child, pathname, search)) ?? false;
 }
 
 function NavBranch({
@@ -39,7 +44,7 @@ function NavBranch({
   pathname: string;
   search: string;
 }) {
-  const active = navActive(pathname, search, item.href);
+  const active = branchActive(item, pathname, search);
 
   if (item.children?.length) {
     return (

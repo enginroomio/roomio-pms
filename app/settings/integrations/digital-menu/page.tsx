@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -29,12 +29,11 @@ export default function DigitalMenuSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Dijital Menü"
-      title="Akıllı Dijital Menü"
-      description="QR masa menüsü, alerjen bilgisi ve mutfak sipariş entegrasyonu."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Akıllı Dijital Menü"}
+      title={"Akıllı Dijital Menü"}
+      description={"QR masa menüsü, alerjen bilgisi ve mutfak sipariş entegrasyonu."}
+      >
       <FormSection title="Genel">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -60,6 +59,6 @@ export default function DigitalMenuSettingsPage() {
           Misafir URL: <Link href="/menu">/menu</Link> · {config.items.filter((i) => i.available).length} aktif ürün
         </p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

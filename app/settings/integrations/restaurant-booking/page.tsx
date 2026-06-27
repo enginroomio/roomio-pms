@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -29,12 +29,11 @@ export default function RestaurantBookingSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Restoran Rezervasyon"
-      title="Restoran Rezervasyon"
-      description="Online masa rezervasyonu, çalışma saatleri ve kapasite yönetimi."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Restoran Rezervasyon"}
+      title={"Restoran Rezervasyon"}
+      description={"Online masa rezervasyonu, çalışma saatleri ve kapasite yönetimi."}
+      >
       <FormSection title="Restoran">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -59,6 +58,6 @@ export default function RestaurantBookingSettingsPage() {
           Misafir URL: <Link href="/restaurant">/restaurant</Link> · {config.tables.filter((t) => t.available).length} müsait masa
         </p>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

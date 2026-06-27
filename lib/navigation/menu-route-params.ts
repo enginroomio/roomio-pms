@@ -64,16 +64,30 @@ export function reportsCategoryFromReportSlug(report: string | null): string | n
   if (slug.includes('transfer') || slug.includes('room-change')) return 'gunluk';
   if (slug.includes('forecast') || slug.includes('doluluk')) return 'forecast';
   if (slug.includes('rez') || slug.includes('reservation')) return 'rezervasyon';
-  if (slug.includes('hk') || slug.includes('kat')) return 'kathizmetleri';
+  if (slug.includes('hk') || slug.includes('kat') || slug.includes('enerji') || slug.includes('demirbas')) return 'kathizmetleri';
   if (slug.includes('egm') || slug.includes('kbs')) return 'egm';
   if (slug.includes('gelir') || slug.includes('revenue')) return 'gelir';
   return 'yonetim';
 }
 
 /** Kuruluş ?section= menü alias → gerçek panel anahtarı */
+const KURULUS_SECTION_ALIASES: Record<string, string> = {
+  'source-codes': 'sources',
+  'segment-codes': 'segments',
+  'market-codes': 'markets',
+  'oda-tip': 'room-types',
+  'oda-no': 'rooms',
+  'oda-kat': 'floors',
+  'res-type': 'res-types',
+  'meal-plan': 'meal-plans',
+  'rate-plan': 'rate-plans',
+  'company': 'company-list',
+  'otel': 'otel-bilgileri',
+};
+
 export function normalizeKurulusSection(section: string | null): string | null {
   if (!section) return section;
-  return section;
+  return KURULUS_SECTION_ALIASES[section] ?? section;
 }
 
 /** Kuruluş harici yönlendirme (null = panel içi) */

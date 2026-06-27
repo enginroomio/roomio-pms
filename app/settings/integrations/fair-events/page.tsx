@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -29,12 +29,11 @@ export default function FairEventsSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Fuar Otomasyon"
-      title="Fuar Otomasyon"
-      description="Etkinlik yönetimi, online kayıt ve QR check-in."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"Fuar Otomasyon"}
+      title={"Fuar Otomasyon"}
+      description={"Etkinlik yönetimi, online kayıt ve QR check-in."}
+      >
       <FormSection title="Fuar">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -79,6 +78,6 @@ export default function FairEventsSettingsPage() {
           </table>
         </div>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

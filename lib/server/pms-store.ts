@@ -288,6 +288,8 @@ export async function init(): Promise<void> {
     await seedUserProfilesIfEmpty();
     await ensureViewerDemoUser();
     await ensureReceptionDemoUser();
+    const { ensureUserPropertyAccessForAll } = await import('@/lib/server/user-properties');
+    await ensureUserPropertyAccessForAll();
     const {
       seedPropertyFloorsIfEmpty,
       seedRoomTypeDefsIfEmpty,
@@ -1163,6 +1165,7 @@ export async function listUsers() {
       department: true,
       groupCode: true,
       active: true,
+      lastLoginAt: true,
     },
     orderBy: { name: 'asc' },
   });

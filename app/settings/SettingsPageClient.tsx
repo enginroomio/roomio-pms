@@ -8,7 +8,11 @@ import { useSession } from '@/components/auth/SessionProvider';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { canAccessRoute, hasPermission } from '@/lib/auth/roles';
 import { findKurulusNavTitle, translateKurulusModuleMenu } from '@/lib/i18n/kurulus-nav-i18n';
-import { kurulusModuleMenuForUser } from '@/lib/navigation/module-menus';
+import {
+  isSistemMenuContext,
+  kurulusModuleMenuForUser,
+  SISTEM_MODULE_MENU,
+} from '@/lib/navigation/module-menus';
 import { Button } from '@/components/ui';
 import type { ThemeMode } from '@/components/theme/ThemeProvider';
 import { AyarlarHubPanel } from '@/components/settings/AyarlarHubPanel';
@@ -69,12 +73,20 @@ export function SettingsPageClient({
     if (hub) return `?hub=${hub}`;
     return '';
   }, [tool, action, section, tab, hub, searchParams]);
-  const title = hub === 'ayarlar' ? 'Ayarlar' : hub === 'sistem' ? 'Sistem' : findKurulusNavTitle(t, section, tab);
+  const screenTitle = findKurulusNavTitle(t, section, tab);
+  const isKurulusHub = !hub && !section && !tab && tool !== 'calculator';
+  const pageTitle = isKurulusHub ? t('nav.settings.title') : screenTitle;
+  const kurulusBreadcrumb = section || tab
+    ? `${t('nav.settings.sideTitle')} › ${screenTitle}`
+    : t('nav.settings.breadcrumb');
   const canAccess = user ? canAccessRoute(user, '/settings', { section, tab }) : true;
   const kurulusMenu = useMemo(
     () => translateKurulusModuleMenu(kurulusModuleMenuForUser(user), t),
     [user, t],
   );
+  const sistemContext = isSistemMenuContext('/settings', menuSearch);
+  const sideMenu = sistemContext ? SISTEM_MODULE_MENU : kurulusMenu;
+  const sideNavTitle = sistemContext ? 'Sistem' : t('nav.settings.sideTitle');
 
   useEffect(() => {
     const action = searchParams.get('action');
@@ -102,11 +114,11 @@ export function SettingsPageClient({
     return (
       <ModuleLayout
         breadcrumb="Sistem"
-        title="Sistem ve Kuruluş"
+        title="Sistem Merkezi"
         description="Kuruluş tanımları, rapor tasarım, entegrasyonlar ve uyumluluk."
-        sideTitle={t('nav.settings.sideTitle')}
+        sideTitle="Sistem"
         menuSearch="?hub=sistem"
-        menuItems={kurulusMenu}
+        menuItems={SISTEM_MODULE_MENU}
       >
         <SistemHubPanel />
       </ModuleLayout>
@@ -133,7 +145,7 @@ export function SettingsPageClient({
       return (
         <ModuleLayout
           breadcrumb={t('nav.settings.breadcrumb')}
-          title={title}
+          title={pageTitle}
           sideTitle={t('nav.settings.sideTitle')}
           menuSearch={menuSearch}
           menuItems={kurulusMenu}
@@ -149,8 +161,8 @@ export function SettingsPageClient({
     }
     return (
       <ModuleLayout
-        breadcrumb={t('nav.settings.breadcrumb')}
-        title={title}
+        breadcrumb={kurulusBreadcrumb}
+        title={pageTitle}
         description={t('nav.settings.description')}
         sideTitle={t('nav.settings.sideTitle')}
         menuSearch={menuSearch}
@@ -192,42 +204,32 @@ export function SettingsPageClient({
 
   return (
     <ModuleLayout
-      breadcrumb={t('nav.settings.breadcrumb')}
-      title={t('nav.settings.title')}
-      description={t('nav.settings.description')}
-      sideTitle={t('nav.settings.sideTitle')}
+      breadcrumb={sistemContext ? `Sistem › ${screenTitle}` : kurulusBreadcrumb}
+      title={pageTitle}
+      description={section || tab ? undefined : t('nav.settings.description')}
+      sideTitle={sideNavTitle}
       menuSearch={menuSearch}
-      menuItems={kurulusMenu}
+      menuItems={sideMenu}
     >
-      <div className="roomio-kurulus-meta">
-        <span className="roomio-badge">{t('nav.settings.badge')}</span>
-        <div className="roomio-quick-actions">
-          <Button variant="ghost" href="/tools/theme">
-            {t('nav.settings.themeScreen')}
-          </Button>
-          <Button variant="ghost" href="/tools/rollout?phase=sistem">
-            {t('nav.settings.rolloutTest')}
-          </Button>
-          <Button variant="ghost" href="/settings/integrations">
-            {t('nav.settings.integrations')}
-          </Button>
-          <Button variant="ghost" href="/settings/compliance/5651">
-            {t('nav.settings.hotspot5651')}
-          </Button>
-          <Button variant="ghost" href="/settings/integrations/pbx">
-            {t('nav.settings.pbx')}
-          </Button>
-          <Button variant="ghost" href="/settings/integrations/tesa">
-            {t('nav.settings.tesa')}
-          </Button>
+      {isKurulusHub ? (
+        <div className="roomio-kurulus-meta">
+          <span className="roomio-badge">{t('nav.settings.badge')}</span>
+          <div className="roomio-quick-actions">
+            <Button variant="ghost" href="/tools/theme">
+              {t('nav.settings.themeScreen')}
+            </Button>
+            <Button variant="ghost" href="/tools/rollout?phase=sistem">
+              {t('nav.settings.rolloutTest')}
+            </Button>
+            <Button variant="ghost" href="/settings/integrations">
+              {t('nav.settings.integrations')}
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : null}
       <KurulusAccessBanner />
-      {!section && !tab ? <SettingsAyalarHub /> : null}
+      {isKurulusHub ? <SettingsAyalarHub /> : null}
       <KurulusScreen section={section} tab={tab} theme={theme} themeFixed={themeFixed} />
-      <p className="roomio-page-desc" style={{ marginTop: 16 }}>
-        {t('nav.settings.activeScreen', { title })}
-      </p>
     </ModuleLayout>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -44,12 +44,11 @@ export default function EfaturaSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > e-Fatura"
-      title="e-Fatura / e-Arşiv"
-      description="GİB uyumlu fatura gönderimi — test ve canlı ortam."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"e-Fatura / e-Arşiv"}
+      title={"e-Fatura / e-Arşiv"}
+      description={"GİB uyumlu fatura gönderimi — test ve canlı ortam."}
+      >
       <FormSection title="Bağlantı">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -103,6 +102,6 @@ export default function EfaturaSettingsPage() {
           </table>
         </div>
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

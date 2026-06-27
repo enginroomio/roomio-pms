@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 import { FormActions, FormField, FormGrid, FormSection, Input } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -44,12 +44,11 @@ export default function ReputationSettingsPage() {
   const allSources: ReputationSource[] = ['booking', 'google', 'tripadvisor', 'internal'];
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > İtibar Yönetimi"
-      title="İtibar Yönetimi"
-      description="Booking, Google ve TripAdvisor yorumlarını tek panelde toplayın."
-      actions={<Button variant="secondary" href="/settings/integrations">← Entegrasyonlar</Button>}
-    >
+    <IntegrationPageLayout
+      segment={"İtibar Yönetimi"}
+      title={"İtibar Yönetimi"}
+      description={"Booking, Google ve TripAdvisor yorumlarını tek panelde toplayın."}
+      >
       <FormSection title="Senkron">
         <FormGrid>
           <label className="roomio-field roomio-field--row">
@@ -72,6 +71,6 @@ export default function ReputationSettingsPage() {
         {saved ? <p className="roomio-page-desc">Kaydedildi.</p> : null}
         {syncMsg ? <p className="roomio-page-desc">{syncMsg}</p> : null}
       </FormSection>
-    </PageHeader>
+    </IntegrationPageLayout>
   );
 }

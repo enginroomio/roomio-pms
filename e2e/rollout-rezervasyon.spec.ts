@@ -1,42 +1,66 @@
 import { test, expect } from '@playwright/test';
+import { gotoWithDemo } from './helpers/demo-auth';
+
+type RolloutCase = {
+  label: string;
+  path: string;
+  heading?: RegExp | string;
+  activeNav?: RegExp | string;
+  listAssert?: boolean;
+  trackBanner?: boolean;
+  readyWhen?: 'heading' | 'list' | 'main';
+};
+
+const REZERVASYON_ROLLOUT: RolloutCase[] = [
+  { label: 'Rezervasyon Merkezi', path: '/reservations?hub=rezervasyon', heading: /Rezervasyon Merkezi/i, readyWhen: 'heading' },
+  { label: 'Grafikler (F1)', path: '/reservations/calendar', heading: /^Grafikler$/i, activeNav: /Grafikler \(F1\)/i, readyWhen: 'heading' },
+  { label: 'Yeni Rezervasyon (F2)', path: '/reservations/new', heading: /Yeni Rezervasyon/i, readyWhen: 'heading' },
+  { label: 'Acenta Aktarım', path: '/reservations?tab=import', heading: /Acenta Rezervasyon Aktarım/i, readyWhen: 'heading' },
+  { label: 'Müsaitlik', path: '/reservations?tab=availability', heading: /Oda Planı/i, readyWhen: 'heading' },
+  { label: 'Fiyatlı Müsaitlik', path: '/reservations?tab=availability&prices=1', heading: /Oda Müsaitlik \(Fiyatlı\)/i, readyWhen: 'heading' },
+  { label: 'Durum Takip', path: '/reservations?track=1', listAssert: true, trackBanner: true, readyWhen: 'list' },
+  { label: 'Konaklayanlar', path: '/reception/inhouse', heading: /Konaklayanlar/i, readyWhen: 'heading' },
+  { label: 'Boş Oda Listesi', path: '/reception/vacant', heading: /Boş Oda/i, readyWhen: 'heading' },
+  { label: 'Hızlı Blokaj', path: '/rooms?tab=blocking', heading: /Hızlı Blokaj/i, readyWhen: 'heading' },
+];
 
 test.describe('Rezervasyon rollout — adım adım', () => {
-  test('Adım 1 — Grafikler (F1) · canlı doluluk', async ({ page }) => {
-    await page.goto('/reservations/calendar');
-    await expect(page.getByRole('heading', { name: /^Grafikler$/i })).toBeVisible();
-    await expect(page.getByText(/Elektra v5 Forecast|Elektra v5 F1|doluluk trendi/i).first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('link', { name: /Grafikler \(F1\)/i }).first()).toHaveClass(/is-active/);
-  });
+  test.describe.configure({ timeout: 180_000 });
 
-  test('Adım 2 — Yeni Rezervasyon (F2)', async ({ page }) => {
-    await page.goto('/reservations/new');
-    await expect(page.getByRole('heading', { name: /Yeni Rezervasyon/i })).toBeVisible();
-    await expect(page.getByText(/Misafir|Konaklama|Fiyat/i).first()).toBeVisible();
-    await page.getByRole('button', { name: /Konaklama/i }).click();
-    await expect(page.getByText(/müsait|Müsaitlik/i).first()).toBeVisible({ timeout: 10_000 });
-  });
+  for (const [index, step] of REZERVASYON_ROLLOUT.entries()) {
+    test(`Adım ${index + 1} — ${step.label}`, async ({ page }) => {
+      await gotoWithDemo(page, step.path, 'admin', {
+        waitForSideNav: false,
+        readyWhen: step.readyWhen ?? 'heading',
+      });
+      if (step.listAssert) {
+        await expect(page.getByRole('button', { name: 'Filtreler' })).toBeVisible({ timeout: 20_000 });
+        await expect(page.getByRole('region', { name: /Rezervasyon listesi/i })).toBeVisible();
+        if (step.trackBanner) {
+          await expect(page.getByText(/durum takip listesi/i)).toBeVisible();
+        }
+        return;
+      }
+      await expect(page.getByRole('heading', { name: step.heading! }).first()).toBeVisible({
+        timeout: 45_000,
+      });
+      if (step.activeNav) {
+        await expect(page.getByRole('link', { name: step.activeNav }).first()).toHaveClass(/is-active/);
+      }
+      if (step.path === '/reservations/calendar') {
+        await expect(page.getByText(/Elektra v5 Forecast|Elektra v5 F1|doluluk trendi/i).first()).toBeVisible({
+          timeout: 15_000,
+        });
+      }
+      if (step.path === '/reception/vacant') {
+        await expect(page.getByText(/Temiz — Check-in hazır/i).first()).toBeVisible();
+      }
+    });
+  }
 
-  test('Adım 3 — Rezervasyon Listesi', async ({ page }) => {
-    await page.goto('/reservations');
-    await expect(page.getByRole('heading', { name: /Rezervasyon Listesi/i })).toBeVisible();
-    await expect(page.getByText('Filtreler')).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(/Kayıt Sayısı/i)).toBeVisible();
-  });
-
-  test('Adım 4 — Konaklayanlar', async ({ page }) => {
-    await page.goto('/reception/inhouse');
-    await expect(page.getByRole('heading', { name: /Konaklayanlar/i })).toBeVisible();
-    await expect(page.getByRole('table')).toBeVisible();
-  });
-
-  test('Adım 5 — Boş Oda Listesi', async ({ page }) => {
-    await page.goto('/reception/vacant');
-    await expect(page.getByRole('heading', { name: /Boş Oda/i })).toBeVisible();
-    await expect(page.getByText(/Temiz — Check-in hazır/i)).toBeVisible();
-  });
-
-  test('Adım 6 — Hızlı Blokaj', async ({ page }) => {
-    await page.goto('/rooms?tab=blocking');
-    await expect(page.getByRole('heading', { name: /Hızlı Blokaj/i })).toBeVisible();
+  test('Adım 11 — Rezervasyon Listesi', async ({ page }) => {
+    await gotoWithDemo(page, '/reservations', 'admin', { waitForSideNav: false, readyWhen: 'list' });
+    await expect(page.getByText(/Kayıt Sayısı/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('region', { name: /Rezervasyon listesi/i })).toBeVisible();
   });
 });

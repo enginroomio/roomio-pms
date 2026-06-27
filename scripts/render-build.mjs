@@ -37,5 +37,6 @@ function run(cmd, args, extraEnv = {}) {
 run('npm', ['ci', '--ignore-scripts', '--include=dev'], { NODE_ENV: 'development', npm_config_production: 'false' });
 run('npx', ['prisma', 'generate', `--schema=${schema}`]);
 run('npx', ['prisma', 'db', 'push', `--schema=${schema}`, '--skip-generate']);
-run('npm', ['run', 'build'], { NODE_ENV: 'production' });
+run('npm', ['run', 'build'], { NODE_ENV: 'production', NEXT_BUILD_WORKERS: '1' });
+run('node', ['scripts/sync-standalone-assets.mjs']);
 console.log('\n✅ render-build tamam');

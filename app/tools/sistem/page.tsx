@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ModuleLayout } from '@/components/ModuleLayout';
+import { SistemModuleLayout } from '@/components/sistem/SistemModuleLayout';
 import { SistemOperationsHub, SqlMessagePanel } from '@/components/sistem/SistemHubPanels';
 
 function SistemToolsInner() {
@@ -27,15 +27,14 @@ function SistemToolsPageClient() {
   const menuSearch = tab ? `?tab=${tab}` : '';
 
   return (
-    <ModuleLayout
-      breadcrumb="Sistem"
+    <SistemModuleLayout
+      segment={tab === 'sql' ? 'SQL Mesaj' : 'Sistem Merkezi'}
       title={tab === 'sql' ? 'SQL Mesaj' : 'Sistem Merkezi'}
       description="Kuruluş, raporlama, entegrasyonlar ve sistem araçları"
-      sideTitle="Sistem"
       menuSearch={menuSearch}
     >
       <SistemToolsInner />
-    </ModuleLayout>
+    </SistemModuleLayout>
   );
 }
 

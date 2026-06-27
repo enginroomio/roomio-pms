@@ -11,7 +11,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useI18n } from '@/components/i18n/I18nProvider';
-import { DEMO_USER, PROPERTY } from '@/lib/navigation';
+import { useSession } from '@/components/auth/SessionProvider';
+import { PROPERTY } from '@/lib/navigation';
 
 type Insight = {
   id: string;
@@ -56,7 +57,8 @@ export function DashboardWelcome({
   businessDate: businessDateIso = PROPERTY.businessDate,
 }: Props) {
   const { t, locale } = useI18n();
-  const firstName = DEMO_USER.name.split(/[\s.]/)[0] ?? DEMO_USER.name;
+  const { user } = useSession();
+  const firstName = user.name.split(/[\s.]/)[0] ?? user.name;
   const businessDate = formatBusinessDate(businessDateIso, locale);
 
   const insights: Insight[] = [
@@ -138,10 +140,10 @@ export function DashboardWelcome({
         </div>
         <div className="roomio-welcome-status-card roomio-welcome-status-card--muted">
           <span className="roomio-welcome-status-card__label">{t('dashboard.shift')}</span>
-          <strong className="roomio-welcome-status-card__value">{DEMO_USER.role}</strong>
+          <strong className="roomio-welcome-status-card__value">{user.roleLabel}</strong>
           <span className="roomio-welcome-status-card__trend">
             <ArrowDownRight size={14} aria-hidden />
-            {DEMO_USER.name}
+            {user.name}
           </span>
         </div>
       </div>
