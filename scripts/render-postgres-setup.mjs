@@ -39,6 +39,7 @@ console.log('✅ render-build tamam\n');
 
 console.log('📋 Adım 3 — Doğrula\n');
 console.log(`npm run render:postgres:verify`);
+console.log(`URL: ${PROD}`);
 console.log('Beklenen: Veritabanı: postgresql ✓ kalıcı\n');
 
 console.log('📋 Kod tarafı (otomatik)\n');

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireIntegrationAdminRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
+import { requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
 import { handleGuestHotspotSession } from '@/lib/integrations/hotspot5651/guest-session';
 import type { GuestSessionRequest } from '@/lib/integrations/hotspot5651/guest-session';
 

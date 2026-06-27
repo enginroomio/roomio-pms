@@ -24,6 +24,14 @@ export async function testWhatsappConnection(config = DEFAULT_WHATSAPP_CONFIG): 
   return { ok: true, simulated: true, message: 'Simülasyon — WhatsApp Cloud API hazır' };
 }
 
+function renderWhatsappTemplate(template: string, variables?: Record<string, string>): string {
+  if (!variables) return template;
+  return Object.entries(variables).reduce(
+    (text, [key, value]) => text.replaceAll(`{{${key}}}`, value),
+    template,
+  );
+}
+
 export async function sendWhatsappMessage(
   to: string,
   template: string,
@@ -33,12 +41,13 @@ export async function sendWhatsappMessage(
   if (!config.enabled) return { ok: false, message: 'WhatsApp kapalı' };
   const test = await testWhatsappConnection(config);
   if (!test.ok) return test;
+  const rendered = renderWhatsappTemplate(template, variables);
   return {
     ok: true,
     simulated: test.simulated,
     messageId: `wamid.${Date.now()}`,
     message: test.simulated
-      ? `Simülasyon: ${template} → ${to}`
-      : `WhatsApp gönderildi: ${template}`,
+      ? `Simülasyon: ${rendered} → ${to}`
+      : `WhatsApp gönderildi: ${rendered}`,
   };
 }

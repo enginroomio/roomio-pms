@@ -1,4 +1,3 @@
-import { PROPERTY } from '@/lib/navigation';
 import { getHousekeepingBoard } from '@/lib/rooms/inventory';
 
 export type RoomStatus = 'CLEAN' | 'DIRTY' | 'INSPECT' | 'OOO' | 'DND';

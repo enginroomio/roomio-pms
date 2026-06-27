@@ -7,7 +7,6 @@ import { roomioFetch } from '@/lib/client/api';
 import { mikrotikRb5009SetupScript } from '@/lib/integrations/hotspot5651/mikrotik';
 import { unifiSyslogInstructions } from '@/lib/integrations/hotspot5651/unifi';
 import {
-  DEFAULT_HOTSPOT_5651_CONFIG,
   MIKROTIK_MODELS,
   type Hotspot5651Config,
   type MikrotikDeviceConfig,

@@ -29,7 +29,7 @@ export function PbxLookupPanel() {
       .then((j: PbxConfig) => setConfig({ ...DEFAULT_PBX_CONFIG, ...j }));
   }, []);
 
-  const mappings = config.extensionMappings ?? {};
+  const mappings = useMemo(() => config.extensionMappings ?? {}, [config.extensionMappings]);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();

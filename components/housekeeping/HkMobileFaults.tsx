@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { CheckCircle2, ClipboardPlus, Plus, Send, UserCog } from 'lucide-react';
+import { CheckCircle2, Plus, Send, UserCog } from 'lucide-react';
 import { HkMobileFrame } from '@/components/housekeeping/HkMobileFrame';
 import { roomioFetch } from '@/lib/client/api';
 import { emitHkMapUpdate } from '@/lib/client/hk-map-sync';

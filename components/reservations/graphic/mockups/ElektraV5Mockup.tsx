@@ -13,7 +13,6 @@ import {
   formatGraphicMonthYear,
   GRAPHIC_ROOM_TYPE_OPTIONS,
   monthStartIso,
-  shiftMonthIso,
   type GraphicCalendarDay,
 } from '@/lib/reservations/graphic-calendar';
 
@@ -40,7 +39,6 @@ function formatDelta(deltaPct: number): { text: string; up: boolean } {
 export function ElektraV5Mockup({
   matrix,
   from = PROPERTY.businessDate,
-  days = 31,
   loading = false,
   live = false,
   onRefresh,

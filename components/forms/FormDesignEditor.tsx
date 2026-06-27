@@ -100,7 +100,7 @@ export function FormDesignEditor({ value, onChange, onSave, onCancel }: Props) {
       return fieldMap.get(keys[stepCursor++]) ?? f;
     });
     applyLayout({ ...value.layout, fields });
-  }, [activeStep, applyLayout, value.layout.fields]);
+  }, [activeStep, applyLayout, value.layout]);
 
   const addCustomField = useCallback(() => {
     const label = customLabel.trim();

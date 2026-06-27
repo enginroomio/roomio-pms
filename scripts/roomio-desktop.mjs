@@ -13,7 +13,6 @@ import { existsSync, mkdirSync, openSync, rmSync, readFileSync, writeFileSync } 
 import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import net from 'node:net';
 import { preparePort, verifyHomeAssets, waitForHealth as waitServerHealth, writeActivePort } from './roomio-port.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -130,14 +129,6 @@ function runSync(cmd, args, opts = {}) {
 
 function runCapture(cmd) {
   return execSync(cmd, { cwd: ROOT, encoding: 'utf8', shell: true }).trim();
-}
-
-function portFree(port) {
-  return new Promise((resolve) => {
-    const server = net.createServer();
-    server.once('error', () => resolve(false));
-    server.listen(port, HOST, () => server.close(() => resolve(true)));
-  });
 }
 
 async function waitForHealth(url, timeoutMs = 120_000) {

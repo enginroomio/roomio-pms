@@ -138,7 +138,7 @@ function seedDemoLogs(): HotspotSessionLog[] {
 }
 
 function purgeExpired(logs: HotspotSessionLog[], retentionDays: number): HotspotSessionLog[] {
-  const minDays = Math.max(retentionDays, 365);
+  const minDays = Math.max(retentionDays, LAW_5651_RETENTION_DAYS_DEFAULT);
   const cutoff = Date.now() - minDays * 86_400_000;
   return logs.filter((log) => new Date(log.startedAt).getTime() >= cutoff);
 }
@@ -160,7 +160,7 @@ export async function saveHotspot5651Config(config: Hotspot5651Config): Promise<
     ...config,
     mikrotik: { ...DEFAULT_HOTSPOT_5651_CONFIG.mikrotik, ...config.mikrotik },
     unifi: { ...DEFAULT_HOTSPOT_5651_CONFIG.unifi, ...config.unifi },
-    retentionDays: Math.max(config.retentionDays, 365),
+    retentionDays: Math.max(config.retentionDays, LAW_5651_RETENTION_DAYS_DEFAULT),
   };
   if (store.config.autoArchive) {
     store.logs = purgeExpired(store.logs, store.config.retentionDays);

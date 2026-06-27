@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireIntegrationAdminRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
+import { requireIntegrationAdminRead } from '@/lib/auth/require-permission';
 import { getDeviceStatus, testNetworkDevices } from '@/lib/integrations/hotspot5651/devices';
 import { loadPbxConfig, testPbxConnection } from '@/lib/integrations/pbx/client';
 import { loadTesaConfig, testTesaConnection } from '@/lib/integrations/tesa/client';

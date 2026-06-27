@@ -17,10 +17,12 @@ test.describe('Ana Sayfa rollout — adım adım', () => {
     const summary = page.getByRole('region', { name: 'Günlük özet' });
     await expect(summary).toBeVisible({ timeout: 15_000 });
     await expect(summary.getByText(/Konaklayan/i)).toBeVisible();
-    await expect(summary.getByText(/%\d+/).first()).toBeVisible();
+    // One-screen düzeninde hint satırı CSS ile gizlenir; görünür insight değerlerini doğrula
+    await expect(summary.locator('.roomio-welcome-insight__value').first()).toBeVisible();
     const kpi = page.getByRole('region', { name: 'Günlük KPI' });
     if (await kpi.isVisible().catch(() => false)) {
       await expect(kpi.getByText('Doluluk')).toBeVisible();
+      await expect(kpi.getByText(/%\d+/)).toBeVisible();
     }
     const opsAlerts = page.getByText(/Operasyon özeti/i);
     if (await opsAlerts.isVisible().catch(() => false)) {

@@ -49,6 +49,7 @@ export async function handleGuestHotspotSession(req: GuestSessionRequest): Promi
     const deviceMsgs: string[] = [];
     if (deviceResults.mikrotik?.message) deviceMsgs.push(deviceResults.mikrotik.message);
     if (deviceResults.closed?.message) deviceMsgs.push(deviceResults.closed.message);
+    if (deviceResults.unifi?.message) deviceMsgs.push(deviceResults.unifi.message);
 
     return {
       ok: true,

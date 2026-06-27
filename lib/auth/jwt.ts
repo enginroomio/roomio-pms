@@ -1,5 +1,5 @@
 import { isTokenRevoked } from '@/lib/auth/session-store';
-import { signToken, verifyTokenEdge, type JwtPayload } from '@/lib/auth/jwt-edge';
+import { verifyTokenEdge, type JwtPayload } from '@/lib/auth/jwt-edge';
 import { isUserActive } from '@/lib/server/users-admin';
 
 export type { JwtPayload } from '@/lib/auth/jwt-edge';

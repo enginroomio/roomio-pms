@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 /**
@@ -22,10 +22,10 @@ export function useClientSearchParams() {
     return () => window.removeEventListener('popstate', sync);
   }, [pathname, sync]);
 
-  const params = new URLSearchParams(search);
+  const params = useMemo(() => new URLSearchParams(search), [search]);
   const paramString = params.toString();
 
-  const get = useCallback((key: string) => params.get(key), [paramString]);
+  const get = useCallback((key: string) => params.get(key), [params]);
 
   return {
     get,

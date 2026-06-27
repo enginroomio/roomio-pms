@@ -68,7 +68,7 @@ export function ReservationGraphicCalendar({ initialFrom = PROPERTY.businessDate
   const router = useRouter();
   const searchParams = useClientSearchParams();
   const [from, setFrom] = useState(initialFrom);
-  const [days, setDays] = useState<GraphicRangeDays>(31);
+  const [days] = useState<GraphicRangeDays>(31);
   const [matrix, setMatrix] = useState<GraphicCalendarDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -76,10 +76,11 @@ export function ReservationGraphicCalendar({ initialFrom = PROPERTY.businessDate
   const [designMode, setDesignMode] = useState<GraphicDesignMode>('monthly-pro');
   const [pickerCollapsed, setPickerCollapsed] = useState(fullScreen);
 
+  const searchParamsString = searchParams.toString();
   useEffect(() => {
-    const fromUrl = searchParams.get(MODE_PARAM);
+    const fromUrl = new URLSearchParams(searchParamsString).get(MODE_PARAM);
     setDesignMode(parseDesignMode(fromUrl) ?? 'monthly-pro');
-  }, [searchParams.toString()]);
+  }, [searchParamsString]);
 
   useEffect(() => {
     if (designMode !== 'calendar' && designMode !== 'elektra' && designMode !== 'forecast') return;

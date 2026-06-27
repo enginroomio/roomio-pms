@@ -1,4 +1,3 @@
-import type { ExchangeRateRow } from '@/lib/exchange/types';
 import { readTcmbCache } from '@/lib/server/tcmb-cache';
 import {
   findArchiveOnOrBefore,

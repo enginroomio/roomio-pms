@@ -73,10 +73,6 @@ async function main() {
     await run('npm', ['run', 'build']);
   }
 
-  const args = devMode
-    ? ['run', 'dev']
-    : ['exec', 'next', 'start', '-H', BIND_HOST, '-p', String(port)];
-
   console.log('\n════════════════════════════════════════');
   console.log(`  Roomio hazır → http://${CONNECT_HOST}:${port}`);
   console.log(`  Rollout    → http://${CONNECT_HOST}:${port}/tools/rollout`);

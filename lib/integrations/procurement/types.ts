@@ -23,5 +23,3 @@ export const DEFAULT_PROCUREMENT_CONFIG: ProcurementConfig = {
   autoRouteToSupplier: true,
   departments: ['Mutfak', 'Bar', 'HK', 'Teknik', 'Ön Büro', 'SPA'],
 };
-
-const REQUESTS_FILE = 'procurement-requests.json';

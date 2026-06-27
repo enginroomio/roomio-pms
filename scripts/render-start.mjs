@@ -3,7 +3,7 @@
 import { execSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { isPostgresUrl, prismaSchemaPath } from './prisma-schema.mjs';
+import { prismaSchemaPath } from './prisma-schema.mjs';
 
 const ROOT = process.cwd();
 const dbUrl = process.env.DATABASE_URL ?? 'file:/tmp/roomio.db';

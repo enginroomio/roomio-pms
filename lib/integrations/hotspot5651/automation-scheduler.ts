@@ -1,7 +1,6 @@
 import { runHotspotAutomation } from '@/lib/integrations/hotspot5651/automation';
 import { loadHotspot5651Config } from '@/lib/integrations/hotspot5651/server';
 
-let timer: ReturnType<typeof setInterval> | null = null;
 let started = false;
 
 const AUTOMATION_SERVER =
@@ -13,7 +12,7 @@ export function startServerHotspotAutomation(): void {
 
   // Sunucu açılışını yavaşlatmamak için ilk çalıştırmayı geciktir
   setTimeout(() => {
-    timer = setInterval(() => {
+    setInterval(() => {
       void tick();
     }, 60_000);
   }, 90_000);

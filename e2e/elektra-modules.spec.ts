@@ -6,7 +6,7 @@ import {
   authHeaders,
   loginApiTokenWith,
 } from './helpers/api-auth';
-import { useDemoRole, waitForDemoSession } from './helpers/demo-auth';
+import { setDemoRole, waitForDemoSession } from './helpers/demo-auth';
 
 function bookingDates() {
   const checkIn = new Date();
@@ -465,7 +465,7 @@ test.describe('Elektra modülleri — UI', () => {
   });
 
   test('entegrasyon hub — yeni kartlar', async ({ page }) => {
-    await useDemoRole(page, 'admin');
+    await setDemoRole(page, 'admin');
     await page.goto('/settings/integrations');
     await waitForDemoSession(page);
     await expect(page.getByRole('heading', { name: /Servis Programları/i }).first()).toBeVisible({ timeout: 15_000 });

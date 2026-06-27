@@ -1,5 +1,4 @@
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
-import { prisma } from '@/lib/server/prisma';
 import { appendAuditLog } from '@/lib/server/audit-log';
 import {
   folioBalance,

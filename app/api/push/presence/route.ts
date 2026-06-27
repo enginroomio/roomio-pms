@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireApiAuth, requireApiPermission } from '@/lib/auth/require-permission';
+import { requireApiAuth } from '@/lib/auth/require-permission';
 import { touchPushPresence } from '@/lib/server/push-store';
 
 export const dynamic = 'force-dynamic';

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireIntegrationAdminRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
+import { requireIntegrationAdminRead } from '@/lib/auth/require-permission';
 import { loadPbxConfig, testPbxConnection } from '@/lib/integrations/pbx/client';
 
 export const dynamic = 'force-dynamic';

@@ -3,7 +3,6 @@
 import type { ReservationStatus } from '@/lib/types/reservation';
 import { STATUS_LABELS } from '@/lib/types/reservation';
 import {
-  buildAgencyCodeLookup,
   resolveAgencyCode,
   type AgencyContractRef,
 } from '@/lib/reservations/agency-code';
@@ -43,7 +42,6 @@ export function ReservationListFilters({
   onApply,
   onClear,
 }: Props) {
-  const agencyLookup = buildAgencyCodeLookup(agencyContracts);
   const chipAgencies = agencyContracts.length
     ? agencyContracts.map((a) => ({ code: a.code, name: a.name }))
     : agencies.map((name) => ({ code: resolveAgencyCode({ agency: name, market: '' }), name }));

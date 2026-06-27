@@ -6,7 +6,7 @@
  * Ortam: VERIFY_PORT (varsayılan 3117), mevcut sunucu için PLAYWRIGHT_REUSE_SERVER=1
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = process.cwd();

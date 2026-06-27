@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { authedGet, authedPost, loginApiToken, authHeaders } from './helpers/api-auth';
+import { authedGet, loginApiToken, authHeaders } from './helpers/api-auth';
 
 test('ana sayfa yüklenir', async ({ page }) => {
   await page.goto('/');

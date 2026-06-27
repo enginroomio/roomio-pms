@@ -3,7 +3,7 @@
  * Fly Postgres kurulum rehberi + dry-run.
  * Kullanım: npm run fly:postgres:setup
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { flyAppName, hasFlyCli, runFly } from './fly-production.mjs';
 
 const app = flyAppName();

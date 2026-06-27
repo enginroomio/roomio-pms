@@ -21,9 +21,6 @@ import {
   releaseRoomBlock,
   type RoomBlock,
 } from '@/lib/data/room-blocks';
-import type { HkRoomRecord } from '@/lib/data/hk-defaults';
-import type { Reservation } from '@/lib/types/reservation';
-
 type Tab = 'rack' | 'blocking';
 
 export function RoomsPageClient({ initial }: { initial: import('@/lib/server/dashboard-data').DashboardSnapshot }) {
@@ -75,6 +72,12 @@ export function RoomsPageClient({ initial }: { initial: import('@/lib/server/das
 
   const activeBlocks = useMemo(() => blocks.filter((b) => b.status === 'active'), [blocks]);
 
+  // inventoryVersion isn't read inside the callback, but it's a deliberate
+  // recompute trigger: getAllRooms() caches by a module-level flag that's
+  // only invalidated when inventory hydrates from the DB (see
+  // lib/client/use-inventory-version.ts). Removing it would leave stale
+  // cached rooms after hydration.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const allRooms = useMemo(() => getAllRooms(hkMap), [hkMap, inventoryVersion]);
 
   function refreshBlocks() {

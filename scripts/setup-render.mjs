@@ -3,7 +3,7 @@
  * Render kurulum — git hazırlığı + rehber + health test.
  * Kullanım: cd ~/Projects/roomio-pms && npm run setup:render
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { saveProductionUrl, defaultRenderUrl, renderServiceName, waitForHealth } from './render-production.mjs';

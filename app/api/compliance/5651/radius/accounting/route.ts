@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireIntegrationAdminRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
+import { requireIntegrationAdminRead } from '@/lib/auth/require-permission';
 import { ingestBridgeEvent } from '@/lib/integrations/hotspot5651/bridge';
 import { loadHotspot5651Config } from '@/lib/integrations/hotspot5651/server';
 import {

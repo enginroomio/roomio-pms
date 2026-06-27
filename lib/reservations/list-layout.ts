@@ -143,10 +143,6 @@ export const REZ_LIST_PRESETS: RezListPreset[] = [
 const STORAGE_KEY = 'roomio:rez-list-layout-v3';
 const LEGACY_STORAGE_KEYS = ['roomio:rez-list-layout-v2', 'roomio:rez-list-layout-v1'];
 
-function allPanelIds(layout: Pick<RezListLayout, 'aboveTable' | 'belowTable'>): RezListPanelId[] {
-  return [...layout.aboveTable, ...layout.belowTable];
-}
-
 export function normalizeRezListLayout(raw: Partial<RezListLayout> | null | undefined): RezListLayout {
   const base = { ...DEFAULT_REZ_LIST_LAYOUT, ...raw };
   const seen = new Set<RezListPanelId>();

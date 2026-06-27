@@ -52,14 +52,18 @@ export async function provisionNetworkGuest(
 export async function deprovisionNetworkGuest(roomNo: string): Promise<{
   mikrotik?: DeviceTestResult;
   closed?: DeviceTestResult;
+  unifi?: DeviceTestResult;
 }> {
   const config = await loadHotspot5651Config();
   const authUser = roomToAuthUser(roomNo);
-  const out: { mikrotik?: DeviceTestResult; closed?: DeviceTestResult } = {};
+  const out: { mikrotik?: DeviceTestResult; closed?: DeviceTestResult; unifi?: DeviceTestResult } = {};
 
   if (config.mikrotik.enabled) {
     out.closed = await disconnectMikrotikActiveUser(config.mikrotik, authUser);
     out.mikrotik = await removeMikrotikHotspotUser(config.mikrotik, authUser);
+  }
+  if (config.unifi.enabled) {
+    out.unifi = await unauthorizeUnifiGuest(config.unifi, `ff:ff:ff:ff:${roomNo.padStart(2, '0')}:00`);
   }
 
   return out;

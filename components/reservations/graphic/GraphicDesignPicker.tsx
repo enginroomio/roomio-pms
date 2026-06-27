@@ -5,7 +5,6 @@ import { FilterWizardProMockup } from './mockups/FilterWizardProMockup';
 import { CalendarHeatmapMockup } from './mockups/CalendarHeatmapMockup';
 import { ElektraV5Mockup } from './mockups/ElektraV5Mockup';
 import { ForecastAnalyticsMockup } from './mockups/ForecastAnalyticsMockup';
-import { MonthlyProGraphicsMockup } from './mockups/MonthlyProGraphicsMockup';
 
 export type GraphicDesignMode = 'live' | 'monthly-pro' | 'filter-wizard' | 'elektra' | 'calendar' | 'forecast';
 

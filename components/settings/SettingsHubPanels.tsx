@@ -55,7 +55,6 @@ function evalCalc(expr: string): string {
   const sanitized = expr.replace(/[^0-9+\-*/().%\s]/g, '');
   if (!sanitized.trim()) return '';
   try {
-    // eslint-disable-next-line no-new-func
     const val = Function(`"use strict"; return (${sanitized})`)() as number;
     if (typeof val !== 'number' || !Number.isFinite(val)) return 'Hata';
     return String(Math.round(val * 10000) / 10000);

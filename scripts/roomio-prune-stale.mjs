@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { killPort, readActivePort, pruneStaleServers } from './roomio-port.mjs';
+import { readActivePort, pruneStaleServers } from './roomio-port.mjs';
 
 const HOST = process.env.ROOMIO_HOST ?? '127.0.0.1';
 const kept = await pruneStaleServers();

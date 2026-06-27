@@ -37,6 +37,11 @@ export function useContextMenuPosition(
     if (x < pad) x = pad;
     if (y < pad) y = pad;
     setPos({ x, y });
+    // `anchor` is deliberately destructured to x/y: callers often pass a
+    // freshly-created `{ x, y }` literal (e.g. from a mouse event) on every
+    // render, so depending on the object itself would re-run this effect
+    // even when the position hasn't actually changed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchor?.x, anchor?.y, anchorY, menuRef]);
 
   return pos;

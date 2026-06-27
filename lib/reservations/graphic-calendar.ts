@@ -378,12 +378,6 @@ function dayMetric(day: GraphicCalendarDay, tab: ForecastAnalyticsTab): number {
   }
 }
 
-function formatAnalyticsValue(value: number, tab: ForecastAnalyticsTab): string {
-  if (tab === 'Gelir') return formatShortMoney(Math.round(value));
-  if (tab === 'Geliş' || tab === 'Günlük') return value.toLocaleString('tr-TR');
-  return formatPercent(value);
-}
-
 export function buildForecastAnalyticsRows(
   matrix: GraphicCalendarDay[],
   tab: ForecastAnalyticsTab,

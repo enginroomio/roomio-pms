@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireIntegrationAdminRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
+import { requireIntegrationAdminRead } from '@/lib/auth/require-permission';
 import { getHotspot5651Stats } from '@/lib/integrations/hotspot5651/server';
 
 export async function GET(req: Request) {

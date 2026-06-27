@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
 import type { DynamicPricingApplyResult } from '@/lib/dynamic-pricing/types';

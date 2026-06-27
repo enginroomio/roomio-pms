@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireApiAnyPermission } from '@/lib/auth/require-permission';
 import { getAuditLogsServer } from '@/lib/server/audit-log';
-import { getBusinessDate, getProperty, init } from '@/lib/server/pms-store';
+import { getProperty, init } from '@/lib/server/pms-store';
 import { buildNightAuditPdfKit } from '@/lib/server/pdf-templates';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 import { logApiError } from '@/lib/server/api-error';
@@ -15,14 +15,14 @@ export async function GET(req: Request) {
   const propertyId = propertyIdFromRequest(req);
   const { searchParams } = new URL(req.url);
   const businessDate = searchParams.get('businessDate') ?? undefined;
-  const module = searchParams.get('module') ?? undefined;
+  const moduleFilter = searchParams.get('module') ?? undefined;
   const limit = Number(searchParams.get('limit') ?? '200');
   const format = searchParams.get('format');
 
   try {
     const logs = await getAuditLogsServer(propertyId, {
       businessDate,
-      module,
+      module: moduleFilter,
       limit: Number.isFinite(limit) ? limit : 200,
     });
 

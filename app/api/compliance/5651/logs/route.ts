@@ -4,6 +4,9 @@ import { appendHotspotLog, closeHotspotSession, listHotspotLogs } from '@/lib/in
 import type { HotspotSessionLog } from '@/lib/integrations/hotspot5651/types';
 
 export async function GET(req: Request) {
+  const auth = await requireIntegrationAdminRead(req);
+  if (auth instanceof NextResponse) return auth;
+
   const url = new URL(req.url);
   const from = url.searchParams.get('from') ?? undefined;
   const to = url.searchParams.get('to') ?? undefined;

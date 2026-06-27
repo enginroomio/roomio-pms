@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireApiAuth, requireApiPermission, requireKurulusApiWrite } from '@/lib/auth/require-permission';
+import { requireApiAuth, requireApiPermission } from '@/lib/auth/require-permission';
 import { deleteReportTemplate, getReportTemplates, saveReportTemplate } from '@/lib/server/pms-store';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 import { logApiError } from '@/lib/server/api-error';

@@ -1,4 +1,4 @@
-import type { EgmGender, EgmIdType, EgmNotifyStatus } from '@/lib/egm/types';
+import type { EgmNotifyStatus } from '@/lib/egm/types';
 import { EGM_STATUS_LABELS } from '@/lib/egm/types';
 
 const STATUS_CLASS: Record<EgmNotifyStatus, string> = {

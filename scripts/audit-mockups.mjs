@@ -5,7 +5,7 @@
  *   node scripts/audit-mockups.mjs           # dosya sistemi denetimi
  *   node scripts/audit-mockups.mjs --http    # + referans PNG HTTP 200
  */
-import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = process.cwd();

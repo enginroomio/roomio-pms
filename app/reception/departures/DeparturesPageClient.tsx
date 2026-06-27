@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { ReceptionTabs } from '@/components/ReceptionTabs';
 import { Button } from '@/components/ui';
-import { ReceptionLoading } from '@/components/reception/ReceptionLoading';
 import { formatMoney } from '@/lib/data/cash';
 import { ExchangeRatesTable } from '@/components/exchange/ExchangeRatesTable';
 import { FxExchangeForm } from '@/components/exchange/FxExchangeForm';
@@ -15,19 +14,19 @@ import { useFolioBalances } from '@/lib/client/use-folio-balances';
 import { useReservations } from '@/lib/client/use-reservations';
 import { roomioFetch } from '@/lib/client/api';
 import { parseApiError } from '@/lib/client/api-errors';
-import { formatDate, getTodayDepartures } from '@/lib/data/reception';
+import { getTodayDepartures } from '@/lib/data/reception';
 
 export default function DeparturesPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
   const roomFilter = searchParams.get('room')?.trim() ?? '';
-  const { reservations, loading, error, reload } = useReservations();
+  const { reservations, loading, reload } = useReservations();
   const departureIds = useMemo(
     () => reservations.filter((r) => r.status === 'CHECKED_IN').map((r) => r.id),
     [reservations],
   );
-  const { balances, error: folioError, reload: reloadFolio } = useFolioBalances(departureIds);
+  const { balances, reload: reloadFolio } = useFolioBalances(departureIds);
   const departures = useMemo(() => {
     const all = getTodayDepartures(reservations, undefined, balances);
     if (!roomFilter) return all;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireKurulusApiRead, requireKurulusApiWrite } from '@/lib/auth/require-permission';
+import { requireKurulusApiRead } from '@/lib/auth/require-permission';
 import { getPropertyInventoryPayload } from '@/lib/server/room-inventory-bridge';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 import { logApiError } from '@/lib/server/api-error';

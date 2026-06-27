@@ -1,7 +1,6 @@
 import type { Invoice } from '@/lib/server/pms-store';
 import { getCompanyByCodeServer } from '@/lib/server/companies';
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
-import { prisma } from '@/lib/server/prisma';
 import { bustReadCaches } from '@/lib/server/perf-cache';
 import { appendAuditLog } from '@/lib/server/audit-log';
 import {

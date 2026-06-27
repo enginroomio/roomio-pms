@@ -6,7 +6,7 @@
  * Kullanım: npm run verify:all
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = process.cwd();
@@ -33,25 +33,6 @@ function run(label, cmd, args, opts = {}) {
     }
     console.error(`\n✗ ${label} başarısız (kod ${r.status})\n`);
     process.exit(r.status ?? 1);
-  }
-  return true;
-}
-
-function runTry(label, cmd, args, opts = {}) {
-  const optional = Boolean(opts.optional);
-  console.log(`\n▶ ${label}\n`);
-  const r = spawnSync(cmd, args, {
-    cwd: ROOT,
-    stdio: 'inherit',
-    shell: false,
-    env: { ...process.env, ...opts.env },
-  });
-  if (r.status !== 0) {
-    if (optional) {
-      console.warn(`· ${label} atlandı (opsiyonel, kod ${r.status})`);
-      return false;
-    }
-    return false;
   }
   return true;
 }

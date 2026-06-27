@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import Link from 'next/link';
 import { Anchor } from 'lucide-react';
 import type { MarinaBerth } from '@/lib/integrations/marina/types';
 

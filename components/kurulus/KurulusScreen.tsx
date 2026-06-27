@@ -1,20 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState, Suspense } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  AGENCY_CONTRACTS,
-  DEMO_COMPANIES,
-  DEPARTMENTS,
-  MARKET_CODES,
-  MEAL_PLANS,
-  NATIONALITIES,
-  RATE_PLANS,
-  RES_TYPES,
-  SEGMENT_CODES,
-  SOURCE_CODES,
-  type CodeRow,
-} from '@/lib/data/kurulus';
 import { AgenciesSettingsPanel } from '@/components/kurulus/AgenciesSettingsPanel';
 import { BranchesSettingsPanel } from '@/components/kurulus/BranchesSettingsPanel';
 import { CompaniesSettingsPanel } from '@/components/kurulus/CompaniesSettingsPanel';
@@ -62,55 +49,6 @@ function KurulusToolbar({ title, actions }: { title: string; actions?: React.Rea
     <div className="roomio-kurulus-toolbar">
       <h2 className="roomio-card-title">{title}</h2>
       {actions}
-    </div>
-  );
-}
-
-function CodeTable({ rows, columns }: { rows: CodeRow[]; columns?: string[] }) {
-  const cols = columns ?? ['Kod', 'Ad', 'Açıklama', 'Durum'];
-  return (
-    <div className="roomio-table-wrap">
-      <table className="roomio-table">
-        <thead>
-          <tr>
-            {cols.map((c) => <th key={c}>{c}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.code}>
-              <td><strong>{row.code}</strong></td>
-              <td>{row.name}</td>
-              {cols.includes('Açıklama') ? <td>{row.description ?? '—'}</td> : null}
-              <td>{row.active ? 'Aktif' : 'Pasif'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function GenericTableScreen({ title, rows, columns, headerAction }: {
-  title: string;
-  rows: Record<string, string | number>[];
-  columns: Array<{ key: string; label: string }>;
-  headerAction?: React.ReactNode;
-}) {
-  return (
-    <div className="roomio-card roomio-table-wrap">
-      <KurulusToolbar title={title} actions={headerAction} />
-      <table className="roomio-table" style={{ marginTop: 12 }}>
-        <thead>
-          <tr>{columns.map((c) => <th key={c.key}>{c.label}</th>)}</tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr key={i}>
-              {columns.map((c) => <td key={c.key}>{row[c.key]}</td>)}</tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

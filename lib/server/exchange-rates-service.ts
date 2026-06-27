@@ -58,7 +58,6 @@ function buildResult(
   origin: RateOrigin,
   debug?: { fetchError?: string },
 ): ExchangeRatesResult {
-  const isFallback = origin !== 'live';
   return {
     ok: true,
     origin,

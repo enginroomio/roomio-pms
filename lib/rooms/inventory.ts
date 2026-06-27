@@ -3,7 +3,7 @@ import { DEMO_RESERVATIONS } from '@/lib/data/reservations';
 import { PROPERTY } from '@/lib/navigation';
 import { getActiveFloors, isRoomExcluded } from '@/lib/rooms/room-config';
 import { getHydratedRooms } from '@/lib/rooms/inventory-hydrate';
-import { getRoomTypeDef, getActiveRoomTypes, type RoomTypeCode, typeCodeForSuffix } from '@/lib/rooms/room-types';
+import { getRoomTypeDef, getActiveRoomTypes, typeCodeForSuffix } from '@/lib/rooms/room-types';
 import type { Reservation } from '@/lib/types/reservation';
 import type { RackCell, RackCellState, RoomHkStatus, RoomRecord } from '@/lib/types/room';
 

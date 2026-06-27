@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { selectEnglish, setEnglishViaStorage } from './helpers/locale';
-import { useDemoRole, waitForDemoSession } from './helpers/demo-auth';
+import { setDemoRole, waitForDemoSession } from './helpers/demo-auth';
 
 test.describe('i18n', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => localStorage.removeItem('roomio-locale'));
-    await useDemoRole(page, 'admin');
+    await setDemoRole(page, 'admin');
   });
 
   test('locale API tr ve en döner', async ({ request }) => {

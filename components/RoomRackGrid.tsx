@@ -274,7 +274,10 @@ export function RoomRackGrid({
   const { activeProperty } = useProperty();
   const { prefs, update: updateRackPrefs } = useRackPreferences();
   const totalRooms = activeProperty?.totalRooms ?? countTotalRooms();
-  const reservations = reservationsProp ?? (preview ? DEMO_RESERVATIONS : []);
+  const reservations = useMemo(
+    () => reservationsProp ?? (preview ? DEMO_RESERVATIONS : []),
+    [reservationsProp, preview],
+  );
   const businessDate = businessDateProp ?? PROPERTY.businessDate;
   const hkMap = hkMapProp ?? DEFAULT_HK_ROOMS;
   const displayCtx: RackDisplayContext = { businessDate, reservations };
@@ -336,22 +339,30 @@ export function RoomRackGrid({
   const filterState = { stateFilter, typeFilter, locationFilter, occupiedOnly, cleanOnly, showMaintenance };
   const separateFloors = floor === 'all';
 
+  // buildCells and filterState are recreated every render (plain closures /
+  // object literals, not memoized), so they're deliberately left out of
+  // these deps arrays — they'd defeat the memoization. The fine-grained
+  // primitives they're built from (reservations, businessDate, hkMap,
+  // inventoryVersion, and the individual filter fields) are listed instead.
   const floorSections = useMemo(() => {
     if (!separateFloors) return null;
     return getActiveFloors().map(({ floor: f }) => ({
       floor: f,
       cells: applyFilters(buildCells(f), filterState),
     }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [separateFloors, stateFilter, typeFilter, locationFilter, occupiedOnly, cleanOnly, showMaintenance, reservations, businessDate, hkMap, inventoryVersion]);
 
   const singleCells = useMemo(() => {
     const base = buildCells(typeof floor === 'number' ? floor : undefined);
     const filtered = applyFilters(base, filterState);
     return maxCells ? filtered.slice(0, maxCells) : filtered;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [floor, stateFilter, typeFilter, locationFilter, occupiedOnly, cleanOnly, showMaintenance, maxCells, reservations, businessDate, hkMap, inventoryVersion]);
 
   const counts = useMemo(
     () => countRackByState(buildCells(floor === 'all' ? undefined : floor)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [floor, reservations, businessDate, hkMap, inventoryVersion],
   );
 

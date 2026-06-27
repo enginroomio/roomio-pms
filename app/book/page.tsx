@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, CreditCard, Hotel, Leaf } from 'lucide-react';
 import { GuestServiceLinks } from '@/components/GuestServiceLinks';

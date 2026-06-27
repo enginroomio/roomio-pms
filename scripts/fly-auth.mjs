@@ -3,11 +3,11 @@
  * Fly.io token tabanlı oturum — interaktif login gerekmez.
  * Token: .env.fly → FLY_API_TOKEN=...
  */
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { parseEnvFile } from './parse-env-file.mjs';
-import { ensureFlyInstalled, installFlyToProject, localFlyBin } from './fly-install.mjs';
+import { installFlyToProject, localFlyBin } from './fly-install.mjs';
 
 const ENV_FLY = join(process.cwd(), '.env.fly');
 const ENV_FLY_EXAMPLE = join(process.cwd(), '.env.fly.example');

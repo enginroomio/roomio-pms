@@ -64,7 +64,8 @@ async function runAgainst(base) {
   const sendOk = sendExpected.includes(sendRes.status);
   console.log(
     `${sendOk ? '✓' : '✗'} Push send [${sendRes.status}] (beklenen ${sendExpected.join('|')})` +
-      (sendRes.status === 404 ? ' — abone yok, pipeline hazır' : ''),
+      (sendRes.status === 404 ? ' — abone yok, pipeline hazır' : '') +
+      (sendRes.status === 200 ? ` sent=${sendBody.sent ?? '?'} failed=${sendBody.failed ?? '?'}` : ''),
   );
   ok = sendOk && ok;
 

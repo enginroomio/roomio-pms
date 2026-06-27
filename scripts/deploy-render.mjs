@@ -3,7 +3,7 @@
  * Render.com deploy rehberi + doğrulama (ücretsiz, kredi kartı yok).
  * Kullanım: npm run deploy:render
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { parseEnvFile } from './parse-env-file.mjs';
 import {

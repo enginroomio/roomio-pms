@@ -75,7 +75,7 @@ function extractModelBlocks(source) {
   return blocks;
 }
 
-function buildPostgresSchema(sqliteSource, currentPgSource) {
+function buildPostgresSchema(sqliteSource) {
   const generatorMatch = sqliteSource.match(/^generator client \{[\s\S]*?\n\}/m);
   if (!generatorMatch) throw new Error('SQLite şemasında generator bloğu bulunamadı');
 
@@ -100,7 +100,7 @@ function main() {
   const sqliteSource = readFileSync(SQLITE_SCHEMA_PATH, 'utf8');
   const currentPgSource = readFileSync(PG_SCHEMA_PATH, 'utf8');
 
-  const nextPgSource = buildPostgresSchema(sqliteSource, currentPgSource);
+  const nextPgSource = buildPostgresSchema(sqliteSource);
 
   if (checkOnly) {
     if (nextPgSource === currentPgSource) {

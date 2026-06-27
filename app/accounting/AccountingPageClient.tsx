@@ -51,7 +51,6 @@ type LedgerEntry = {
 };
 type CompanyOption = { code: string; name: string };
 
-const INVOICE_STATUS = ['draft', 'issued', 'paid'] as const;
 const INVOICE_TYPES = ['konaklama', 'ekstra', 'banket'] as const;
 
 export default function AccountingPageClient() {
