@@ -10,6 +10,16 @@ const BASE = process.env.ROOMIO_URL ?? readActivePort() ?? 'http://127.0.0.1:310
 const ADMIN_EMAIL = process.env.ROOMIO_ADMIN_EMAIL ?? 'admin@roomio.local';
 const ADMIN_PASSWORD = process.env.ROOMIO_CHECKLIST_PASSWORD ?? 'roomio123';
 
+/** Seed'deki atanmamış CONFIRMED rezervasyon — check-in / PBX smoke için */
+const PBX_SMOKE = {
+  reservationId: 'rez-06',
+  reservationRef: '6',
+  guestName: 'Can Arslan',
+  checkIn: '2026-06-22',
+  checkOut: '2026-06-24',
+  roomNo: '201',
+};
+
 function readActivePort() {
   try {
     const port = readFileSync(join(process.cwd(), '.roomio/runtime/active-port.txt'), 'utf8').trim();
@@ -103,12 +113,7 @@ const tests = [
     name: 'reception check-in auto PBX',
     run: async () => {
       const r = await json('POST', '/api/reception/check-in', {
-        reservationId: '3',
-        roomNo: '201',
-        guestName: 'PBX Test',
-        checkIn: '2026-06-21',
-        checkOut: '2026-06-23',
-        reservationRef: 'REF-3',
+        ...PBX_SMOKE,
         tesa: false,
         pbx: true,
       });
@@ -125,9 +130,9 @@ const tests = [
     name: 'reception checkout auto PBX',
     run: async () => {
       const r = await json('POST', '/api/reception/checkout', {
-        roomNo: '201',
-        guestName: 'PBX Test',
-        reservationId: '3',
+        roomNo: PBX_SMOKE.roomNo,
+        guestName: PBX_SMOKE.guestName,
+        reservationId: PBX_SMOKE.reservationId,
       });
       return (
         r.ok

@@ -50,9 +50,18 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Start server
-        run: npx next start -H 127.0.0.1 -p 3100 &
+        run: |
+          if [ -f .next/standalone/server.js ]; then
+            PORT=3100 HOSTNAME=127.0.0.1 node .next/standalone/server.js &
+          else
+            npx next start -H 127.0.0.1 -p 3100 &
+          fi
         env:
           NODE_ENV: production
+          DATABASE_URL: file:.roomio-data/ci-rollout.db
+          ROOMIO_JWT_SECRET: ci-test-secret-at-least-32-characters-long
+          ROOMIO_AUTH_REQUIRED: '0'
+          ROOMIO_DEMO_AUTH: '1'
 
       - name: Wait for health
         run: |

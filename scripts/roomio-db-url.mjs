@@ -11,6 +11,12 @@ export function roomioDbPath() {
 }
 
 export function roomioDatabaseUrl() {
+  const fromEnv = process.env.DATABASE_URL?.trim();
+  if (fromEnv?.startsWith('file:')) {
+    const pathPart = fromEnv.slice(5);
+    if (pathPart.startsWith('/')) return fromEnv;
+    return `file:${join(ROOT, pathPart)}`;
+  }
   return `file:${roomioDbPath()}`;
 }
 
