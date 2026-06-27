@@ -1,0 +1,46 @@
+name: Rollout E2E
+
+on:
+  pull_request:
+    paths:
+      - 'e2e/**'
+      - 'lib/navigation/**'
+      - 'components/**'
+      - 'app/**'
+      - 'scripts/verify-rollout.mjs'
+      - 'scripts/verify-menu-params.mjs'
+      - 'playwright.rollout.config.ts'
+  workflow_dispatch:
+
+jobs:
+  rollout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: file:.roomio-data/ci-rollout.db
+      ROOMIO_JWT_SECRET: ci-test-secret-at-least-32-characters-long
+      ROOMIO_AUTH_REQUIRED: '0'
+      ROOMIO_DEMO_AUTH: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync database schema
+        run: mkdir -p .roomio-data && npm run db:push && npm run db:seed
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Rollout E2E
+        run: npm run verify:rollout
+
+      - name: Menu params E2E
+        run: npm run verify:menu-params

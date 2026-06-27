@@ -356,7 +356,11 @@ async function main() {
   for (let i = 0; i < apiProtectedBatches.length; i++) {
     const batch = apiProtectedBatches[i];
     await e2e(batch.label, 'e2e/api-protected.spec.ts', batch.grep);
-    if (i < apiProtectedBatches.length - 1 && process.env.VERIFY_REUSE_SERVER !== '1') {
+    if (
+      i < apiProtectedBatches.length - 1 &&
+      process.env.VERIFY_REUSE_SERVER !== '1' &&
+      process.env.VERIFY_KEEP_SERVER !== '1'
+    ) {
       await restartServer(useProductionServer, 'Sunucu (batch arası)');
     }
   }
