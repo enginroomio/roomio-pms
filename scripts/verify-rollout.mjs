@@ -105,11 +105,23 @@ async function main() {
     killPort();
     mkdirSync(join(ROOT, '.roomio/runtime'), { recursive: true });
     writeFileSync(join(ROOT, '.roomio/runtime/active-port.txt'), PORT);
-    server = spawn('npx', ['next', 'dev', '-p', PORT, '-H', '127.0.0.1'], {
-      cwd: ROOT,
-      stdio: 'ignore',
-      env: { ...process.env, ROOMIO_AUTH_REQUIRED: '0', WATCHPACK_POLLING: 'true' },
-    });
+    server = spawn(
+      'npx',
+      process.env.VERIFY_BUILD === '1'
+        ? ['next', 'start', '-p', PORT, '-H', '127.0.0.1']
+        : ['next', 'dev', '-p', PORT, '-H', '127.0.0.1'],
+      {
+        cwd: ROOT,
+        stdio: 'ignore',
+        env: {
+          ...process.env,
+          ROOMIO_AUTH_REQUIRED: '0',
+          WATCHPACK_POLLING: 'true',
+          NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=4096',
+          ...(process.env.VERIFY_BUILD === '1' ? { NODE_ENV: 'production' } : {}),
+        },
+      },
+    );
     if (!(await waitHealth())) {
       server.kill('SIGTERM');
       console.error('✗ Sunucu hazır değil');
