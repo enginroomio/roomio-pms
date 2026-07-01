@@ -18,6 +18,7 @@ ENV ROOMIO_DB_PROVIDER=${ROOMIO_DB_PROVIDER}
 ENV DATABASE_URL="file:/data/roomio.db"
 ARG GITHUB_SHA
 ENV GITHUB_SHA=${GITHUB_SHA}
+RUN node scripts/setup-id-reader-ocr.mjs
 RUN if [ "$ROOMIO_DB_PROVIDER" = "postgresql" ]; then npm run db:generate:pg; else npm run db:generate; fi && npm run build
 
 FROM node:20-alpine AS runner
@@ -45,6 +46,7 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/scripts/docker-entrypoint.mjs ./scripts/docker-entrypoint.mjs
 COPY --from=builder /app/scripts/patch-release-git-sha.mjs ./scripts/patch-release-git-sha.mjs
 COPY --from=builder /app/scripts/prisma-schema.mjs ./scripts/prisma-schema.mjs
+COPY --from=builder /app/lib/integrations/id-reader/tessdata ./lib/integrations/id-reader/tessdata
 
 RUN mkdir -p /data && chown -R nextjs:nodejs /data /app
 USER nextjs

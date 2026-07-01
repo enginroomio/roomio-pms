@@ -22,6 +22,13 @@ execSync(`npx prisma db push --schema=${schema} --skip-generate`, { stdio: 'inhe
 
 execSync('node scripts/patch-release-git-sha.mjs', { stdio: 'inherit' });
 
+const jwt = process.env.ROOMIO_JWT_SECRET?.trim() ?? '';
+const authRequired = process.env.ROOMIO_AUTH_REQUIRED === '1';
+if (process.env.NODE_ENV === 'production' && authRequired && (jwt.length < 32 || jwt.includes('replace-with'))) {
+  console.warn('[entrypoint] ⚠ ROOMIO_JWT_SECRET eksik veya zayıf — /api/health ok:false olur.');
+  console.warn('[entrypoint]   Düzeltme: npm run render:paste-env → Render Environment → Manual Deploy');
+}
+
 console.log('[entrypoint] Roomio başlatılıyor…');
 const port = process.env.PORT ?? '3100';
 console.log(`[entrypoint] PORT=${port}`);

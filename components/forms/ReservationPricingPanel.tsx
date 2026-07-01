@@ -8,7 +8,7 @@ type RateMap = ReturnType<typeof rateMapFromRows>;
 
 type Props = {
   currency: string;
-  rate: number;
+  rate: number | '';
   rateDate: string;
   exchangeRate: number;
   currencyOptions: string[];
@@ -23,7 +23,7 @@ type Props = {
   fxLoading: boolean;
   fxDate?: string;
   onCurrencyChange: (next: PaymentCurrency) => void;
-  onRateChange: (rate: number) => void;
+  onRateChange: (rate: number | '') => void;
   onRefreshFx: () => void;
   compact?: boolean;
 };
@@ -93,8 +93,8 @@ export function ReservationPricingPanel({
                 type="number"
                 min={0}
                 step={currency === 'JPY' ? 1 : currency === 'TRY' ? 100 : 0.01}
-                value={rate}
-                onChange={(e) => onRateChange(Number(e.target.value))}
+                value={rate === '' ? '' : rate}
+                onChange={(e) => onRateChange(e.target.value === '' ? '' : Number(e.target.value))}
               />
               <select
                 className="roomio-select roomio-elektra-pricing__currency"
@@ -166,7 +166,7 @@ export function ReservationPricingPanel({
               </tr>
             </thead>
             <tbody>
-              <DetailRow label="Gece fiyatı" amount={rate} currency={currency} rates={rateMap} />
+              <DetailRow label="Gece fiyatı" amount={typeof rate === 'number' ? rate : 0} currency={currency} rates={rateMap} />
               <DetailRow label={`Konaklama · ${nightLabel}`} amount={gross} currency={currency} rates={rateMap} />
               {discountPct > 0 ? (
                 <DetailRow label={`İndirim %${discountPct}`} amount={-(gross - subtotal)} currency={currency} rates={rateMap} muted />

@@ -55,6 +55,8 @@ const MENU_ROUTES: MenuRoute[] = [
   { path: '/settings/integrations/pbx', heading: /Grandstream/i },
   { path: '/settings/integrations/channel-manager', heading: /Kanal Yöneticisi/i },
   { path: '/settings/integrations/ical-import', heading: /OTA Takvim/i },
+  { path: '/settings/integrations/cloud-backup', heading: /Yedekleme|Veritabanı/i },
+  { path: '/settings/integrations/room-service', heading: /Oda Servisi/i },
   { path: '/settings/integrations/booking-engine', heading: /Rezervasyon Motoru/i },
   { path: '/settings?section=users', heading: /Kullanıcı Tanımları/i },
   { path: '/settings?section=rate-plans', heading: /Fiyat/i },

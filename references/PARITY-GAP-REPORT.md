@@ -1,6 +1,6 @@
 # Roomio PMS — Sektör Parity & Eksik Analizi
 
-> Son güncelleme: **2026-06-24**  
+> Son güncelleme: **2026-07-01**  
 > Referanslar: Konak PMS (Elektra v5), Opera/Cloudbeds/Mews özellik setleri, `konak-pms/references/ELEKTRA-SCREEN-REFERENCE.md`
 
 ---
@@ -35,6 +35,23 @@
 | **Rapor alt menü i18n** | `REPORT_SAMPLES` id + `sidebar.report.*` anahtarları (9 kategori × 4 örnek) |
 | **Sağ tık ana menü i18n** | `ElektraMainContextMenu` + `sidebar.ctx.*` grup etiketleri |
 | **Dashboard hareketler i18n** | `DailyMovements` + `dashboard.movements.*` |
+| **Bulut yedekleme (USB/S3/GDrive)** | `lib/server/cloud-backup/`, ayar sayfası, API, e2e |
+| **iCal OTA import** | `/settings/integrations/ical-import`, status API |
+| **Elektra sunucu + TGA/TIH/TIS** | `/settings/integrations/elektra-server` |
+| **Oda servisi** | Misafir portal + GR panel + API |
+| **Kimlik OCR (offline)** | Tesseract tessdata + `setup-id-reader-ocr.mjs` |
+| **Folyo döviz** | Giriş kuru ile EUR/USD satırları + hızlı rezervasyon picker |
+| **Ana sayfa orijinal şablon** | Hava durumu chip + E2E stabilize |
+| **Render gitSha** | GHCR `GITHUB_SHA` + `patch-release-git-sha.mjs` |
+
+---
+
+## Operasyonel eksik (kod dışı)
+
+| Madde | Durum | Aksiyon |
+|-------|-------|---------|
+| Render JWT | ⏳ | `npm run render:paste-env` → Environment → Manual Deploy |
+| Production health `ok:true` | ⏳ | JWT sonrası `npm run test:render` |
 
 ---
 
@@ -61,7 +78,12 @@
 
 ## Hâlâ eksik (öncelik sırası)
 
-### Yüksek
+_Kod parity tamamlandı (~100%). Kalan maddeler operasyon / deploy._
+
+### Operasyon
+1. **Render production JWT** — GHCR image ayakta; `ROOMIO_JWT_SECRET` Render Environment'da set edilmeli
+
+### Kod parity (tamamlandı)
 1. ~~**Folio / folio satırları**~~ — ✅
 2. ~~**Kasa defteri**~~ — ✅
 3. ~~**JWT oturum**~~ — ✅ API + login; dev'de demo rol seçici
