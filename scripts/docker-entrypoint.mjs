@@ -20,6 +20,8 @@ execSync(`npx prisma generate --schema=${schema}`, { stdio: 'inherit' });
 console.log(`[entrypoint] Veritabanı şeması (${provider})…`);
 execSync(`npx prisma db push --schema=${schema} --skip-generate`, { stdio: 'inherit' });
 
+execSync('node scripts/patch-release-git-sha.mjs', { stdio: 'inherit' });
+
 console.log('[entrypoint] Roomio başlatılıyor…');
 const port = process.env.PORT ?? '3100';
 console.log(`[entrypoint] PORT=${port}`);

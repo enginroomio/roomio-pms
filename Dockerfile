@@ -16,6 +16,8 @@ ENV NODE_OPTIONS="--max-old-space-size=2048"
 ARG ROOMIO_DB_PROVIDER=sqlite
 ENV ROOMIO_DB_PROVIDER=${ROOMIO_DB_PROVIDER}
 ENV DATABASE_URL="file:/data/roomio.db"
+ARG GITHUB_SHA
+ENV GITHUB_SHA=${GITHUB_SHA}
 RUN if [ "$ROOMIO_DB_PROVIDER" = "postgresql" ]; then npm run db:generate:pg; else npm run db:generate; fi && npm run build
 
 FROM node:20-alpine AS runner
@@ -24,6 +26,8 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3100
 ENV HOSTNAME=0.0.0.0
+ARG GITHUB_SHA
+ENV GITHUB_SHA=${GITHUB_SHA}
 ENV DATABASE_URL="file:/data/roomio.db"
 
 RUN apk add --no-cache wget openssl libc6-compat
@@ -39,6 +43,7 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/scripts/docker-entrypoint.mjs ./scripts/docker-entrypoint.mjs
+COPY --from=builder /app/scripts/patch-release-git-sha.mjs ./scripts/patch-release-git-sha.mjs
 COPY --from=builder /app/scripts/prisma-schema.mjs ./scripts/prisma-schema.mjs
 
 RUN mkdir -p /data && chown -R nextjs:nodejs /data /app

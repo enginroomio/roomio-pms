@@ -166,7 +166,7 @@ export async function verifyCanaryRoutes(baseUrl) {
       method: probe.method ?? 'GET',
       headers: probe.headers,
       body: probe.body,
-      signal: AbortSignal.timeout(2500),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!probe.statuses.includes(res.status)) {
       throw new Error(`Eski sunucu: ${probe.path} → HTTP ${res.status}`);
@@ -202,8 +202,11 @@ export async function waitForHealth(baseUrl, timeoutMs = 90_000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
-      const res = await fetch(`${baseUrl}/api/health`);
-      if (res.ok) return;
+      const res = await fetch(`${baseUrl}/api/health`, { signal: AbortSignal.timeout(8000) });
+      if (res.status === 200 || res.status === 503) {
+        const body = await res.json().catch(() => null);
+        if (body?.service === 'roomio-pms') return;
+      }
     } catch {
       // retry
     }

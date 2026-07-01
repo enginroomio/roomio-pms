@@ -35,6 +35,8 @@ jobs:
           push: true
           provenance: false
           sbom: false
+          build-args: |
+            GITHUB_SHA=${{ github.sha }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}

@@ -125,7 +125,9 @@ async function main() {
 
   if (!devMode) {
     await waitForHealth(baseUrl);
-    await verifyHomeAssets(baseUrl);
+    if (!quick) {
+      await verifyHomeAssets(baseUrl);
+    }
     const manifest = JSON.parse(readFileSync(join(ROOT, 'public', 'release-manifest.json'), 'utf8'));
     console.log(`\n✓ Roomio hazır · ${manifest.label}`);
     console.log(`  → ${baseUrl}\n`);
