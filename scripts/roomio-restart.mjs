@@ -105,7 +105,15 @@ async function main() {
   const useStandalone = !devMode && existsSync(standaloneServer);
 
   const dbUrl = roomioDatabaseUrl();
-  const prodEnv = { ...process.env, NODE_ENV: 'production', PORT: String(port), HOSTNAME: BIND_HOST, DATABASE_URL: dbUrl };
+  const prodEnv = {
+    ...process.env,
+    NODE_ENV: 'production',
+    PORT: String(port),
+    HOSTNAME: BIND_HOST,
+    DATABASE_URL: dbUrl,
+    // Yerel smoke/E2E — paylaşılan sunucuda login rate limit tetiklenmesin
+    ROOMIO_DISABLE_RATE_LIMIT: process.env.ROOMIO_DISABLE_RATE_LIMIT ?? '1',
+  };
 
   const child = useStandalone
     ? spawn(process.execPath, [standaloneServer], {

@@ -45,7 +45,12 @@ console.log('\n══ Production health ══');
 const health = await waitForHealth(PROD, 8, 5000);
 console.log(`${health.ok ? '✓' : '✗'} ${PROD}/api/health`);
 if (!health.ok) {
-  if (health.reason === 'dns') {
+  const auth = health.body?.checks?.auth;
+  if (auth && !auth.ok) {
+    console.log(`  auth: ${auth.detail}`);
+    console.log('  Düzeltme: npm run render:paste-env → Render Environment → Manual Deploy');
+    console.log('  veya: RENDER_API_KEY=rnd_... npm run render:set-secrets');
+  } else if (health.reason === 'dns') {
     console.log('ℹ DNS kaydı yok — Render Blueprint henüz deploy edilmemiş');
     console.log('  Önce: bash scripts/github-push.sh');
     console.log('  Sonra: render.com → New → Blueprint');
@@ -55,6 +60,9 @@ if (!health.ok) {
   } else {
     console.log('ℹ Site uyuyor olabilir (free plan) veya deploy devam ediyor');
     console.log('  Render dashboard → Logs kontrol edin');
+  }
+  if (health.body?.gitSha) {
+    console.log(`  canlı build: ${health.body.gitSha} (${health.body.build?.slice(0, 10) ?? '—'})`);
   }
 }
 ok = health.ok && ok;
