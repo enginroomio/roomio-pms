@@ -2,7 +2,7 @@
 
 import { useOneScreenFit } from '@/lib/client/use-one-screen-fit';
 
-export type OneScreenVariant = 'default' | 'dashboard' | 'hk' | 'theme' | 'list';
+export type OneScreenVariant = 'default' | 'dashboard' | 'home' | 'hk' | 'theme' | 'list';
 
 type Props = {
   children: React.ReactNode;
@@ -12,6 +12,7 @@ type Props = {
 const BODY_CLASS: Record<OneScreenVariant, string> = {
   default: 'roomio-one-screen-fit__body--page',
   dashboard: 'roomio-dashboard roomio-dashboard--one-screen',
+  home: 'roomio-dashboard roomio-dashboard--scroll',
   hk: 'roomio-hk-mobile roomio-hk-mobile--one-screen roomio-dashboard roomio-dashboard--one-screen',
   theme: 'roomio-one-screen-fit__body--page roomio-one-screen-fit__body--theme',
   list: 'roomio-one-screen-fit__body--page roomio-one-screen-fit__body--scroll',
@@ -20,6 +21,7 @@ const BODY_CLASS: Record<OneScreenVariant, string> = {
 const FIT_OPTIONS: Record<OneScreenVariant, { minScale?: number; uniformScale?: boolean; allowScroll?: boolean }> = {
   default: { minScale: 0.48, uniformScale: true },
   dashboard: { minScale: 0.48, uniformScale: true },
+  home: { minScale: 1, uniformScale: false, allowScroll: true },
   hk: { minScale: 0.48, uniformScale: true },
   theme: { minScale: 0.72, uniformScale: true },
   list: { minScale: 1, uniformScale: false, allowScroll: true },

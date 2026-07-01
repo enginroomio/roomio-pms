@@ -612,3 +612,12 @@ html[data-theme='classic'] .roomio-viewport-host {
 .roomio-reception-status {
   margin-bottom: 8px;
 }
+
+/* Ana sayfa — rack iç scroll kapalı, sayfa kayar */
+.roomio-dashboard--scroll .roomio-nr-shell,
+.roomio-dashboard--scroll .roomio-nr-shell--preview,
+.roomio-dashboard--scroll .roomio-nr-board,
+.roomio-dashboard--scroll .roomio-card--rack {
+  overflow: visible !important;
+  max-height: none !important;
+}

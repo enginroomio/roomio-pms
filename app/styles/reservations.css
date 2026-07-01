@@ -1641,6 +1641,17 @@ body.roomio-rez-col-resizing {
   gap: 10px;
 }
 
+.roomio-rez-quick__price-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.roomio-rez-quick__price-row .roomio-input {
+  flex: 1;
+  min-width: 0;
+}
+
 .roomio-rez-quick .roomio-field > span {
   font-size: 0.68rem;
   font-weight: 500;

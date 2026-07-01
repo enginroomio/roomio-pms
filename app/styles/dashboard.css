@@ -69,6 +69,38 @@
   color: #0a58ca;
 }
 
+/* Ana sayfa — kaydırmalı tam genişlik (ölçek yok) */
+.roomio-dashboard--scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+  min-height: min-content;
+}
+
+.roomio-dashboard--scroll .roomio-dashboard-board {
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  align-items: stretch;
+  gap: 14px;
+}
+
+.roomio-dashboard--scroll .roomio-card--rack,
+.roomio-dashboard--scroll .roomio-nr-shell,
+.roomio-dashboard--scroll .roomio-nr-shell--preview {
+  overflow: visible !important;
+  max-height: none !important;
+  min-height: auto !important;
+}
+
+.roomio-dashboard--scroll .roomio-nr-board {
+  overflow: visible !important;
+  flex: 0 0 auto !important;
+  min-height: auto !important;
+}
+
 /* Ana sayfa — kompakt tek ekran düzeni (ölçek AppShell ContentOneScreen) */
 .roomio-dashboard--one-screen {
   display: flex;

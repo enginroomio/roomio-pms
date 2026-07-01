@@ -62,7 +62,7 @@ function isScrollListRoute(pathname: string): boolean {
 
 function oneScreenVariant(pathname: string, tab: string | null): OneScreenVariant {
   if (isThemeRoute(pathname, tab)) return 'theme';
-  if (pathname === '/') return 'dashboard';
+  if (pathname === '/') return 'home';
   if (isHkMobileRoute(pathname)) return 'hk';
   if (isScrollListRoute(pathname)) return 'list';
   return 'default';

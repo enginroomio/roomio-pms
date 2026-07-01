@@ -15,8 +15,9 @@ type Options = {
 
 const REFIT_DELAYS_MS = [0, 80, 240, 600, 1200, 2000];
 
-/** Yeni rezervasyon hızlı kayıt — doğal sayfa kaydırması; sığdırma kancası devre dışı */
+/** Doğal boyut — JS ölçekleme uygulanmaz (ana sayfa + rezervasyon kayıt) */
 function shouldSkipOneScreenFit(rootEl: HTMLElement): boolean {
+  if (rootEl.classList.contains('roomio-dashboard--scroll')) return true;
   return Boolean(rootEl.querySelector('.roomio-rez-quick, .roomio-rez-new-screen'));
 }
 

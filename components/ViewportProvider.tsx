@@ -29,6 +29,12 @@ export function ViewportProvider({ children }: { children: React.ReactNode }) {
 
     function update() {
       const next = detectViewport(window.innerWidth, window.innerHeight, mode);
+      if (pathname === '/') {
+        next.fitScale = 1;
+        next.fitActive = false;
+        next.canvasWidth = '100%';
+        next.canvasHeight = '100%';
+      }
       applyViewportToDocument(next);
       setState(next);
     }
@@ -46,7 +52,7 @@ export function ViewportProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('resize', schedule);
       window.removeEventListener('orientationchange', schedule);
     };
-  }, [mode]);
+  }, [mode, pathname]);
 
   return <ViewportContext.Provider value={state}>{children}</ViewportContext.Provider>;
 }
