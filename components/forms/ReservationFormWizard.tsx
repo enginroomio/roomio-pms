@@ -88,6 +88,13 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Sayı alanı — silince 0 kalmasın */
+function parseRateFieldInput(raw: string): string | number {
+  if (raw === '') return '';
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : '';
+}
+
 function DualAmount({ amount, currency, rates }: { amount: number; currency: string; rates: ReturnType<typeof rateMapFromRows> }) {
   const { primary, secondary } = formatDualMoney(amount, currency, rates);
   return (
@@ -210,7 +217,8 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
   const rateDate = checkIn || todayIso();
   const rateMap = useMemo(() => rateMapFromRows(fx?.rates ?? []), [fx]);
   const currency = String(values.currency ?? 'TRY');
-  const rate = Number(values.rate ?? 0);
+  const rateNum = values.rate === '' ? 0 : Number(values.rate ?? 0);
+  const rate = rateNum;
   const roomCount = Math.max(1, Number(values.roomCount ?? 1));
   const discountPct = Number(values.discountPct ?? 0);
   const nights = nightsBetween(String(values.checkIn ?? ''), String(values.checkOut ?? ''));
@@ -462,7 +470,11 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
   }
 
   function onCurrencyChange(next: PaymentCurrency) {
-    const tryValue = foreignToTry(rate, currency, rateMap);
+    if (values.rate === '') {
+      setValues((prev) => ({ ...prev, currency: next }));
+      return;
+    }
+    const tryValue = foreignToTry(rateNum, currency, rateMap);
     const converted = next === 'TRY' ? tryValue : tryToForeign(tryValue, next, rateMap);
     const step = next === 'JPY' ? 1 : next === 'TRY' ? 100 : 0.01;
     setValues((prev) => ({ ...prev, currency: next, rate: Math.round(converted / step) * step }));
@@ -577,7 +589,16 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
           required={cfg.required}
           placeholder={def.placeholder}
           min={def.type === 'number' ? 0 : undefined}
-          onChange={(e) => setValue(cfg.key, def.type === 'number' ? Number(e.target.value) : e.target.value)}
+          onChange={(e) =>
+            setValue(
+              cfg.key,
+              def.type === 'number'
+                ? cfg.key === 'rate'
+                  ? parseRateFieldInput(e.target.value)
+                  : Number(e.target.value)
+                : e.target.value,
+            )
+          }
         />
       </label>
     );
@@ -919,7 +940,7 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
             <ReservationPricingPanel
               compact={wizardCompact}
               currency={currency}
-              rate={rate}
+              rate={values.rate === '' ? '' : rateNum}
               rateDate={rateDate}
               exchangeRate={exchangeRate}
               currencyOptions={currencyOptions}
@@ -1286,8 +1307,8 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
                         type="number"
                         min={0}
                         step={currency === 'JPY' ? 1 : currency === 'TRY' ? 100 : 0.01}
-                        value={rate}
-                        onChange={(e) => setValue('rate', Number(e.target.value))}
+                        value={values.rate === '' ? '' : rateNum}
+                        onChange={(e) => setValue('rate', parseRateFieldInput(e.target.value))}
                       />
                     </div>
                   </label>
