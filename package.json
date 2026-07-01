@@ -157,7 +157,7 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:generate:pg": "prisma generate --schema=prisma/schema.postgresql.prisma",
-    "db:push": "prisma db push",
+    "db:push": "node scripts/db-push.mjs",
     "db:push:pg": "prisma db push --schema=prisma/schema.postgresql.prisma",
     "db:sync-pg-schema": "node scripts/sync-postgres-schema.mjs",
     "db:sync-pg-schema:check": "node scripts/sync-postgres-schema.mjs --check",
