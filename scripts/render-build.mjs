@@ -37,6 +37,8 @@ function run(cmd, args, extraEnv = {}) {
 run('npm', ['ci', '--ignore-scripts', '--include=dev'], { NODE_ENV: 'development', npm_config_production: 'false' });
 run('npx', ['prisma', 'generate', `--schema=${schema}`]);
 run('npx', ['prisma', 'db', 'push', `--schema=${schema}`, '--skip-generate']);
-run('npm', ['run', 'build'], { NODE_ENV: 'production', NEXT_BUILD_WORKERS: '1' });
+const buildEnv = { NODE_ENV: 'production', NEXT_BUILD_WORKERS: '1' };
+if (process.env.RENDER_GIT_COMMIT) buildEnv.GITHUB_SHA = process.env.RENDER_GIT_COMMIT;
+run('npm', ['run', 'build'], buildEnv);
 run('node', ['scripts/sync-standalone-assets.mjs']);
 console.log('\n✅ render-build tamam');

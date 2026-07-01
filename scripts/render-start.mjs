@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Render.com Node runtime başlatıcı (Docker gerekmez). */
 import { execSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { prismaSchemaPath } from './prisma-schema.mjs';
 
@@ -27,6 +27,26 @@ if (existsSync(standalone)) {
   writeFileSync(join(standalone, '.env'), `DATABASE_URL="${dbUrl}"\n`, 'utf8');
 }
 
+/** Render build sırasında .git yoksa manifest gitSha boş kalır — runtime commit ile düzelt. */
+function patchReleaseManifestGitSha() {
+  const sha = process.env.RENDER_GIT_COMMIT?.trim() || process.env.GITHUB_SHA?.trim();
+  if (!sha) return;
+  const short = sha.slice(0, 7);
+  const targets = [join(ROOT, 'public', 'release-manifest.json')];
+  if (existsSync(standalone)) targets.push(join(standalone, 'public', 'release-manifest.json'));
+  for (const path of targets) {
+    if (!existsSync(path)) continue;
+    try {
+      const manifest = JSON.parse(readFileSync(path, 'utf8'));
+      manifest.gitSha = short;
+      writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+      console.log(`[render] release-manifest gitSha=${short}`);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 const schema = prismaSchemaPath(dbUrl);
 console.log('[render] Veritabanı şeması…');
 execSync(`npx prisma db push --schema=${schema} --skip-generate`, { stdio: 'inherit', cwd: ROOT });
@@ -38,6 +58,7 @@ if (process.env.NODE_ENV === 'production' && authRequired && (jwt.length < 32 ||
   console.warn('[render] ⚠ ROOMIO_JWT_SECRET eksik veya zayıf — /api/health ok:false olur.');
   console.warn('[render]   Düzeltme: npm run render:paste-env → Render Environment → Manual Deploy');
 }
+patchReleaseManifestGitSha();
 console.log(`[render] Roomio başlatılıyor — PORT=${port}`);
 
 if (existsSync(join(standalone, 'server.js'))) {

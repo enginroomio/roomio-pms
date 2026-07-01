@@ -1,74 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Bell, Check, Sparkles, Wrench } from 'lucide-react';
 import { roomioFetch } from '@/lib/client/api';
+import { emitHkGuestRequestUpdate } from '@/lib/client/guest-request-sync';
 import { patchHkRoom } from '@/lib/client/hk-update';
+import { emitFaultClientUpdate, useLiveFaults } from '@/lib/client/use-live-faults';
+import { useLiveGuestRequests } from '@/lib/client/use-live-guest-requests';
 import { HK_STATUS_LABELS } from '@/lib/data/housekeeping';
 import type { HkRoomRecord } from '@/lib/data/hk-defaults';
 import type { RoomFault } from '@/lib/server/fault-service';
-import type { HkGuestRequestRecord } from '@/lib/server/guest-request-service';
 import type { RoomHkStatus } from '@/lib/types/room';
-
-const DEMO_FAULTS: RoomFault[] = [
-  {
-    id: 'fault-demo-410',
-    propertyId: 'demo',
-    roomNo: '410',
-    floor: 4,
-    category: 'hvac',
-    categoryLabel: 'Klima',
-    description: 'Klima çalışmıyor',
-    status: 'assigned',
-    assignedTo: 'mehmet',
-    assignedToName: 'Mehmet Y.',
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'fault-demo-415',
-    propertyId: 'demo',
-    roomNo: '415',
-    floor: 4,
-    category: 'general',
-    categoryLabel: 'Genel',
-    description: 'Jakuzi pompası arızalı',
-    status: 'assigned',
-    assignedTo: 'serkan',
-    assignedToName: 'Serkan D.',
-    createdAt: '',
-    updatedAt: '',
-  },
-];
-
-const DEMO_REQUESTS: HkGuestRequestRecord[] = [
-  {
-    id: 'greq-demo-112',
-    propertyId: 'demo',
-    roomNo: '112',
-    floor: 1,
-    requestType: 'late_checkout',
-    requestLabel: 'Geç çıkış',
-    description: 'Geç çıkış talebi',
-    status: 'pending',
-    requestedBy: 'Resepsiyon',
-    createdAt: '',
-  },
-  {
-    id: 'greq-demo-205',
-    propertyId: 'demo',
-    roomNo: '205',
-    floor: 2,
-    requestType: 'extra_towel',
-    requestLabel: 'Ek havlu',
-    description: '2 adet banyo havlusu',
-    status: 'pending',
-    requestedBy: 'Misafir',
-    assignedStaff: 'Elif K.',
-    createdAt: '',
-  },
-];
 
 type HkOpsItem = {
   roomNo: string;
@@ -111,41 +54,13 @@ type Props = {
   onHkUpdate?: (roomNo: string, status: RoomHkStatus) => void;
 };
 
-/** Ana sayfa alt şerit — HK, arıza ve misafir talepleri */
+/** Ana sayfa alt şerit — HK, arıza ve misafir talepleri (canlı senkron) */
 export function DashboardOpsBottom({ hkMap, onHkUpdate }: Props) {
   const hkItems = useMemo(() => buildHkItems(hkMap), [hkMap]);
-  const [faults, setFaults] = useState<RoomFault[]>([]);
-  const [requests, setRequests] = useState<HkGuestRequestRecord[]>([]);
+  const { faults, removeFault } = useLiveFaults();
+  const { requests, removeRequest } = useLiveGuestRequests();
   const [busy, setBusy] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-
-  const loadOps = useCallback(async () => {
-    try {
-      const [faultRes, reqRes] = await Promise.all([
-        roomioFetch('/api/housekeeping/faults?status=active'),
-        roomioFetch('/api/housekeeping/requests?status=active'),
-      ]);
-      if (faultRes.ok) {
-        const j = (await faultRes.json()) as { faults?: RoomFault[] };
-        setFaults(j.faults?.length ? j.faults : DEMO_FAULTS);
-      } else {
-        setFaults(DEMO_FAULTS);
-      }
-      if (reqRes.ok) {
-        const j = (await reqRes.json()) as { requests?: HkGuestRequestRecord[] };
-        setRequests(j.requests?.length ? j.requests : DEMO_REQUESTS);
-      } else {
-        setRequests(DEMO_REQUESTS);
-      }
-    } catch {
-      setFaults(DEMO_FAULTS);
-      setRequests(DEMO_REQUESTS);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadOps();
-  }, [loadOps]);
 
   async function markHkClean(roomNo: string) {
     setBusy(`hk-${roomNo}`);
@@ -169,7 +84,8 @@ export function DashboardOpsBottom({ hkMap, onHkUpdate }: Props) {
         body: JSON.stringify({ faultId, action: 'complete', resolvedBy: 'Dashboard' }),
       });
       if (!res.ok) throw new Error('fault');
-      setFaults((prev) => prev.filter((f) => f.id !== faultId));
+      removeFault(faultId);
+      emitFaultClientUpdate({ action: 'completed', faultId, roomNo });
       setStatus(`Oda ${roomNo} arızası kapatıldı`);
     } catch {
       setStatus('Arıza kapatılamadı — yetki gerekli olabilir');
@@ -187,7 +103,8 @@ export function DashboardOpsBottom({ hkMap, onHkUpdate }: Props) {
         body: JSON.stringify({ requestId, action: 'complete' }),
       });
       if (!res.ok) throw new Error('request');
-      setRequests((prev) => prev.filter((r) => r.id !== requestId));
+      removeRequest(requestId);
+      emitHkGuestRequestUpdate({ action: 'completed', requestId, roomNo });
       setStatus(`Oda ${roomNo} talebi tamamlandı`);
     } catch {
       setStatus('Talep kapatılamadı — yetki gerekli olabilir');

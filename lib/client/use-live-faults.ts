@@ -22,14 +22,40 @@ export function useLiveFaults(initial: RoomFault[] = []) {
     }
   }, []);
 
+  const upsertFault = useCallback((fault: RoomFault) => {
+    setFaults((prev) => {
+      const next = prev.filter((f) => f.id !== fault.id);
+      if (fault.status !== 'resolved') next.push(fault);
+      return next.sort((a, b) => a.roomNo.localeCompare(b.roomNo, 'tr'));
+    });
+  }, []);
+
+  const removeFault = useCallback((faultId: string) => {
+    setFaults((prev) => prev.filter((f) => f.id !== faultId));
+  }, []);
+
   useEffect(() => {
     void pull();
   }, [pull]);
 
   useEffect(() => {
-    const onDom = () => void pull();
+    const onDom = (event: Event) => {
+      const detail = (event as CustomEvent<HkFaultUpdateDetail>).detail;
+      if (detail?.action === 'completed' && detail.faultId) {
+        removeFault(detail.faultId);
+        return;
+      }
+      void pull();
+    };
     const bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('roomio-hk-fault') : null;
-    const onBc = () => void pull();
+    const onBc = (event: MessageEvent<HkFaultUpdateDetail>) => {
+      const detail = event.data;
+      if (detail?.action === 'completed' && detail.faultId) {
+        removeFault(detail.faultId);
+        return;
+      }
+      void pull();
+    };
     const onVisible = () => {
       if (document.visibilityState === 'visible') void pull();
     };
@@ -46,19 +72,7 @@ export function useLiveFaults(initial: RoomFault[] = []) {
       window.clearInterval(timer);
       bc?.close();
     };
-  }, [pull]);
-
-  const upsertFault = useCallback((fault: RoomFault) => {
-    setFaults((prev) => {
-      const next = prev.filter((f) => f.id !== fault.id);
-      if (fault.status !== 'resolved') next.push(fault);
-      return next.sort((a, b) => a.roomNo.localeCompare(b.roomNo, 'tr'));
-    });
-  }, []);
-
-  const removeFault = useCallback((faultId: string) => {
-    setFaults((prev) => prev.filter((f) => f.id !== faultId));
-  }, []);
+  }, [pull, removeFault]);
 
   const openFaultForRoom = useCallback(
     (roomNo: string) => faults.find((f) => f.roomNo === roomNo && f.status !== 'resolved'),
