@@ -37,7 +37,7 @@ if (authFail) {
 
 console.log('\n── Sıradaki adımlar ──');
 console.log('1. npm run render:paste-env → Render Dashboard → Environment');
-console.log('2. git push main → GHCR + Render auto-deploy (veya Manual Deploy)');
+console.log('2. git push master (veya main) → GHCR + Render auto-deploy (veya Manual Deploy)');
 console.log('3. npm run render:go-live -- --step 1');
 console.log('4. npm run go-live:verify\n');
 
