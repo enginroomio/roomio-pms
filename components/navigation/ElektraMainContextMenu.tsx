@@ -9,6 +9,7 @@ import { useContextMenuPosition } from '@/lib/client/context-menu-position';
 import { shouldFlipFlyout } from '@/lib/client/flyout-flip';
 import { translateSidebarNavItems } from '@/lib/i18n/kurulus-nav-i18n';
 import { CONTEXT_MENU_GROUPS, contextMenuItems } from '@/lib/navigation/context-menu-nav';
+import { contextMenuGroupsForPath } from '@/lib/navigation/context-menu-scope';
 import type { SidebarNavItem } from '@/lib/navigation/sidebar-nav';
 
 export type MainContextMenuState = { x: number; y: number } | null;
@@ -29,6 +30,7 @@ const CONTEXT_MENU_GROUP_KEYS: Record<string, string> = {
 
 type Props = {
   menu: MainContextMenuState;
+  pathname?: string;
   onClose: () => void;
 };
 
@@ -106,19 +108,26 @@ function ContextMenuLeaf({
   );
 }
 
-export function ElektraMainContextMenu({ menu, onClose }: Props) {
+export function ElektraMainContextMenu({ menu, pathname = '', onClose }: Props) {
   const { t } = useI18n();
   const menuRef = useRef<HTMLDivElement>(null);
   const pos = useContextMenuPosition(menu, menuRef, 'topBar');
 
+  const visibleGroupIds = useMemo(
+    () => contextMenuGroupsForPath(pathname),
+    [pathname],
+  );
+
   const translatedGroups = useMemo(
     () =>
-      CONTEXT_MENU_GROUPS.map((group) => ({
+      CONTEXT_MENU_GROUPS.filter(
+        (group) => !visibleGroupIds || visibleGroupIds.includes(group.id),
+      ).map((group) => ({
         ...group,
         label: t(CONTEXT_MENU_GROUP_KEYS[group.id] ?? '', undefined, group.label),
         items: translateSidebarNavItems(contextMenuItems(group.id), t),
       })),
-    [t],
+    [t, visibleGroupIds],
   );
 
   useEffect(() => {
@@ -160,7 +169,7 @@ export function ElektraMainContextMenu({ menu, onClose }: Props) {
       <div
         ref={menuRef}
         className="roomio-ctx-menu roomio-ctx-menu--from-top"
-        style={{ left: pos.x, top: pos.y }}
+        style={{ left: pos.x, top: pos.y, maxHeight: pos.maxHeight }}
         onContextMenu={(e) => e.preventDefault()}
         role="menu"
         aria-label={t('sidebar.ctx.menuLabel')}

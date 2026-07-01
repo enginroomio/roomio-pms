@@ -19,6 +19,10 @@
   box-shadow: 0 16px 48px rgba(15, 23, 42, 0.1);
 }
 
+.roomio-setup-card {
+  width: min(100%, 480px);
+}
+
 .roomio-login-brand {
   display: flex;
   align-items: center;

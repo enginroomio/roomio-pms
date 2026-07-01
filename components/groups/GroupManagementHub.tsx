@@ -35,23 +35,23 @@ export function GroupManagementHub() {
 
   return (
     <>
-      <div className="roomio-kpi-strip" style={{ marginBottom: 16 }}>
+      <div className="roomio-kpi-grid" style={{ marginBottom: 16 }}>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Aktif blok</span>
+          <span className="roomio-kpi-label">Aktif blok</span>
           <strong>{loading ? '…' : summary?.openBlocks ?? 0}</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Toplam grup</span>
+          <span className="roomio-kpi-label">Toplam grup</span>
           <strong>{loading ? '…' : summary?.groupCount ?? 0}</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Pickup</span>
+          <span className="roomio-kpi-label">Pickup</span>
           <strong>
             {loading ? '…' : `${summary?.roomsPickedUp ?? 0}/${summary?.roomsAllotted ?? 0} (%${summary?.pickupPct ?? 0})`}
           </strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Release bekleyen</span>
+          <span className="roomio-kpi-label">Release bekleyen</span>
           <strong>{loading ? '…' : summary?.dueForRelease ?? 0}</strong>
         </div>
       </div>

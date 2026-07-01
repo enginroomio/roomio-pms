@@ -3,19 +3,34 @@
  * Tüm rollout-*.spec.ts E2E (chromium gerekli).
  * verify:ui alt kümesini genişletir: günsonu, kat, misafir, raporlar, sistem dahil.
  * Kullanım: npm run verify:rollout
+ * Mevcut sunucu: PLAYWRIGHT_REUSE_SERVER=1 ROOMIO_URL=http://127.0.0.1:3100 npm run verify:rollout
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = process.cwd();
 const PORT = process.env.VERIFY_PORT ?? '3117';
-const BASE = `http://127.0.0.1:${PORT}`;
+
+function baseUrl() {
+  if (process.env.ROOMIO_URL) return process.env.ROOMIO_URL.replace(/\/$/, '');
+  const portFile = join(ROOT, '.roomio/runtime/active-port.txt');
+  if (existsSync(portFile)) {
+    const p = readFileSync(portFile, 'utf8').trim();
+    if (p) return `http://127.0.0.1:${p}`;
+  }
+  return `http://127.0.0.1:${PORT}`;
+}
+
 const REUSE = process.env.PLAYWRIGHT_REUSE_SERVER === '1';
+const BASE = REUSE ? baseUrl() : `http://127.0.0.1:${PORT}`;
 
 const ROLLOUT_SPECS = [
   'e2e/rollout-shell.spec.ts',
   'e2e/rollout-home.spec.ts',
+  'e2e/home-orijinal-template.spec.ts',
+  'e2e/cloud-backup.spec.ts',
+  'e2e/eod-wizard.spec.ts',
   'e2e/rollout-rezervasyon.spec.ts',
   'e2e/rollout-resepsiyon.spec.ts',
   'e2e/rollout-onkasa.spec.ts',
@@ -23,6 +38,8 @@ const ROLLOUT_SPECS = [
   'e2e/rollout-kat.spec.ts',
   'e2e/rollout-misafir.spec.ts',
   'e2e/rollout-raporlar.spec.ts',
+  'e2e/rollout-arkaburo.spec.ts',
+  'e2e/rollout-ayarlar.spec.ts',
   'e2e/rollout-sistem.spec.ts',
 ];
 
@@ -53,7 +70,7 @@ function killPort() {
   spawnSync(`lsof -ti :${PORT} 2>/dev/null | xargs kill -9 2>/dev/null; true`, { shell: true, stdio: 'ignore' });
 }
 
-async function waitHealth(maxMs = 180_000) {
+async function waitHealth(maxMs = 180_000, { requireHome = true } = {}) {
   const start = Date.now();
   while (Date.now() - start < maxMs) {
     try {
@@ -61,6 +78,7 @@ async function waitHealth(maxMs = 180_000) {
       if (!res.ok) throw new Error(`health ${res.status}`);
       const j = await res.json();
       if (!j.ok) throw new Error('health not ok');
+      if (!requireHome) return true;
       const home = await fetch(`${BASE}/`, { signal: AbortSignal.timeout(15_000) });
       if (home.ok) return true;
     } catch {
@@ -115,7 +133,7 @@ async function main() {
   };
 
   for (const spec of ROLLOUT_SPECS) {
-    if (!(await waitHealth(45_000))) {
+    if (!(await waitHealth(120_000, { requireHome: false }))) {
       console.error(`✗ Sunucu yanıt vermiyor — ${spec} öncesi durdu`);
       if (server) server.kill('SIGTERM');
       process.exit(1);

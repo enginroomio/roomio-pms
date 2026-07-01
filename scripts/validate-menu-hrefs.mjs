@@ -83,8 +83,8 @@ async function check(base, path) {
 
 async function checkWithRetry(base, path) {
   let r = await check(base, path);
-  if (!r.ok && r.status === 0) {
-    await new Promise((res) => setTimeout(res, 600));
+  for (let attempt = 0; !r.ok && r.status === 0 && attempt < 2; attempt++) {
+    await new Promise((res) => setTimeout(res, attempt === 0 ? 600 : 1500));
     r = await check(base, path);
   }
   return r;

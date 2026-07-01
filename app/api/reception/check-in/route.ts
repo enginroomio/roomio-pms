@@ -8,6 +8,7 @@ import { propertyIdFromRequest } from '@/lib/server/property-context';
 import { requireApiPermission } from '@/lib/auth/require-permission';
 import { sendEgmIdentity, upsertEgmIdentity } from '@/lib/server/pms-store';
 import { logApiError } from '@/lib/server/api-error';
+import { loadTihConfig, submitTihEgm } from '@/lib/integrations/tih/client';
 
 export async function POST(req: Request) {
   const auth = await requireApiPermission(req, 'reception.checkin');
@@ -36,6 +37,7 @@ export async function POST(req: Request) {
   }
 
   const readerConfig = await loadIdReaderConfig();
+  const tihConfig = await loadTihConfig();
   const egmMessages: string[] = [];
 
   if (readerConfig.enabled && body.egmForm) {
@@ -108,12 +110,21 @@ export async function POST(req: Request) {
       );
       egmMessages.push(`EGM kaydı: ${record.status}`);
 
-      if (readerConfig.autoSendEgmAfterCheckIn && record.status === 'ready') {
-        const sent = await sendEgmIdentity(record.id);
-        if (sent?.status === 'sent') {
-          egmMessages.push(`EGM otomatik gönderildi (${sent.egmRef ?? 'ref yok'})`);
-        } else if (sent?.status === 'error') {
-          egmMessages.push(`EGM gönderim hatası: ${sent.errorMessage ?? 'bilinmiyor'}`);
+      if ((readerConfig.autoSendEgmAfterCheckIn || tihConfig.autoSubmitOnCheckIn) && record.status === 'ready') {
+        if (tihConfig.enabled) {
+          const tih = await submitTihEgm(record, tihConfig);
+          if (tih.ok) {
+            egmMessages.push(`TIH otomatik EGM: ${tih.message}${tih.egmRef ? ` (${tih.egmRef})` : ''}`);
+          } else {
+            egmMessages.push(`TIH EGM hatası: ${tih.message}`);
+          }
+        } else {
+          const sent = await sendEgmIdentity(record.id);
+          if (sent?.status === 'sent') {
+            egmMessages.push(`EGM otomatik gönderildi (${sent.egmRef ?? 'ref yok'})`);
+          } else if (sent?.status === 'error') {
+            egmMessages.push(`EGM gönderim hatası: ${sent.errorMessage ?? 'bilinmiyor'}`);
+          }
         }
       }
     } catch (err) {

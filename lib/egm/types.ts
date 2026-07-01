@@ -26,6 +26,11 @@ export type EgmIdentityRecord = {
   sentAt?: string;
   egmRef?: string;
   errorMessage?: string;
+  /** EGM/KBS çıkış (departure) bildirimi — check-out sonrası otomatik gönderim */
+  checkOutStatus?: 'sent' | 'error';
+  checkOutSentAt?: string;
+  checkOutEgmRef?: string;
+  checkOutErrorMessage?: string;
   createdAt: string;
 };
 

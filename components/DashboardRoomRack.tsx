@@ -11,6 +11,7 @@ type Props = {
   businessDate?: string;
   hkMap?: Record<string, HkRoomRecord>;
   hkInteractive?: boolean;
+  hkPrimary?: boolean;
   savingRoom?: string | null;
   onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
   onRoomPmsContextMenu?: (cell: import('@/lib/types/room').RackCell, event: React.MouseEvent) => void;
@@ -21,6 +22,7 @@ export function DashboardRoomRack({
   businessDate,
   hkMap,
   hkInteractive,
+  hkPrimary,
   savingRoom,
   onRoomContextMenu,
   onRoomPmsContextMenu,
@@ -45,6 +47,7 @@ export function DashboardRoomRack({
         businessDate={businessDate}
         hkMap={hkMap}
         hkInteractive={hkInteractive}
+        hkPrimary={hkPrimary}
         savingRoom={savingRoom}
         onRoomContextMenu={onRoomContextMenu}
         onRoomPmsContextMenu={onRoomPmsContextMenu}

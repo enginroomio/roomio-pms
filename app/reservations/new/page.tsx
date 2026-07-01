@@ -2,9 +2,8 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PageHeader } from '@/components/PageHeader';
-import { Button } from '@/components/ui';
 import { ReservationFormWizard } from '@/components/forms/ReservationFormWizard';
+import { RezervasyonModuleLayout } from '@/components/rezervasyon/RezervasyonModuleLayout';
 
 function NewReservationContent() {
   const searchParams = useSearchParams();
@@ -12,20 +11,16 @@ function NewReservationContent() {
   const checkIn = searchParams.get('checkIn') ?? undefined;
 
   return (
-    <PageHeader
-      breadcrumb="Rezervasyon > Yeni Rezervasyon Kaydı"
+    <RezervasyonModuleLayout
+      segment="Yeni Rezervasyon"
       title="Yeni Rezervasyon"
-      description="Elektra screen-038 uyumlu sihirbaz — EGM kimlik adımı ve misafir arşivi otomatik doldurma."
-      stackClassName="roomio-page-stack--rez-new"
-      actions={
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button variant="secondary" href="/reports?tab=forms">Form tasarımı</Button>
-          <Button variant="secondary" href="/reservations">← Listeye dön</Button>
-        </div>
-      }
+      hideTitle
+      menuSearch=""
     >
-      <ReservationFormWizard seed={{ fixRoomNo, checkIn }} />
-    </PageHeader>
+      <div className="roomio-page-stack roomio-page-stack--rez-new">
+        <ReservationFormWizard seed={{ fixRoomNo, checkIn }} />
+      </div>
+    </RezervasyonModuleLayout>
   );
 }
 

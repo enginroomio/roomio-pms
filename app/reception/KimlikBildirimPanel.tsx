@@ -5,6 +5,7 @@ import { Button } from '@/components/ui';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { roomioFetch } from '@/lib/client/api';
 import { parseApiError } from '@/lib/client/api-errors';
+import { maskIdNo } from '@/lib/kvkk/mask';
 
 type IdentityRow = {
   id: string;
@@ -152,7 +153,7 @@ export function KimlikBildirimPanel({ variant = 'list' }: { variant?: 'list' | '
                   <td><strong>{row.roomNo}</strong></td>
                   <td>{row.guestName}</td>
                   <td>{row.nationality}</td>
-                  <td>{row.idNo}</td>
+                  <td>{maskIdNo(row.idNo)}</td>
                   <td><span className="roomio-badge">{row.status === 'sent' ? 'Gönderildi' : 'Bekliyor'}</span></td>
                   <td>
                     {row.status === 'pending' ? (

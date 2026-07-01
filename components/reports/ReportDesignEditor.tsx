@@ -34,6 +34,7 @@ export function ReportDesignEditor({ value, onChange, onSave, onCancel }: Props)
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [starterSearch, setStarterSearch] = useState('');
   const [showHelp, setShowHelp] = useState(true);
 
   const mod = useMemo(() => moduleByLabel(value.module) ?? REPORT_MODULES[0], [value.module]);
@@ -52,6 +53,30 @@ export function ReportDesignEditor({ value, onChange, onSave, onCancel }: Props)
       }))
       .filter((g) => g.fields.length > 0);
   }, [groups, search]);
+
+  const groupedStarters = useMemo(() => {
+    const q = starterSearch.trim().toLowerCase();
+    const list = mod.starters.filter((s) => {
+      if (!q) return true;
+      return (
+        s.name.toLowerCase().includes(q)
+        || s.description.toLowerCase().includes(q)
+        || (s.reportCode ?? '').toLowerCase().includes(q)
+        || (s.group ?? '').toLowerCase().includes(q)
+        || s.id.toLowerCase().includes(q)
+      );
+    });
+    if (mod.id !== 'eod') {
+      return [{ group: 'Hazır şablonlar', starters: list }];
+    }
+    const map = new Map<string, ReportStarter[]>();
+    for (const s of list) {
+      const g = s.group ?? 'Diğer';
+      if (!map.has(g)) map.set(g, []);
+      map.get(g)!.push(s);
+    }
+    return Array.from(map.entries()).map(([group, starters]) => ({ group, starters }));
+  }, [mod, starterSearch]);
 
   const availableCount = useMemo(
     () => mod.fields.filter((f) => !value.columns.includes(f.key)).length,
@@ -172,20 +197,48 @@ export function ReportDesignEditor({ value, onChange, onSave, onCancel }: Props)
         <h3 className="roomio-report-designer__section-title">
           <Sparkles size={16} aria-hidden /> 2. Hazır şablonla başla (isteğe bağlı)
         </h3>
-        <div className="roomio-report-starters">
-          {mod.starters.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              className="roomio-report-starter-card"
-              onClick={() => applyStarter(s, mod)}
-            >
-              <strong>{s.name}</strong>
-              <span>{s.description}</span>
-              <em>{s.columns.length} sütun</em>
-            </button>
-          ))}
+        {mod.id === 'eod' ? (
+          <p className="roomio-page-desc">
+            Elektra GR gün sonu raporları — {mod.starters.length} şablon. Kod veya başlıkla arayın.
+          </p>
+        ) : null}
+        <div className="roomio-report-palette-search" style={{ marginBottom: 12 }}>
+          <Search size={16} aria-hidden />
+          <input
+            className="roomio-input"
+            placeholder={mod.id === 'eod' ? 'GR kodu veya rapor adı ara… (örn. GR310, polis, kasa)' : 'Şablon ara…'}
+            value={starterSearch}
+            onChange={(e) => setStarterSearch(e.target.value)}
+            aria-label="Hazır şablon ara"
+          />
         </div>
+        {groupedStarters.map(({ group, starters }) => (
+          <div key={group} className="roomio-report-starter-group">
+            {mod.id === 'eod' ? (
+              <h4 className="roomio-report-starter-group__title">{group}</h4>
+            ) : null}
+            <div className="roomio-report-starters">
+              {starters.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`roomio-report-starter-card${value.name === s.name ? ' is-active' : ''}`}
+                  onClick={() => applyStarter(s, mod)}
+                >
+                  {s.reportCode ? (
+                    <code className="roomio-report-starter-card__code">{s.reportCode}</code>
+                  ) : null}
+                  <strong>{s.name}</strong>
+                  <span>{s.description}</span>
+                  <em>{s.columns.length} sütun</em>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        {groupedStarters.every((g) => g.starters.length === 0) ? (
+          <p className="roomio-page-desc">Aramanızla eşleşen şablon bulunamadı.</p>
+        ) : null}
       </section>
 
       <div className="roomio-report-designer__meta">

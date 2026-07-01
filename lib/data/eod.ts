@@ -13,6 +13,9 @@ export type EodArchive = {
   closedBy: string;
   occupancy: number;
   revenue: number;
+  status?: 'open' | 'closed';
+  generatedAt?: string;
+  reportCount?: number;
 };
 
 export const DEMO_EOD_REPORTS: EodReport[] = [
@@ -125,3 +128,13 @@ export const CATEGORY_REPORTS: Record<string, { id: string; name: string; format
     { id: 'tga-mice', name: 'MICE / Leisure Ayrımı', format: 'PDF / Excel' },
   ],
 };
+
+// TGA (Segment&Kanal) ve TIS (Turizm İstatistik) raporları mevzuata göre ilgili
+// kuruma gönderilen resmi istatistik raporlarıdır — KVKK/mevzuat kapsamında
+// görüntüleme ve dışa aktarma sadece sistem yöneticisi ile sınırlandırılır
+// (bkz. app/api/reports/export/route.ts, requireComplianceExportRead deseni).
+export const COMPLIANCE_REPORT_CATEGORIES = ['tga', 'tis'] as const;
+
+export function isComplianceReportCategory(category: string | null | undefined): boolean {
+  return !!category && (COMPLIANCE_REPORT_CATEGORIES as readonly string[]).includes(category);
+}

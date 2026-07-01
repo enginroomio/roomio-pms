@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui';
 import { PermissionGate } from '@/components/auth/PermissionGate';
-import { CATEGORY_REPORTS } from '@/lib/data/eod';
+import { CATEGORY_REPORTS, isComplianceReportCategory } from '@/lib/data/eod';
 
 export function CategoryReportDetailPanel({
   category,
@@ -37,7 +37,8 @@ export function CategoryReportDetailPanel({
     <div className="roomio-card" style={{ marginTop: 16 }}>
       <div className="roomio-kurulus-toolbar">
         <h2 className="roomio-card-title">{report.name}</h2>
-        <PermissionGate permission="reports.export">
+        {/* TGA/TİS: korumalı resmi rapor — görüntüleme/export sadece sistem yöneticisi. */}
+        <PermissionGate permission={isComplianceReportCategory(category) ? 'settings.admin' : 'reports.export'}>
           <div className="roomio-form-actions">
             <Button variant="secondary" href={exportHref('pdf')}>PDF</Button>
             <Button variant="secondary" href={exportHref('csv')}>CSV</Button>

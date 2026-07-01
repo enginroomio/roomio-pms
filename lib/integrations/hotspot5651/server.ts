@@ -34,22 +34,36 @@ async function readStore(): Promise<Hotspot5651Store> {
   }
 
   await ensureDataDir();
+  let store: Hotspot5651Store;
+  let isNew = false;
   try {
     const raw = await fs.readFile(STORE_FILE, 'utf8');
-    const store = decryptServerBlob<Hotspot5651Store>(raw);
+    store = decryptServerBlob<Hotspot5651Store>(raw);
     if (!store.credentials?.length) store.credentials = seedDemoCredentials();
-    storeCache = { data: store, at: Date.now() };
-    return store;
   } catch {
-    const store = {
+    store = {
       config: DEFAULT_HOTSPOT_5651_CONFIG,
       logs: seedDemoLogs(),
       credentials: seedDemoCredentials(),
       updatedAt: new Date().toISOString(),
     };
-    storeCache = { data: store, at: Date.now() };
-    return store;
+    isNew = true;
   }
+
+  // KVKK/5651 saklama süresi: her okumada da süresi geçen oturum kayıtlarını temizle —
+  // sadece config kaydedildiğinde veya yeni log eklendiğinde değil, böylece kimse
+  // ayarlar sayfasını açmasa bile süresi dolan kayıtlar süresiz birikmez.
+  if (!isNew && store.config.autoArchive) {
+    const purged = purgeExpired(store.logs, store.config.retentionDays);
+    if (purged.length !== store.logs.length) {
+      store.logs = purged;
+      store.updatedAt = new Date().toISOString();
+      await fs.writeFile(STORE_FILE, encryptServerBlob(store), 'utf8');
+    }
+  }
+
+  storeCache = { data: store, at: Date.now() };
+  return store;
 }
 
 function seedDemoCredentials(): GuestWifiCredential[] {

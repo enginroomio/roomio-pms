@@ -1,12 +1,16 @@
-import { GuestRelationsTabs } from '@/components/GuestRelationsTabs';
+'use client';
+
+import { GuestRelationsModuleShell } from '@/components/guest-relations/GuestRelationsModuleShell';
 import { WeatherPanel } from '@/components/guest-relations/WeatherPanel';
-import { PageHeader } from '@/components/PageHeader';
 
 export default function WeatherPage() {
   return (
-    <PageHeader breadcrumb="Misafir İlişkileri > Günlük Hava Durumu" title="Günlük Hava Durumu" description="Misafir bilgilendirme — günlük hava özeti.">
-      <GuestRelationsTabs />
+    <GuestRelationsModuleShell
+      segment="Günlük Hava Durumu"
+      title="Günlük Hava Durumu"
+      description="Misafir bilgilendirme — günlük hava özeti."
+    >
       <WeatherPanel mode="today" />
-    </PageHeader>
+    </GuestRelationsModuleShell>
   );
 }

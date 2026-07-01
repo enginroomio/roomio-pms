@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
 import { FormActions, FormField, FormSection, Textarea } from '@/components/kit';
 import { Button } from '@/components/ui';
+import { AyarlarModuleShell } from '@/components/settings/AyarlarModuleShell';
 import type { LicensePayload } from '@/lib/license/types';
 import { clearLicense, getStoredLicense, storeLicense, validateLicenseRemote } from '@/lib/license/client';
 
@@ -25,11 +25,11 @@ export default function LicensingSettingsPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar > Lisans"
+    <AyarlarModuleShell
+      segment="Lisans"
       title="Lisans Yönetimi"
       description="RSA-4096 imzalı profesyonel lisans — firma, oda sayısı ve modül yetkileri."
-      actions={<Button variant="secondary" href="/settings">← Ayarlar</Button>}
+      actions={<Button variant="ghost" href="/settings?hub=ayarlar">← Ayarlar</Button>}
     >
       <FormSection title="Lisans Anahtarı">
         <FormField label="ROOMIO-LIC-v1 anahtarı" hint="Satıcıdan aldığınız tam anahtarı yapıştırın.">
@@ -65,6 +65,6 @@ export default function LicensingSettingsPage() {
           </dl>
         </div>
       ) : null}
-    </PageHeader>
+    </AyarlarModuleShell>
   );
 }

@@ -5,7 +5,7 @@ import { HkMobileFrame } from '@/components/housekeeping/HkMobileFrame';
 import { DEMO_HK_TASKS, HK_TASK_LABELS } from '@/lib/data/housekeeping';
 import { enqueueSync } from '@/lib/sync/engine';
 
-export function HkMobileTasksClient() {
+export function HkMobileTasksClient({ embedded = false }: { embedded?: boolean }) {
   const [tasks, setTasks] = useState(DEMO_HK_TASKS);
 
   async function markDone(id: string) {
@@ -21,35 +21,37 @@ export function HkMobileTasksClient() {
     }
   }
 
-  return (
-    <HkMobileFrame title="Görevler">
-      <div className="roomio-card roomio-hk-mobile-tasks">
-        <ul className="roomio-hk-mobile-task-list">
-          {tasks.map((t) => (
-            <li key={t.id} className={t.status === 'done' ? 'is-done' : ''}>
-              <div className="roomio-hk-mobile-task-list__main">
-                <strong>Oda {t.roomNo}</strong>
-                <span>{HK_TASK_LABELS[t.taskType]}</span>
-                <span className="roomio-hk-mobile-task-list__meta">
-                  {t.assignee} · {t.dueBy}
-                  {t.priority === 'urgent' ? ' · Acil' : ''}
-                </span>
-              </div>
-              {t.status !== 'done' ? (
-                <button
-                  type="button"
-                  className="roomio-btn roomio-btn--ghost roomio-btn--sm"
-                  onClick={() => void markDone(t.id)}
-                >
-                  Tamamla
-                </button>
-              ) : (
-                <span className="roomio-hk-mobile-task-list__done">Tamam</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </HkMobileFrame>
+  const content = (
+    <div className="roomio-card roomio-hk-mobile-tasks">
+      <ul className="roomio-hk-mobile-task-list">
+        {tasks.map((t) => (
+          <li key={t.id} className={t.status === 'done' ? 'is-done' : ''}>
+            <div className="roomio-hk-mobile-task-list__main">
+              <strong>Oda {t.roomNo}</strong>
+              <span>{HK_TASK_LABELS[t.taskType]}</span>
+              <span className="roomio-hk-mobile-task-list__meta">
+                {t.assignee} · {t.dueBy}
+                {t.priority === 'urgent' ? ' · Acil' : ''}
+              </span>
+            </div>
+            {t.status !== 'done' ? (
+              <button
+                type="button"
+                className="roomio-btn roomio-btn--ghost roomio-btn--sm"
+                onClick={() => void markDone(t.id)}
+              >
+                Tamamla
+              </button>
+            ) : (
+              <span className="roomio-hk-mobile-task-list__done">Tamam</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
+
+  if (embedded) return content;
+
+  return <HkMobileFrame title="Görevler">{content}</HkMobileFrame>;
 }

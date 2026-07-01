@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScanLine } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Camera, ScanLine } from 'lucide-react';
 import { EgmIdentityFormPanel } from '@/components/egm/EgmIdentityFormPanel';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -38,6 +38,41 @@ type Props = {
   roomNo: string;
   onChange: (state: CheckInIdentityState) => void;
 };
+
+/**
+ * Reads an image file and re-encodes it as a downsized JPEG data URL,
+ * entirely in browser memory (FileReader + canvas — no upload, no storage).
+ * Keeps the payload reasonable for the local OCR fallback and is discarded
+ * the moment the caller's fetch call completes; nothing here is ever written
+ * to localStorage/sessionStorage or any persistent store.
+ */
+function fileToDownsizedDataUrl(file: File, maxDim = 1600): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Dosya okunamadı'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Görsel açılamadı'));
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas desteklenmiyor'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export function CheckInIdentityPanel({ seed, roomNo, onChange }: Props) {
   const [policy, setPolicy] = useState<ReaderPolicy | null>(null);
@@ -93,6 +128,20 @@ export function CheckInIdentityPanel({ seed, roomNo, onChange }: Props) {
     });
   }, [form, approved, scanScore, canSubmit, blockReason, roomNo, onChange]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const applyScanResponse = useCallback(
+    (scan: IdScanResult) => {
+      const mapped = buildEgmFormFromScan(scan, { ...seed, roomNo: roomNo || seed.roomNo });
+      setForm(mapped.form);
+      setScanMessage(scan.message);
+      setScanScore(scan.validation?.score ?? mapped.validation.score);
+      setScanErrors(scan.validation?.errors ?? mapped.validation.errors);
+      setScanWarnings(scan.validation?.warnings ?? mapped.validation.warnings);
+    },
+    [roomNo, seed],
+  );
+
   const scan = useCallback(async () => {
     setScanning(true);
     setScanMessage(null);
@@ -106,20 +155,40 @@ export function CheckInIdentityPanel({ seed, roomNo, onChange }: Props) {
         body: JSON.stringify({ reservationId: seed.reservationId }),
       });
       if (!res.ok) throw new Error(await parseApiError(res, 'Tarama başarısız'));
-      const scan = (await res.json()) as IdScanResult;
-      const mapped = buildEgmFormFromScan(scan, { ...seed, roomNo: roomNo || seed.roomNo });
-      setForm(mapped.form);
-      setScanMessage(scan.message);
-      setScanScore(scan.validation?.score ?? mapped.validation.score);
-      setScanErrors(scan.validation?.errors ?? mapped.validation.errors);
-      setScanWarnings(scan.validation?.warnings ?? mapped.validation.warnings);
+      applyScanResponse((await res.json()) as IdScanResult);
     } catch (err) {
       setScanMessage(err instanceof Error ? err.message : 'Tarama başarısız');
       setScanScore(null);
     } finally {
       setScanning(false);
     }
-  }, [roomNo, seed]);
+  }, [applyScanResponse, seed]);
+
+  const scanFromImage = useCallback(
+    async (file: File) => {
+      setScanning(true);
+      setScanMessage(null);
+      setScanErrors([]);
+      setScanWarnings([]);
+      setApproved(false);
+      try {
+        const imageBase64 = await fileToDownsizedDataUrl(file);
+        const res = await roomioFetch('/api/integrations/id-reader/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64, reservationId: seed.reservationId }),
+        });
+        if (!res.ok) throw new Error(await parseApiError(res, 'Tarama başarısız'));
+        applyScanResponse((await res.json()) as IdScanResult);
+      } catch (err) {
+        setScanMessage(err instanceof Error ? err.message : 'Tarama başarısız');
+        setScanScore(null);
+      } finally {
+        setScanning(false);
+      }
+    },
+    [applyScanResponse, seed],
+  );
 
   const panelValues = useMemo(
     () => ({
@@ -166,6 +235,27 @@ export function CheckInIdentityPanel({ seed, roomNo, onChange }: Props) {
           <ScanLine size={16} aria-hidden style={{ marginRight: 6, verticalAlign: 'middle' }} />
           {scanning ? 'Taranıyor…' : 'Kimlik / Pasaport Tara'}
         </Button>
+        <Button
+          variant="secondary"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={scanning}
+          title="Kimlik/pasaport fotoğrafını yükleyin — tamamen yerel OCR ile okunur, görsel sunucuda saklanmaz"
+        >
+          <Camera size={16} aria-hidden style={{ marginRight: 6, verticalAlign: 'middle' }} />
+          {scanning ? 'Taranıyor…' : 'Fotoğraftan Tara (Yerel OCR)'}
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) void scanFromImage(file);
+          }}
+        />
         {scanScore !== null ? (
           <span className={`roomio-badge${scanScore >= 90 ? ' roomio-badge--success' : scanScore >= 70 ? '' : ' roomio-badge--warn'}`}>
             Güven skoru: %{scanScore}

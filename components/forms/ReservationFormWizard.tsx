@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Camera, ScanLine, Zap, Check, Bed, Banknote, FileText, IdCard, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { EgmIdentityFormPanel } from '@/components/egm/EgmIdentityFormPanel';
 import { EgmStatusBadge } from '@/components/egm/EgmStatusBadge';
@@ -30,6 +31,51 @@ import { computeEgmStatus, splitGuestName } from '@/lib/egm/types';
 import type { Reservation } from '@/lib/types/reservation';
 import { roomioFetch } from '@/lib/client/api';
 import { parseApiError } from '@/lib/client/api-errors';
+import { buildEgmFormFromScan } from '@/lib/integrations/id-reader/map-to-egm';
+import type { IdScanResult } from '@/lib/integrations/id-reader/types';
+import { QuickGuestFinder } from '@/components/forms/reservation-quick-entry/QuickGuestFinder';
+import {
+  QuickChipGroup,
+  QuickJumpNav,
+  QuickKbsChecklist,
+  QuickSectionHead,
+  QuickStepper,
+  QuickToast,
+} from '@/components/forms/reservation-quick-entry/QuickUiParts';
+
+/**
+ * Reads an image file and re-encodes it as a downsized JPEG data URL,
+ * entirely in browser memory (FileReader + canvas — no upload, no storage).
+ * Mirrors components/reception/CheckInIdentityPanel.tsx's helper of the same
+ * name; kept local here to avoid coupling the two components together.
+ */
+function fileToDownsizedDataUrl(file: File, maxDim = 1600): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Dosya okunamadı'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Görsel açılamadı'));
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas desteklenmiyor'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 function nightsBetween(checkIn: string, checkOut: string): number {
   if (!checkIn || !checkOut) return 0;
@@ -127,7 +173,7 @@ type Props = {
 
 export function ReservationFormWizard({ existing, seed, embedded, onComplete, onCancel, singleScreen: singleScreenProp }: Props) {
   const isEdit = Boolean(existing);
-  const singleScreen = singleScreenProp ?? (isEdit && !embedded);
+  const singleScreen = singleScreenProp ?? !embedded;
   const router = useRouter();
   const [layout, setLayout] = useState<FormLayout | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
@@ -146,6 +192,16 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
   const [marketRequired, setMarketRequired] = useState(false);
   const [refPreview, setRefPreview] = useState(existing?.refNo ?? '');
   const [roomTypeOptions, setRoomTypeOptions] = useState<{ code: string; label: string }[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
+  const [scanning, setScanning] = useState(false);
+  const [scanMessage, setScanMessage] = useState<string | null>(null);
+  const [scanScore, setScanScore] = useState<number | null>(null);
+  const [scanErrors, setScanErrors] = useState<string[]>([]);
+  const [scanWarnings, setScanWarnings] = useState<string[]>([]);
+  const [toast, setToast] = useState<string | null>(null);
+  const [toastKind, setToastKind] = useState<'ok' | 'err'>('ok');
+  const scanFileInputRef = useRef<HTMLInputElement>(null);
+  const submitRef = useRef<() => void>(() => {});
 
   const page = formPageById('reservations-new')!;
   const coverage = useMemo(() => elektraCoverage('reservations-new'), []);
@@ -158,6 +214,62 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
   const discountPct = Number(values.discountPct ?? 0);
   const nights = nightsBetween(String(values.checkIn ?? ''), String(values.checkOut ?? ''));
   const nightCount = Math.max(nights, 1);
+
+  function addDaysIso(iso: string, days: number): string {
+    const d = new Date(`${iso}T12:00:00`);
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function applyNightCount(n: number) {
+    const ci = String(values.checkIn ?? '');
+    if (ci) setValues((prev) => ({ ...prev, checkOut: addDaysIso(ci, n) }));
+  }
+
+  function quickCheckin(offset: number) {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    const iso = d.toISOString().slice(0, 10);
+    setValues((prev) => ({ ...prev, checkIn: iso, checkOut: addDaysIso(iso, Math.max(nights, 2)) }));
+  }
+
+  function saveDraft() {
+    try {
+      localStorage.setItem('roomio-rez-draft', JSON.stringify(values));
+      setToastKind('ok');
+      setToast('Taslak olarak kaydedildi');
+      setTimeout(() => setToast(null), 2500);
+    } catch {
+      setToastKind('err');
+      setToast('Taslak kaydedilemedi');
+    }
+  }
+
+  useEffect(() => {
+    if (!singleScreen || isEdit) return;
+    try {
+      const raw = localStorage.getItem('roomio-rez-draft');
+      if (raw && !existing) {
+        const draft = JSON.parse(raw) as FormValues;
+        setValues((prev) => ({ ...prev, ...draft }));
+      }
+    } catch {
+      // ignore corrupt draft
+    }
+  }, [singleScreen, isEdit, existing]);
+
+  useEffect(() => {
+    if (!singleScreen || isEdit) return;
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        submitRef.current();
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [singleScreen, isEdit]);
+
   const gross = rate * nightCount * roomCount;
   const subtotal = Math.round(gross * (1 - discountPct / 100));
   const taxes = useMemo(() => calculateTaxes(subtotal, taxRules), [subtotal, taxRules]);
@@ -180,6 +292,76 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
     });
   }, [values]);
 
+  const applyScanResponse = useCallback(
+    (scan: IdScanResult) => {
+      const mapped = buildEgmFormFromScan(scan, {
+        firstName: String(values.firstName ?? ''),
+        lastName: String(values.lastName ?? ''),
+        nationality: String(values.nationality ?? 'TR'),
+        roomNo: String(values.fixRoomNo ?? ''),
+        checkIn: String(values.checkIn ?? ''),
+        checkOut: String(values.checkOut ?? ''),
+      });
+      setValues((prev) => ({
+        ...prev,
+        firstName: mapped.form.firstName,
+        lastName: mapped.form.lastName,
+        guestName: String(prev.guestName ?? '').trim()
+          ? prev.guestName
+          : `${mapped.form.firstName} ${mapped.form.lastName}`.trim(),
+        nationality: mapped.form.nationality,
+        idNo: mapped.form.idNo,
+        idType: mapped.form.idType,
+        birthDate: mapped.form.birthDate,
+        birthPlace: mapped.form.birthPlace,
+        gender: mapped.form.gender,
+        fatherName: mapped.form.fatherName,
+        motherName: mapped.form.motherName,
+      }));
+      setScanMessage(scan.message);
+      setScanScore(scan.validation?.score ?? mapped.validation.score);
+      setScanErrors(scan.validation?.errors ?? mapped.validation.errors);
+      setScanWarnings(scan.validation?.warnings ?? mapped.validation.warnings);
+    },
+    [values.firstName, values.lastName, values.nationality, values.fixRoomNo, values.checkIn, values.checkOut],
+  );
+
+  const runIdScan = useCallback(
+    async (imageBase64?: string) => {
+      setScanning(true);
+      setScanMessage(null);
+      setScanErrors([]);
+      setScanWarnings([]);
+      try {
+        const res = await roomioFetch('/api/integrations/id-reader/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(imageBase64 ? { imageBase64 } : {}),
+        });
+        if (!res.ok) throw new Error(await parseApiError(res, 'Tarama başarısız'));
+        applyScanResponse((await res.json()) as IdScanResult);
+      } catch (err) {
+        setScanMessage(err instanceof Error ? err.message : 'Tarama başarısız');
+        setScanScore(null);
+      } finally {
+        setScanning(false);
+      }
+    },
+    [applyScanResponse],
+  );
+
+  const scanFromImage = useCallback(
+    async (file: File) => {
+      try {
+        const imageBase64 = await fileToDownsizedDataUrl(file);
+        await runIdScan(imageBase64);
+      } catch (err) {
+        setScanMessage(err instanceof Error ? err.message : 'Görsel okunamadı');
+      }
+    },
+    [runIdScan],
+  );
+
   const loadFx = useCallback(async (date: string, refresh = false) => {
     setFxLoading(true);
     try {
@@ -201,32 +383,39 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
 
   useEffect(() => {
     void (async () => {
-      const [tplRes, taxRes, marketRes, refRes, typesRes] = await Promise.all([
-        roomioFetch('/api/reports/templates?pageId=reservations-new'),
-        roomioFetch('/api/tax/rules'),
-        roomioFetch('/api/market-required'),
-        existing?.refNo ? Promise.resolve(null) : roomioFetch('/api/reservations/next-ref'),
-        roomioFetch('/api/room-type-defs'),
-      ]);
-      const tplJ = (await tplRes.json()) as { template?: { layout?: FormLayout } };
-      const taxJ = (await taxRes.json()) as { rules?: TaxRule[] };
-      const marketJ = (await marketRes.json()) as { required?: boolean };
-      setLayout(mergeFormLayoutWithDefaults('reservations-new', tplJ.template?.layout) ?? defaultFormLayout('reservations-new'));
-      if (taxJ.rules) setTaxRules(taxJ.rules);
-      setMarketRequired(Boolean(marketJ.required));
-
-      if (refRes) {
-        const refJ = (await refRes.json()) as { refNo?: string };
-        if (refJ.refNo) setRefPreview(refJ.refNo);
-      }
-
-      const typesJ = (await typesRes.json()) as { types?: { code: string; short: string; name: string; active?: boolean }[] };
-      if (typesJ.types?.length) {
-        setRoomTypeOptions(
-          typesJ.types
-            .filter((t) => t.active !== false)
-            .map((t) => ({ code: t.code, label: `${t.short} — ${t.name}` })),
+      try {
+        const [tplRes, taxRes, marketRes, refRes, typesRes] = await Promise.all([
+          roomioFetch('/api/reports/templates?pageId=reservations-new'),
+          roomioFetch('/api/tax/rules'),
+          roomioFetch('/api/market-required'),
+          existing?.refNo ? Promise.resolve(null) : roomioFetch('/api/reservations/next-ref'),
+          roomioFetch('/api/room-type-defs'),
+        ]);
+        const tplJ = (await tplRes.json()) as { template?: { layout?: FormLayout } };
+        const taxJ = (await taxRes.json()) as { rules?: TaxRule[] };
+        const marketJ = (await marketRes.json()) as { required?: boolean };
+        setLayout(
+          mergeFormLayoutWithDefaults('reservations-new', tplJ.template?.layout)
+            ?? defaultFormLayout('reservations-new'),
         );
+        if (taxJ.rules) setTaxRules(taxJ.rules);
+        setMarketRequired(Boolean(marketJ.required));
+
+        if (refRes) {
+          const refJ = (await refRes.json()) as { refNo?: string };
+          if (refJ.refNo) setRefPreview(refJ.refNo);
+        }
+
+        const typesJ = (await typesRes.json()) as { types?: { code: string; short: string; name: string; active?: boolean }[] };
+        if (typesJ.types?.length) {
+          setRoomTypeOptions(
+            typesJ.types
+              .filter((t) => t.active !== false)
+              .map((t) => ({ code: t.code, label: `${t.short} — ${t.name}` })),
+          );
+        }
+      } catch {
+        setLayout(defaultFormLayout('reservations-new'));
       }
     })();
   }, [existing?.refNo]);
@@ -243,11 +432,26 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
   const steps = layout?.steps ?? page.steps;
   const activeStep = steps[stepIndex];
 
+  const requiredFieldKeys = useMemo(
+    () => layout?.fields.filter((f) => f.required).map((f) => f.key) ?? [],
+    [layout],
+  );
+  const missingRequiredKeys = useMemo(
+    () => requiredFieldKeys.filter((k) => !String(values[k] ?? '').trim()),
+    [requiredFieldKeys, values],
+  );
+  const requiredTotal = requiredFieldKeys.length;
+  const requiredDone = requiredTotal - missingRequiredKeys.length;
+  const progressPct = requiredTotal > 0 ? Math.round((requiredDone / requiredTotal) * 100) : 100;
+
   useEffect(() => {
-    if (activeStep?.id === 'pricing' || singleScreen) {
+    // Tek ekran modunda zaten mount anında normal (cache'li) kur yükleniyor
+    // (yukarıdaki effect) — burada ayrıca canlı TCMB sorgusu zorlamak (refresh=1)
+    // sayfa açılışında fazladan, yavaşlatan bir ağ isteğiydi; kaldırıldı.
+    if (activeStep?.id === 'pricing') {
       void loadFx(rateDate, true);
     }
-  }, [activeStep?.id, rateDate, loadFx, singleScreen]);
+  }, [activeStep?.id, rateDate, loadFx]);
 
   const selectedFxRow = currency === 'TRY' ? rateMap.get('TRY') : rateMap.get(currency);
   const exchangeRate = currency === 'TRY' ? 1 : (selectedFxRow?.tryPerUnitBuy ?? 0);
@@ -295,13 +499,16 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
     const label = cfg.label ?? formFieldLabel('reservations-new', cfg.key, def.label);
     const val = values[cfg.key] ?? def.defaultValue ?? '';
     const full = cfg.width === 'full';
+    const hasError = fieldErrors.has(cfg.key);
+    const fieldId = `rf-${cfg.key}`;
 
     if (cfg.key === 'currency' || def.type === 'currency' || cfg.type === 'currency') {
       return (
-        <label key={cfg.key} className={`roomio-field${full ? ' roomio-field--full' : ''}`}>
+        <label key={cfg.key} htmlFor={fieldId} className={`roomio-field${full ? ' roomio-field--full' : ''}`}>
           <span>{label}{cfg.required ? ' *' : ''}</span>
           <select
-            className="roomio-select"
+            id={fieldId}
+            className={`roomio-select${hasError ? ' roomio-field-error' : ''}`}
             value={String(val)}
             onChange={(e) => onCurrencyChange(e.target.value as PaymentCurrency)}
           >
@@ -328,9 +535,15 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
         return o;
       };
       return (
-        <label key={cfg.key} className={`roomio-field${full ? ' roomio-field--full' : ''}`}>
+        <label key={cfg.key} htmlFor={fieldId} className={`roomio-field${full ? ' roomio-field--full' : ''}`}>
           <span>{label}{cfg.required ? ' *' : ''}</span>
-          <select className="roomio-select" value={String(val)} required={cfg.required} onChange={(e) => setValue(cfg.key, e.target.value)}>
+          <select
+            id={fieldId}
+            className={`roomio-select${hasError ? ' roomio-field-error' : ''}`}
+            value={String(val)}
+            required={cfg.required}
+            onChange={(e) => setValue(cfg.key, e.target.value)}
+          >
             {options.map((o) => <option key={o} value={o}>{optionLabel(o)}</option>)}
           </select>
         </label>
@@ -339,10 +552,11 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
 
     if (def.type === 'textarea') {
       return (
-        <label key={cfg.key} className="roomio-field roomio-field--full">
+        <label key={cfg.key} htmlFor={fieldId} className="roomio-field roomio-field--full">
           <span>{label}</span>
           <textarea
-            className="roomio-input"
+            id={fieldId}
+            className={`roomio-input${hasError ? ' roomio-field-error' : ''}`}
             rows={opts?.textareaRows ?? 3}
             value={String(val)}
             onChange={(e) => setValue(cfg.key, e.target.value)}
@@ -352,10 +566,11 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
     }
 
     return (
-      <label key={cfg.key} className={`roomio-field${full ? ' roomio-field--full' : ''}`}>
+      <label key={cfg.key} htmlFor={fieldId} className={`roomio-field${full ? ' roomio-field--full' : ''}`}>
         <span>{label}{cfg.required ? ' *' : ''}</span>
         <input
-          className="roomio-input"
+          id={fieldId}
+          className={`roomio-input${hasError ? ' roomio-field-error' : ''}`}
           type={inputType(def.type)}
           value={val}
           required={cfg.required}
@@ -377,6 +592,30 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
   async function onSubmit() {
     setSubmitError(null);
     setEgmWarning(null);
+    setFieldErrors(new Set());
+
+    if (missingRequiredKeys.length > 0) {
+      setFieldErrors(new Set(missingRequiredKeys));
+      const firstKey = missingRequiredKeys[0];
+      const stepId = layout?.fields.find((f) => f.key === firstKey)?.stepId;
+      const stepEl = stepId
+        ? document.getElementById(isEdit ? `rez-edit-step-${stepId}` : `rez-new-step-${stepId}`)
+        : null;
+      const fieldEl = document.getElementById(`rf-${firstKey}`);
+      (stepEl ?? fieldEl)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      fieldEl?.focus?.();
+      setSubmitError(
+        `Eksik zorunlu alanlar: ${missingRequiredKeys
+          .map((k) => formFieldLabel('reservations-new', k))
+          .join(', ')}`,
+      );
+      setToastKind('err');
+      setToast('Eksik zorunlu alanlar var — kırmızı işaretli alanları tamamlayın');
+      setTimeout(() => setToast(null), 2800);
+      setTimeout(() => setFieldErrors(new Set()), 2200);
+      return;
+    }
+
     if (marketRequired && !String(values.market ?? '').trim()) {
       setSubmitError('Market kodu zorunludur — Kuruluş ayarlarından kontrol edin.');
       return;
@@ -508,6 +747,13 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
 
     setSaved(true);
     setSubmitError(null);
+    setToastKind('ok');
+    setToast(`Rezervasyon kaydedildi — no. ${reservation.refNo}`);
+    try {
+      localStorage.removeItem('roomio-rez-draft');
+    } catch {
+      // ignore
+    }
     if (embedded) {
       onComplete?.();
       return;
@@ -515,6 +761,8 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
     const successTarget = isEdit ? `/reservations/${reservation.id}` : '/reservations';
     setTimeout(() => router.push(successTarget), isEdit ? 1200 : 800);
   }
+
+  submitRef.current = () => { void onSubmit(); };
 
   if (!layout) {
     return <p className="roomio-page-desc">Form yükleniyor…</p>;
@@ -524,7 +772,7 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
     return layout?.fields.filter((f) => f.stepId === stepId) ?? [];
   }
 
-  function renderStepContent(stepId: string, compact = false, wizardCompact = false) {
+  function renderStepContent(stepId: string, compact = false, wizardCompact = false, withScan = false) {
     const stepFields = fieldsForStep(stepId);
 
     if (stepId === 'egm') {
@@ -536,12 +784,62 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
         );
       }
       return (
-        <EgmIdentityFormPanel
-          compact={wizardCompact}
-          values={values}
-          refNo={refPreview}
-          onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}
-        />
+        <>
+          {withScan ? (
+            <div className="roomio-rez-id-scan">
+              <div className="roomio-form-actions roomio-rez-id-scan__actions">
+                <Button variant="primary" onClick={() => void runIdScan()} disabled={scanning}>
+                  <ScanLine size={14} aria-hidden style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                  {scanning ? 'Taranıyor…' : 'Kimlik / Pasaport Tara'}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => scanFileInputRef.current?.click()}
+                  disabled={scanning}
+                  title="Kimlik/pasaport fotoğrafını yükleyin — yerel OCR ile okunur, görsel sunucuda saklanmaz"
+                >
+                  <Camera size={14} aria-hidden style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                  Fotoğraftan Tara
+                </Button>
+                <input
+                  ref={scanFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  hidden
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = '';
+                    if (file) void scanFromImage(file);
+                  }}
+                />
+                {scanScore !== null ? (
+                  <span className={`roomio-badge${scanScore >= 90 ? ' roomio-badge--success' : scanScore >= 70 ? '' : ' roomio-badge--warn'}`}>
+                    Güven skoru: %{scanScore}
+                  </span>
+                ) : null}
+              </div>
+              {scanMessage ? <p className="roomio-page-desc roomio-rez-id-scan__msg">{scanMessage}</p> : null}
+              {scanErrors.length > 0 ? (
+                <div className="roomio-alert roomio-alert--danger" role="alert">
+                  <strong>Doğrulama hatası:</strong> {scanErrors.join(' · ')}
+                </div>
+              ) : null}
+              {scanWarnings.length > 0 ? (
+                <div className="roomio-alert roomio-alert--warn" role="status">
+                  <strong>Kontrol edin:</strong> {scanWarnings.join(' · ')}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          <EgmIdentityFormPanel
+            compact={wizardCompact}
+            values={values}
+            refNo={refPreview}
+            onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}
+            skipArchiveSearch={singleScreen}
+          />
+        </>
       );
     }
 
@@ -735,7 +1033,7 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
     </aside>
   );
 
-  if (singleScreen) {
+  if (singleScreen && isEdit) {
     return (
       <div className="roomio-rez-edit-screen">
         {saved ? (
@@ -786,6 +1084,268 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
             </div>
           </div>
           {priceSummary}
+        </div>
+      </div>
+    );
+  }
+
+  if (singleScreen && !isEdit) {
+    const roomChips = roomTypeOptions.length ? roomTypeOptions.map((o) => o.code) : ['DBL', 'TWN', 'SUI', 'SGL'];
+    const roomChipLabels = Object.fromEntries(
+      roomTypeOptions.map((o) => [o.code, o.label.split(' — ')[0] ?? o.code]),
+    );
+    const mealChips = ['RO', 'BB', 'HB', 'FB', 'AI'];
+    const paymentChips = ['Kredi Kartı', 'Nakit', 'Havale'];
+    const ratePlanChips = ['BAR-2026', 'CORP-2026', 'OTA promo'];
+    const stayFields = fieldsForStep('stay');
+    const pricingFields = fieldsForStep('pricing');
+    const guestFields = fieldsForStep('guest');
+    const egmFields = fieldsForStep('egm');
+    const extraFields = fieldsForStep('extra');
+    const pricingAdvFields = pricingFields.filter((f) => !PRICING_PRIMARY_KEYS.has(f.key) && f.key !== 'paymentType');
+    const pickStay = (key: string) => stayFields.find((f) => f.key === key);
+    const pickPricing = (key: string) => pricingFields.find((f) => f.key === key);
+
+    return (
+      <div className={`roomio-rez-quick roomio-rez-new-wizard roomio-rez-new-screen${embedded ? ' roomio-rez-new-wizard--embedded' : ''}`}>
+        <div className="roomio-rez-quick__head">
+          <div>
+            <h1>
+              Yeni rezervasyon
+              <span className="roomio-rez-quick__mode"><Zap size={11} aria-hidden /> Hızlı kayıt</span>
+            </h1>
+            <p>Misafiri arayın, bilgiler otomatik dolsun — geri kalanı tek tıkla seçin.</p>
+          </div>
+          <div className="roomio-rez-quick__head-actions">
+            {embedded ? (
+              <Button variant="secondary" onClick={onCancel}>İptal</Button>
+            ) : (
+              <Button variant="secondary" href="/reservations">İptal</Button>
+            )}
+            <Button variant="secondary" type="button" onClick={saveDraft}>Taslak kaydet</Button>
+            <button type="button" className="roomio-btn roomio-btn--primary" onClick={() => void onSubmit()}>
+              <Check size={14} aria-hidden style={{ marginRight: 6 }} />
+              Kaydet <span className="roomio-rez-quick__kbd">⌘S</span>
+            </button>
+          </div>
+        </div>
+
+        <QuickToast message={toast ?? (saved ? `${refPreview} kaydedildi` : null)} kind={toastKind} />
+        {saved && egmWarning ? (
+          <p className="roomio-card roomio-text-warn" role="status" style={{ padding: '8px 12px' }}>
+            Rezervasyon kaydedildi; EGM kimlik kaydı tamamlanamadı: {egmWarning}
+          </p>
+        ) : null}
+        {!fxReady ? (
+          <p className="roomio-rez-edit-screen__fx-hint" role="status">
+            TCMB kurları yüklenemedi — TRY dışı dövizlerde TL karşılığı gecikebilir.
+          </p>
+        ) : null}
+
+        <div className="roomio-rez-quick__progress roomio-card" role="status">
+          <div className="roomio-rez-quick__progress-top">
+            <span>Zorunlu alanlar <b>{requiredDone}/{requiredTotal}</b> tamamlandı</span>
+            <span className="roomio-rez-quick__progress-pct">%{progressPct}</span>
+          </div>
+          <div className="roomio-rez-quick__progress-track">
+            <div className="roomio-rez-quick__progress-fill" style={{ width: `${progressPct}%` }} />
+          </div>
+        </div>
+
+        <QuickJumpNav />
+
+        <div className="roomio-rez-quick__layout">
+          <div className="roomio-rez-quick__formcol">
+            <QuickGuestFinder
+              onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}
+              onScan={() => void runIdScan()}
+              onScanImage={(file) => void scanFromImage(file)}
+              scanning={scanning}
+              scanMessage={scanMessage}
+              scanFileInputRef={scanFileInputRef}
+            />
+
+            <div className="roomio-rez-quick__card">
+              <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2">
+                {fieldsForStep('sender').map((f) => renderField(f))}
+              </div>
+            </div>
+
+            <section className="roomio-rez-quick__card" id="rez-sec-misafir">
+              <QuickSectionHead
+                icon={<IdCard size={15} />}
+                title="Misafir & KBS kimlik"
+                description="Zorunlu alanlar polis bildirimi (KBS) için gereklidir"
+              />
+              <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2">
+                {egmFields.map((f) => renderField(f))}
+                {guestFields.filter((f) => !['nationality', 'idNo', 'vipLevel'].includes(f.key)).map((f) => renderField(f))}
+                {guestFields.filter((f) => ['nationality', 'idNo', 'vipLevel'].includes(f.key)).map((f) => renderField(f))}
+              </div>
+            </section>
+
+            <section className="roomio-rez-quick__card" id="rez-sec-konaklama">
+              <QuickSectionHead
+                icon={<Bed size={15} />}
+                title="Konaklama"
+                description={`${String(values.roomType ?? 'DBL')} — ${nights > 0 ? `${nights} gece` : 'tarih seçin'}`}
+              />
+              <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2" style={{ marginBottom: 12 }}>
+                <div>
+                  {pickStay('checkIn') ? renderField(pickStay('checkIn')!) : null}
+                  <div className="roomio-rez-quick__chips" style={{ marginTop: 7 }}>
+                    <button type="button" className="roomio-rez-quick__chip" onClick={() => quickCheckin(0)}>Bugün</button>
+                    <button type="button" className="roomio-rez-quick__chip" onClick={() => quickCheckin(1)}>Yarın</button>
+                  </div>
+                </div>
+                <div>
+                  {pickStay('checkOut') ? renderField(pickStay('checkOut')!) : null}
+                  <div className="roomio-rez-quick__chips" style={{ marginTop: 7 }}>
+                    {[1, 2, 3, 7].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        className={`roomio-rez-quick__chip${nights === n ? ' is-selected' : ''}`}
+                        onClick={() => applyNightCount(n)}
+                      >
+                        {n} gece
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2" style={{ marginBottom: 12 }}>
+                {pickStay('arrivalTime') ? renderField(pickStay('arrivalTime')!) : null}
+                {pickStay('departureTime') ? renderField(pickStay('departureTime')!) : null}
+              </div>
+              <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2" style={{ marginBottom: 12 }}>
+                <div>
+                  <span className="roomio-field"><span>Oda tipi</span></span>
+                  <QuickChipGroup
+                    options={roomChips}
+                    value={String(values.roomType ?? 'DBL')}
+                    labels={roomChipLabels}
+                    onChange={(v) => setValue('roomType', v)}
+                  />
+                </div>
+                <div>
+                  <span className="roomio-field"><span>Pansiyon</span></span>
+                  <QuickChipGroup
+                    options={mealChips}
+                    value={String(values.mealPlan ?? 'BB')}
+                    onChange={(v) => setValue('mealPlan', v)}
+                  />
+                </div>
+              </div>
+              <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2">
+                <div className="roomio-rez-quick__field-row">
+                  <span className="roomio-field" style={{ margin: 0 }}><span>Oda sayısı</span></span>
+                  <QuickStepper value={roomCount} min={1} max={9} onChange={(v) => setValue('roomCount', v)} />
+                </div>
+                <div className="roomio-rez-quick__field-row">
+                  <span className="roomio-field" style={{ margin: 0 }}><span>Yetişkin</span></span>
+                  <QuickStepper value={Number(values.adults ?? 2)} min={1} max={10} onChange={(v) => setValue('adults', v)} />
+                </div>
+                <div className="roomio-rez-quick__field-row">
+                  <span className="roomio-field" style={{ margin: 0 }}><span>Çocuk</span></span>
+                  <QuickStepper value={Number(values.children ?? 0)} min={0} max={10} onChange={(v) => setValue('children', v)} />
+                </div>
+                <div className="roomio-rez-quick__field-row">
+                  <span className="roomio-field" style={{ margin: 0 }}><span>Bebek</span></span>
+                  <QuickStepper value={Number(values.infants ?? 0)} min={0} max={10} onChange={(v) => setValue('infants', v)} />
+                </div>
+              </div>
+              <div style={{ marginTop: 12, maxWidth: 220 }}>
+                <label className="roomio-field" htmlFor="rf-fixRoomNo">
+                  <span>Oda no <span className="roomio-rez-quick__opt">opsiyonel</span></span>
+                  <input
+                    id="rf-fixRoomNo"
+                    className="roomio-input"
+                    value={String(values.fixRoomNo ?? '')}
+                    placeholder="Örn. 312"
+                    onChange={(e) => setValue('fixRoomNo', e.target.value)}
+                  />
+                </label>
+              </div>
+            </section>
+
+            <section className="roomio-rez-quick__card" id="rez-sec-fiyat">
+              <QuickSectionHead
+                icon={<Banknote size={15} />}
+                title="Fiyatlandırma"
+                description="Tutar girilince özet otomatik güncellenir"
+              />
+              <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2" style={{ marginBottom: 12 }}>
+                {pickPricing('rate') ? renderField(pickPricing('rate')!) : null}
+                <div>
+                  <span className="roomio-field"><span>Ödeme tipi</span></span>
+                  <QuickChipGroup
+                    options={paymentChips}
+                    value={String(values.paymentType ?? 'Kredi Kartı')}
+                    onChange={(v) => setValue('paymentType', v)}
+                  />
+                </div>
+              </div>
+              <div>
+                <span className="roomio-field"><span>Rate plan</span></span>
+                <QuickChipGroup
+                  options={ratePlanChips}
+                  value={String(values.ratePlanCode || values.rateCode || 'BAR-2026')}
+                  onChange={(v) => setValues((prev) => ({ ...prev, ratePlanCode: v, rateCode: v }))}
+                />
+              </div>
+              <details className="roomio-rez-quick__details" style={{ marginTop: 14 }}>
+                <summary>
+                  <FileText size={15} aria-hidden />
+                  Gelişmiş fiyatlandırma <span className="roomio-rez-quick__opt">opsiyonel</span>
+                  <ChevronDown size={14} className="roomio-rez-quick__details-chev" aria-hidden />
+                </summary>
+                <div className="roomio-rez-quick__details-body">
+                  <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2">
+                    {pricingAdvFields.map((f) => renderField(f))}
+                  </div>
+                </div>
+              </details>
+            </section>
+
+            <details className="roomio-rez-quick__details" id="rez-sec-ek">
+              <summary>
+                <FileText size={15} aria-hidden />
+                Ek bilgiler <span className="roomio-rez-quick__opt">opsiyonel</span>
+                <ChevronDown size={14} className="roomio-rez-quick__details-chev" aria-hidden />
+              </summary>
+              <div className="roomio-rez-quick__details-body">
+                <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2" style={{ marginBottom: 12 }}>
+                  {extraFields.filter((f) => f.key !== 'notes' && !f.key.endsWith('Note')).map((f) => renderField(f))}
+                </div>
+                <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2">
+                  {extraFields.filter((f) => f.key.endsWith('Note') || f.key === 'notes').map((f) => renderField(f, { textareaRows: 2 }))}
+                </div>
+              </div>
+            </details>
+
+            {submitError ? (
+              <p className="roomio-text-warn" role="alert">{submitError}</p>
+            ) : null}
+          </div>
+
+          <aside className="roomio-rez-quick__sumcol">
+            {priceSummary}
+            <QuickKbsChecklist values={values} />
+          </aside>
+        </div>
+
+        <div className="roomio-rez-quick__actionbar">
+          {embedded ? (
+            <Button variant="secondary" onClick={onCancel}>İptal</Button>
+          ) : (
+            <Button variant="secondary" href="/reservations">İptal</Button>
+          )}
+          <Button variant="secondary" type="button" onClick={saveDraft}>Taslak kaydet</Button>
+          <button type="button" className="roomio-btn roomio-btn--primary" onClick={() => void onSubmit()}>
+            <Check size={14} aria-hidden style={{ marginRight: 6 }} />
+            Kaydet <span className="roomio-rez-quick__kbd">⌘S</span>
+          </button>
         </div>
       </div>
     );

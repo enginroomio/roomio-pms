@@ -14,7 +14,6 @@ import { emitHkMapUpdate } from '@/lib/client/hk-map-sync';
 import { emitFaultClientUpdate, useLiveFaults } from '@/lib/client/use-live-faults';
 import { patchHkRoom } from '@/lib/client/hk-update';
 import { useLiveHkMap } from '@/lib/client/use-live-hk-map';
-import { usePointerFine } from '@/lib/client/use-pointer-fine';
 import { buildHkMobileAlerts } from '@/lib/housekeeping/alerts';
 import { enqueueSync } from '@/lib/sync/engine';
 import type { HkRoomRecord } from '@/lib/data/hk-defaults';
@@ -34,7 +33,6 @@ export type HkMobileSnapshot = {
 
 export function HousekeepingMobileClient({ snapshot }: { snapshot: HkMobileSnapshot }) {
   const { t } = useI18n();
-  const pointerFine = usePointerFine();
   const { hkMap, applyUpdate } = useLiveHkMap(snapshot.hkMap);
   const { openFaultForRoom, removeFault } = useLiveFaults();
   const [queuedCount, setQueuedCount] = useState(0);
@@ -206,7 +204,8 @@ export function HousekeepingMobileClient({ snapshot }: { snapshot: HkMobileSnaps
             reservations={snapshot.reservations}
             businessDate={snapshot.businessDate}
             hkMap={hkMap}
-            hkInteractive={pointerFine}
+            hkInteractive={true}
+            hkPrimary={true}
             savingRoom={savingRoom}
             onRoomContextMenu={openRoomMenu}
           />

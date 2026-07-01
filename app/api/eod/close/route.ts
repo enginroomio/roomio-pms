@@ -34,6 +34,8 @@ export async function POST(req: Request) {
       ok: true,
       archive: result.archive,
       newBusinessDate: result.newDate,
+      archivedReports: result.archivedReports,
+      cloudBackup: result.cloudBackup ?? null,
       pdfBase64: pdf.toString('base64'),
     });
   } catch (e) {

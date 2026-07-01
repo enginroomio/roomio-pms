@@ -134,7 +134,10 @@ npm run serve
 | `npm run serve` | `build` + `start` (önerilen) |
 | `npm run typecheck` | TypeScript kontrolü |
 | `npm run test:routes` | Temel rota smoke testi (`ROOMIO_URL` ile) |
-| `npm run test:e2e` | Playwright E2E testleri |
+| `npm run test:menus` | Menü href smoke (~288 URL, çalışan sunucu gerekir) |
+| `npm run test:e2e` | Playwright E2E (varsayılan config; CI’da mevcut sunucuya bağlanır) |
+| `npm run test:e2e:local` | E2E — mevcut `3100` sunucusu (`playwright.rollout.config.ts`) |
+| `npm run verify:hk` | HK sağ tık menü + rollout Kat + menü URL doğrulama |
 | `npm run db:push` | Prisma şema → SQLite DB |
 | `npm run db:seed` | Demo veri seed |
 | `npm run bridge:syslog` | MikroTik/UniFi syslog köprüsü |

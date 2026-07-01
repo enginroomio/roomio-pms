@@ -19,13 +19,16 @@ import {
   findHomeTemplate,
   getDefaultHomeTemplateId,
   loadHomeArchive,
+  migrateHomeLayoutForOrijinalDefault,
   setDefaultHomeTemplateId,
   type HomeUserTemplate,
 } from '@/lib/dashboard/home-templates';
 
 export function useHomeLayout() {
-  const [layout, setLayout] = useState<HomeLayout>(() => loadHomeLayout());
-  const [archive, setArchive] = useState<HomeUserTemplate[]>([]);
+  const [layout, setLayout] = useState<HomeLayout>(() => migrateHomeLayoutForOrijinalDefault());
+  const [archive, setArchive] = useState<HomeUserTemplate[]>(() =>
+    typeof window !== 'undefined' ? loadHomeArchive() : [],
+  );
   const [defaultTemplateId, setDefaultTemplateIdState] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -35,13 +38,14 @@ export function useHomeLayout() {
   }, []);
 
   useEffect(() => {
-    const saved = loadHomeLayout();
+    const saved = migrateHomeLayoutForOrijinalDefault();
     const defaultId = getDefaultHomeTemplateId();
     if (defaultId) {
       const tpl = findHomeTemplate(defaultId);
       if (tpl) {
-        setLayout(applyHomeLayoutSnapshot(tpl.layout, tpl.id));
-        saveHomeLayout(tpl.layout);
+        const applied = applyHomeLayoutSnapshot(tpl.layout, tpl.id);
+        setLayout(applied);
+        saveHomeLayout(applied);
       } else {
         setLayout(saved);
       }

@@ -3,9 +3,11 @@ import test from 'node:test';
 import { isSistemMenuContext, moduleMenuForPath, SISTEM_MODULE_MENU } from './module-menus';
 
 test('isSistemMenuContext — raporlar modülü', () => {
-  assert.equal(isSistemMenuContext('/reports', ''), true);
+  assert.equal(isSistemMenuContext('/reports', ''), false);
   assert.equal(isSistemMenuContext('/reports', 'tab=design'), true);
-  assert.equal(isSistemMenuContext('/reports', 'tab=management'), true);
+  assert.equal(isSistemMenuContext('/reports', 'tab=user'), true);
+  assert.equal(isSistemMenuContext('/reports', 'tab=management'), false);
+  assert.equal(isSistemMenuContext('/reports', 'tab=special'), false);
   assert.equal(isSistemMenuContext('/reports', 'hub=raporlar'), false);
   assert.equal(isSistemMenuContext('/reports', 'category=rezervasyon'), false);
   assert.equal(isSistemMenuContext('/reports', 'tab=eod'), false);

@@ -287,7 +287,7 @@ function Hotspot5651PageInner() {
             </label>
             <label className="roomio-field roomio-field--row">
               <input type="checkbox" checked={config.autoCloseOnCheckOut} onChange={(e) => setConfig({ ...config, autoCloseOnCheckOut: e.target.checked })} />
-              <span>Check-out&apos;ta WiFi kapat</span>
+              <span>Check-out&apos;ta WiFi kapat ve çıkış günü 23:59&apos;da süresi geçen misafirleri otomatik düşür</span>
             </label>
             <label className="roomio-field roomio-field--row">
               <input type="checkbox" checked={config.linkToPmsGuest} onChange={(e) => setConfig({ ...config, linkToPmsGuest: e.target.checked })} />

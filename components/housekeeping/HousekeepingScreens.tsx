@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
-import { HousekeepingTabs } from '@/components/HousekeepingTabs';
+import { KatModuleLayout } from '@/components/housekeeping/KatModuleLayout';
 import {
   HkFilterBar,
   HkStatusDots,
@@ -12,7 +11,6 @@ import {
 import { HkRoomContextMenu, type HkRoomMenuState } from '@/components/housekeeping/HkRoomContextMenu';
 import { HK_STATUS_LABELS } from '@/lib/data/housekeeping';
 import { patchHkRoom } from '@/lib/client/hk-update';
-import { usePointerFine } from '@/lib/client/use-pointer-fine';
 import { roomioFetch } from '@/lib/client/api';
 import type { HousekeepingBoardRow } from '@/lib/rooms/inventory';
 
@@ -27,7 +25,6 @@ type HubProps = {
 };
 
 export function HousekeepingHubClient({ initialBoard }: HubProps) {
-  const pointerFine = usePointerFine();
   const [board, setBoard] = useState(initialBoard);
   const [floor, setFloor] = useState<number | 'ALL'>('ALL');
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
@@ -68,7 +65,7 @@ export function HousekeepingHubClient({ initialBoard }: HubProps) {
         onRoomSelect={setSelectedRoom}
         onStatusChange={(roomNo, status) => void updateStatus(roomNo, status)}
         savingRoom={savingRoom}
-        hkInteractive={pointerFine}
+        hkInteractive={true}
         onRoomContextMenu={openRoomMenu}
       />
       <HkRoomContextMenu
@@ -134,12 +131,12 @@ export function HousekeepingRoomsClient() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Kat Hizmetleri > Oda Durumu"
+    <KatModuleLayout
+      segment="Oda Durumu"
       title="Oda Listesi"
       description="Elektra screen-101 uyumlu — 77 oda, HK durum matrisi, misafir ve tarih."
+      menuSearch=""
     >
-      <HousekeepingTabs />
       <HkFilterBar
         floor={floor}
         status={status}
@@ -206,6 +203,6 @@ export function HousekeepingRoomsClient() {
           <span>1 – {filtered.length} / {rooms.length}</span>
         </div>
       </div>
-    </PageHeader>
+    </KatModuleLayout>
   );
 }

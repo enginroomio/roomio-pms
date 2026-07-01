@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { ResepsiyonModuleLayout } from '@/components/resepsiyon/ResepsiyonModuleLayout';
 import { Button, StatusBadge } from '@/components/ui';
 import { FolioTabAnchor } from '@/components/reception/FolioTabAnchor';
 import { GuestFolioSplitPanel } from '@/components/reception/GuestFolioSplitPanel';
@@ -83,10 +83,10 @@ export function GuestFolioPageClient({ id, tab }: { id: string; tab?: string }) 
 
   if (error || !reservation || !folio) {
     return (
-      <PageHeader breadcrumb="Resepsiyon > Folyo" title="Folyo görüntülenemiyor">
+      <ResepsiyonModuleLayout segment="Folyo" title="Folyo görüntülenemiyor" menuSearch="">
         <p className="roomio-page-desc roomio-text-warn" role="alert">{error ?? 'Kayıt yok'}</p>
         <Button variant="secondary" href="/reception/inhouse">← Konaklayanlar</Button>
-      </PageHeader>
+      </ResepsiyonModuleLayout>
     );
   }
 
@@ -94,10 +94,11 @@ export function GuestFolioPageClient({ id, tab }: { id: string; tab?: string }) 
   const guest = enrichInHouse(reservation, allLines, folio.guestBalance + folio.companyBalance);
 
   return (
-    <PageHeader
-      breadcrumb={`Resepsiyon > Oda ${guest.roomNo} > Folyo`}
+    <ResepsiyonModuleLayout
+      segment={`Oda ${guest.roomNo} › Folyo`}
       title={guest.guestName}
       description={`Oda ${guest.roomNo} · ${guest.roomType} · Çıkış ${formatDate(guest.checkOut)}`}
+      menuSearch={tab ? `?tab=${tab}` : ''}
       actions={
         <Button variant="secondary" href="/reception/inhouse">← Konaklayanlar</Button>
       }
@@ -129,6 +130,6 @@ export function GuestFolioPageClient({ id, tab }: { id: string; tab?: string }) 
       />
 
       <ExtraChargesFolioPanel reservationId={guest.id} onApplied={() => void load()} />
-    </PageHeader>
+    </ResepsiyonModuleLayout>
   );
 }

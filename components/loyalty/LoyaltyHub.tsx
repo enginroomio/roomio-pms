@@ -115,21 +115,21 @@ export function LoyaltyHub() {
 
   return (
     <>
-      <div className="roomio-kpi-strip">
+      <div className="roomio-kpi-grid">
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Üye sayısı</span>
+          <span className="roomio-kpi-label">Üye sayısı</span>
           <strong>{summary.accountCount}</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Toplam puan</span>
+          <span className="roomio-kpi-label">Toplam puan</span>
           <strong>{summary.totalPoints.toLocaleString('tr-TR')}</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Program</span>
+          <span className="roomio-kpi-label">Program</span>
           <strong>{summary.enabled ? 'Aktif' : 'Kapalı'}</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Min harcama</span>
+          <span className="roomio-kpi-label">Min harcama</span>
           <strong>{config.minRedeemPoints} puan</strong>
         </div>
       </div>

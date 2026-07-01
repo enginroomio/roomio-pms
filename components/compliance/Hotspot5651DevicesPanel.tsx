@@ -81,6 +81,7 @@ export function Hotspot5651DevicesPanel({ config, onChange, onSave, saved }: Pro
           hotspotServer: config.mikrotik.hotspotServer,
           hotspotProfile: config.mikrotik.hotspotProfile,
           guestVlan: config.unifi.guestVlan,
+          maxDevicesPerUser: config.maxDevicesPerUser,
         })
       : '';
 

@@ -3,7 +3,7 @@ import type { GuestArchiveEntry } from '@/lib/egm/guest-archive';
 import { splitGuestName, type EgmGender, type EgmIdType } from '@/lib/egm/types';
 import { maskBirthDate, maskEmail, maskGuestName, maskIdNo, maskPhone } from '@/lib/kvkk/mask';
 import { appendAuditLog } from '@/lib/server/audit-log';
-import { init } from '@/lib/server/pms-store';
+import { getInvoices, init } from '@/lib/server/pms-store';
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
 
@@ -50,6 +50,43 @@ export function retentionUntilFromStay(checkOut: string): string {
   }
   d.setFullYear(d.getFullYear() + 2);
   return d.toISOString().slice(0, 10);
+}
+
+// KVKK saklama süresi: süresi geçen (retentionUntil < bugün) ve henüz anonimleştirilmemiş
+// kayıtları her okuma/yazma erişiminde anonimleştir — sadece arama sonuçlarından gizlemek
+// yetmez, kişisel veri fiilen silinmeli/anonimleştirilmelidir (5651 modülündeki
+// purgeExpired-on-read deseninin aynısı).
+async function anonymizeExpiredGuestIdentities(propertyId?: string): Promise<number> {
+  const prop = pid(propertyId);
+  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date().toISOString();
+
+  const expired = await prisma.guestIdentityArchive.findMany({
+    where: { propertyId: prop, anonymizedAt: null, retentionUntil: { lt: today } },
+    select: { id: true },
+    take: 500,
+  });
+  if (expired.length === 0) return 0;
+
+  await prisma.guestIdentityArchive.updateMany({
+    where: { id: { in: expired.map((r) => r.id) } },
+    data: {
+      guestName: 'Anonimleştirildi',
+      firstName: 'Anonim',
+      lastName: '',
+      email: null,
+      phone: null,
+      idNo: '',
+      birthDate: null,
+      birthPlace: null,
+      gender: null,
+      fatherName: null,
+      motherName: null,
+      anonymizedAt: now,
+      updatedAt: now,
+    },
+  });
+  return expired.length;
 }
 
 function rowToEntry(row: {
@@ -146,6 +183,7 @@ export async function upsertGuestIdentityArchive(
   if (!idNo || idNo.length < 4) return null;
 
   await init();
+  await anonymizeExpiredGuestIdentities(propertyId).catch(() => undefined);
   const prop = pid(propertyId);
   const now = new Date().toISOString();
   const today = now.slice(0, 10);
@@ -245,6 +283,7 @@ export async function searchGuestIdentityArchive(
   query: { guestName?: string; idNo?: string; phone?: string; email?: string },
 ): Promise<GuestArchiveListEntry[]> {
   await init();
+  await anonymizeExpiredGuestIdentities(propertyId).catch(() => undefined);
   const prop = pid(propertyId);
   const today = new Date().toISOString().slice(0, 10);
 
@@ -259,10 +298,25 @@ export async function searchGuestIdentityArchive(
   });
 
   const scored = rows
-    .map((row) => ({ entry: rowToEntry(row), score: scoreEntry(rowToEntry(row), query) }))
+    .map((row) => ({ row, entry: rowToEntry(row), score: scoreEntry(rowToEntry(row), query) }))
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 8);
+
+  // "Fatura listesi" — KVKK kimlik arşivinde tutulmaz (VUK uyarınca muhasebe
+  // kayıtları daha uzun saklanır) ama burada çapraz referans olarak misafirin
+  // geçmiş fatura sayısını gösteriyoruz; tam liste muhasebe modülünden açılır.
+  if (scored.length > 0) {
+    const invoices = await getInvoices(prop).catch(() => []);
+    if (invoices.length > 0) {
+      for (const x of scored) {
+        const gn = norm(x.entry.guestName);
+        x.entry.invoiceCount = invoices.filter(
+          (inv) => (x.row.lastReservationId && inv.reservationId === x.row.lastReservationId) || norm(inv.guest) === gn,
+        ).length;
+      }
+    }
+  }
 
   return scored.map((x) => maskArchiveEntry(x.entry));
 }
@@ -273,6 +327,7 @@ export async function revealGuestIdentityArchive(
   actor: string,
 ): Promise<GuestArchiveEntry | null> {
   await init();
+  await anonymizeExpiredGuestIdentities(propertyId).catch(() => undefined);
   const prop = pid(propertyId);
   const today = new Date().toISOString().slice(0, 10);
 

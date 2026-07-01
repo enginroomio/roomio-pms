@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FileBarChart } from 'lucide-react';
-import { ModuleLayout } from '@/components/ModuleLayout';
+import { ReportsModuleShell } from '@/components/reports/ReportsModuleShell';
 import { Button } from '@/components/ui';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { useI18n } from '@/components/i18n/I18nProvider';
@@ -12,9 +12,10 @@ import { useProperty } from '@/components/property/PropertyProvider';
 import type { FormTemplateDraft } from '@/components/forms/FormDesignEditor';
 import { FORM_PAGES, defaultFormLayout } from '@/lib/forms/form-catalog';
 import { REPORT_MODULES } from '@/lib/reports/field-catalog';
+import { findEodStarterByRpr, eodTemplateId } from '@/lib/reports/eod-legacy-wizard';
 import { roomioFetch } from '@/lib/client/api';
 import { SIDEBAR_NAV, type SidebarNavItem } from '@/lib/navigation/sidebar-nav';
-import { CATEGORY_REPORTS } from '@/lib/data/eod';
+import { CATEGORY_REPORTS, isComplianceReportCategory } from '@/lib/data/eod';
 import { EodOperationsHub } from '@/components/reports/EodOperationsHub';
 import {
   AgencyAnalysisPanel,
@@ -52,7 +53,7 @@ import {
 import { UserReportsPanel } from '@/components/reports/UserReportsPanel';
 import { GunSonuHubPanel, RaporlarHubPanel } from '@/components/reports/MenuHubPanels';
 import { SistemModuleLayout } from '@/components/sistem/SistemModuleLayout';
-import { SistemReportTabs, type SistemReportTabId } from '@/components/sistem/SistemReportTabs';
+import { SistemReportTabs } from '@/components/sistem/SistemReportTabs';
 import {
   ReportsConsolidatedTabContent,
   ReportsDesignTabContent,
@@ -153,6 +154,27 @@ export function ReportsPageClient({
       });
   }, [activeTab, propertyId]);
 
+  const rprParam = searchParams.get('rpr');
+
+  const eodDesignDraft = useMemo((): ReportTemplate | null => {
+    if (activeTab !== 'design' || !rprParam) return null;
+    const hit = findEodStarterByRpr(rprParam);
+    if (!hit) return null;
+    return {
+      id: eodTemplateId(rprParam),
+      name: hit.starter.name,
+      module: 'Gün Sonu',
+      columns: [...hit.starter.columns],
+      updatedAt: '',
+    };
+  }, [activeTab, rprParam]);
+
+  const designEditing = editing ?? eodDesignDraft;
+
+  useEffect(() => {
+    if (eodDesignDraft) setEditing(eodDesignDraft);
+  }, [eodDesignDraft]);
+
   useEffect(() => {
     if (activeTab !== 'forms') return;
     void roomioFetch('/api/reports/templates?kind=form')
@@ -207,12 +229,13 @@ export function ReportsPageClient({
   }
 
   async function handleSaveTemplate() {
-    if (!editing) return;
+    const draft = editing ?? eodDesignDraft;
+    if (!draft) return;
     setTplMsg(null);
     const r = await roomioFetch('/api/reports/templates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editing),
+      body: JSON.stringify(draft),
     });
     const j = (await r.json()) as { template?: ReportTemplate; error?: string };
     if (r.ok && j.template) {
@@ -288,104 +311,90 @@ export function ReportsPageClient({
 
   if (hub === 'gunsonu' && !tab && !report && !category) {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Gün Sonu"
         title="Gün Sonu Merkezi"
         description="Night audit, rapor paketi ve yedekleme işlemleri."
-        sideTitle={t('nav.reports')}
-        menuSearch="?hub=gunsonu"
       >
         <GunSonuHubPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (hub === 'raporlar' && !tab && !report && !category) {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Raporlar"
         title="Raporlar Merkezi"
         description="Kategori raporları, tasarım ve dışa aktarma."
-        sideTitle={t('nav.reports')}
-        menuSearch="?hub=raporlar"
       >
         <RaporlarHubPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'transfer') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Rezervasyon › Transfer Bilgileri"
         title="Transfer Listesi"
         description="Geliş/gidiş transfer saatleri ve uçuş bilgileri"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=transfer"
       >
         {rezLoading ? (
           <p className="roomio-page-desc">Yükleniyor…</p>
         ) : (
           <TransferReportPanel reservations={reservations} />
         )}
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'room-changes') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Resepsiyon › Oda Değişimleri"
         title="Oda Değişim Listesi"
         description="Planlanan oda taşıma kayıtları"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=room-changes"
       >
         {rezLoading ? (
           <p className="roomio-page-desc">Yükleniyor…</p>
         ) : (
           <RoomChangesReportPanel reservations={reservations} />
         )}
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'departure-change') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Rezervasyon › Tarih Değişimleri"
         title="Ayrılış Tarihi Değişim Tablosu"
         description="Planlanan çıkış tarihi değişen rezervasyonlar"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=departure-change"
       >
         <ReservationDateChangeReportPanel kind="departure" />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'arrival-change') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Rezervasyon › Tarih Değişimleri"
         title="Geliş Tarihi Değişim Tablosu"
         description="Planlanan giriş tarihi değişen rezervasyonlar"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=arrival-change"
       >
         <ReservationDateChangeReportPanel kind="arrival" />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (category && report && (CATEGORY_REPORTS[category] ?? []).some((r) => r.id === report)) {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb={`Raporlar › ${activeCategory?.label ?? category}`}
         title={(CATEGORY_REPORTS[category] ?? []).find((r) => r.id === report)?.name ?? report}
         description="Kategori raporu önizleme ve dışa aktarma"
-        sideTitle={t('nav.reports')}
-        menuSearch={`?category=${category}&report=${report}`}
       >
         <CategoryReportDetailPanel
           category={category}
@@ -396,102 +405,88 @@ export function ReportsPageClient({
             return `/api/reports/export?${params.toString()}`;
           }}
         />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'gunluk-maliye') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Ön Kasa › Günlük Maliye"
         title="Günlük Maliye Listesi"
         description="Kasa hareketleri, döviz ve depozit özeti"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=gunluk-maliye"
       >
         <DailyFinanceReportPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'gunluk-balans') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Ön Kasa › Günlük Balanslar"
         title="Günlük Balanslar"
         description="Konaklayan misafir folyo bakiyeleri"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=gunluk-balans"
       >
         <DailyBalanceReportPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'enerji') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Kat Hizmetleri › Enerji"
         title="Enerji Tüketim Tablosu"
         description="Oda bazlı enerji tüketim özeti"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=enerji"
       >
         <EnergyConsumptionPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'demirbas') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Kat Hizmetleri › Demirbaş"
         title="Oda Demirbaş Listesi"
         description="Oda envanter ve demirbaş durumu"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=demirbas"
       >
         <RoomFixturesPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'occupancy' && category === 'banket') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Banket › Salon Doluluk"
         title="Salon Doluluk Raporu"
         description="Salon bazlı etkinlik ve kişi doluluğu"
-        sideTitle={t('nav.reports')}
-        menuSearch="?category=banket&report=occupancy"
       >
         <BanketOccupancyReportPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'revenue' && category === 'banket') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Banket › Etkinlik Gelir"
         title="Etkinlik Gelir Raporu"
         description="Onaylı ve opsiyon banket gelirleri"
-        sideTitle={t('nav.reports')}
-        menuSearch="?category=banket&report=revenue"
       >
         <BanketRevenueReportPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (category === 'banket' && !tab && !report) {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Banket › Raporlar"
         title="Banket Raporları"
         description="Salon doluluk ve etkinlik gelir raporları"
-        sideTitle={t('nav.reports')}
-        menuSearch="?category=banket"
       >
         <div className="roomio-gr-grid">
           <Link href="/reports?category=banket&report=occupancy" className="roomio-card roomio-gr-card">
@@ -511,7 +506,7 @@ export function ReportsPageClient({
             <span className="roomio-page-desc">Onaylı ve opsiyon anlaşmalar</span>
           </Link>
         </div>
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
@@ -519,153 +514,139 @@ export function ReportsPageClient({
   if (tab && mgmtTabs.has(tab)) {
     if (tab === 'management') {
       return (
-        <SistemModuleLayout
+        <ReportsModuleShell
           segment="Yönetim Raporları"
           title="Yönetim Raporu"
           description="Gelir, doluluk ve departman analizleri"
-          menuSearch="?tab=management"
         >
-          <SistemReportTabs active="management" />
           <ManagementSummaryPanel variant={tab} />
-        </SistemModuleLayout>
+        </ReportsModuleShell>
       );
     }
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Arka Büro › Yönetim Raporu"
         title={tab === 'prepare' ? 'Yönetim Raporu Hazırlama' : 'Yönetim Raporu'}
         description="Gelir, doluluk ve departman analizleri"
-        sideTitle={t('nav.reports')}
-        menuSearch={`?tab=${tab}`}
       >
         {tab === 'prepare' ? <ManagementPrepareHub /> : <ManagementSummaryPanel variant={tab} />}
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'dept-revenue-old') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Arka Büro › Departman Gelirleri"
         title="Eski Tarihli Departman Gelirleri"
         description="Arşivlenmiş günlük departman gelir satırları"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=dept-revenue-old"
       >
         <DeptRevenueOldPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'distribution') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Arka Büro › Dağılım Analizi"
         title="Dağılım Analizi"
         description="Segment bazlı oda ve gelir dağılımı"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=distribution"
       >
         <DistributionAnalysisPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'mgmt-old') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Arka Büro › Yönetim Raporu"
         title="Eski Tarihli Günlük Yönetim Raporu"
         description="Gün sonu arşivinden yönetim özetleri"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=mgmt-old"
       >
         <MgmtOldReportPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'kredi-kontrol') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Arka Büro › Kredi Kontrol"
         title="Kredi Kontrol Listesi"
         description="Cari limit ve vadesi geçmiş bakiye takibi"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=kredi-kontrol"
       >
         <KrediKontrolPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'dept-transfer') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Arka Büro › Gelir Aktarım"
         title="Departman Gelirleri Aktarım"
         description="Günlük departman gelirlerinin muhasebe aktarımı"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=dept-transfer"
       >
         <DeptTransferPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (tab === 'eod') {
+    const eodTitle =
+      action === 'archive' ? 'Eski Gün Sonu Raporları'
+        : action === 'close' ? 'Günü Kapat'
+          : action === 'fetch' ? 'Gün Sonu Raporları'
+            : action === 'room-prices' ? 'Oda Fiyatlarını İşle'
+              : action === 'extra-prices' ? 'Ek Fiyatları Bas'
+                : 'Gün Sonu İşlemleri';
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Gün Sonu"
-        title="Gün Sonu İşlemleri"
-        description="Rapor alma, gün kapatma, yedekleme ve gece posting"
-        sideTitle={t('nav.reports')}
-        menuSearch="?tab=eod"
+        title={eodTitle}
+        description={action === 'archive' ? undefined : 'Rapor alma, gün kapatma, yedekleme ve gece posting'}
+        hideTitle={action === 'archive'}
       >
         <EodOperationsHub action={action} />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (tab === 'special') {
     return (
-      <SistemModuleLayout
+      <ReportsModuleShell
         segment="Özel Raporlar"
         title="Özel Raporlar"
         description="Sık kullanılan özel rapor kısayolları"
-        menuSearch="?tab=special"
       >
-        <SistemReportTabs active="special" />
         <SpecialReportsPanel />
-      </SistemModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (tab === 'remote') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Raporlar › Uzak"
         title="Uzak Otelden Raporlama"
         description="Merkez ofisten bağlı tesislere rapor çekme"
-        sideTitle={t('nav.reports')}
-        menuSearch="?tab=remote"
       >
         <RemoteReportsPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (tab === 'daily') {
     return (
-      <SistemModuleLayout
+      <ReportsModuleShell
         segment="Günlük Raporlar"
         title="DL — Günlük Raporlar"
         description="In-house listeleri ve günlük özet raporları"
-        menuSearch="?tab=daily"
       >
-        <SistemReportTabs active="daily" />
         <ReportCategoryHub category="gunluk" label="Günlük Raporlar (InHouse Lists)" />
-      </SistemModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
@@ -696,7 +677,7 @@ export function ReportsPageClient({
           t={t}
           activePropertyName={activeProperty?.name}
           templates={templates}
-          editing={editing}
+          editing={designEditing}
           tplMsg={tplMsg}
           onStartNew={startNewTemplate}
           onEdit={setEditing}
@@ -742,12 +723,10 @@ export function ReportsPageClient({
       || p.name.toLowerCase().includes(propertyCode.toLowerCase()),
     ) ?? [];
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Raporlar › Konsolide"
         title={t('reports.consolidatedTitle')}
         description="Tüm tesisler — canlı doluluk özeti"
-        sideTitle={t('nav.reports')}
-        menuSearch={consolidatedMenuSearch}
       >
         <ReportsConsolidatedTabContent
           t={t}
@@ -756,117 +735,88 @@ export function ReportsPageClient({
           filteredProperties={filteredProperties}
           onRefresh={loadConsolidated}
         />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'acenta-analiz') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Raporlar › Acenta"
         title="Acenta Analiz"
         description="Gün, ay ve yıl bazlı acenta üretim analizi"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=acenta-analiz"
       >
         <AgencyAnalysisPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'market-rate') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Raporlar › Market Rate"
         title="Market Rate Analiz"
         description="Segment bazlı ADR ve gelir dağılımı"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=market-rate"
       >
         <MarketRateAnalysisPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'nationality') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Raporlar › Uyruk"
         title="Uyruk Raporu"
         description="Misafir uyruk dağılımı"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=nationality"
       >
         <NationalityReportPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (report === 'mgmt-eng') {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Raporlar › Yönetim"
         title="Management Report (Eng)"
         description="English management summary export"
-        sideTitle={t('nav.reports')}
-        menuSearch="?report=mgmt-eng"
       >
         <MgmtEngReportPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (category && !tab && !report && category !== 'banket' && category !== 'kathizmetleri' && activeCategory) {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb={`Raporlar › ${activeCategory.label}`}
         title={activeCategory.label}
         description="Kategori raporları — önizleme ve dışa aktarma"
-        sideTitle={t('nav.reports')}
-        menuSearch={`?category=${category}`}
       >
         <ReportCategoryHub category={category} label={activeCategory.label} />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
   if (category === 'kathizmetleri' && !tab) {
     return (
-      <ModuleLayout
+      <ReportsModuleShell
         breadcrumb="Kat Hizmetleri › HK Raporları"
         title="House Keeping Raporu"
         description="Canlı oda durumu ve HK raporları"
-        sideTitle={t('nav.reports')}
-        menuSearch="?category=kathizmetleri"
       >
         <HkStatusReportPanel />
-      </ModuleLayout>
+      </ReportsModuleShell>
     );
   }
 
-  const hubMenuSearch =
-    tab === 'consolidated' && propertyCode
-      ? consolidatedMenuSearch
-      : tab
-        ? `?tab=${tab}`
-        : category
-          ? `?category=${category}`
-          : '';
-
-  const hubReportTab: SistemReportTabId =
-    activeTab === 'design' || activeTab === 'forms' || activeTab === 'user' || activeTab === 'special'
-      ? activeTab
-      : 'hub';
-
   return (
-    <SistemModuleLayout
-      segment={activeTab === 'design' ? 'Rapor Tasarım' : activeCategory?.label ?? 'Raporlama Programı'}
-      title={activeTab === 'design' ? t('reports.design') : activeCategory?.label ?? t('reports.hub')}
-      description="Rapor kategorileri, şablon tasarımı ve gün sonu raporları."
-      menuSearch={hubMenuSearch}
+    <ReportsModuleShell
+      segment={activeCategory?.label ?? 'Raporlama Programı'}
+      title={activeCategory?.label ?? t('reports.hub')}
+      description="Rapor kategorileri, şablon tasarımı ve dışa aktarma."
     >
-      <SistemReportTabs active={hubReportTab} />
-
       {activeTab === 'hub' ? (
         <div className="roomio-reports-hub">
           <p className="roomio-page-desc" style={{ marginTop: 12 }}>
@@ -898,7 +848,8 @@ export function ReportsPageClient({
                         <td><strong>{r.name}</strong></td>
                         <td>{r.format}</td>
                         <td>
-                          <PermissionGate permission="reports.export">
+                          {/* TGA/TİS: korumalı resmi rapor — görüntüleme/export sadece sistem yöneticisi. */}
+                          <PermissionGate permission={isComplianceReportCategory(category) ? 'settings.admin' : 'reports.export'}>
                             <Button variant="secondary" href={exportHref('pdf', category)}>PDF</Button>
                             {' '}
                             <Button variant="secondary" href={exportHref('csv', category)}>CSV</Button>
@@ -945,7 +896,7 @@ export function ReportsPageClient({
           t={t}
           activePropertyName={activeProperty?.name}
           templates={templates}
-          editing={editing}
+          editing={designEditing}
           tplMsg={tplMsg}
           onStartNew={startNewTemplate}
           onEdit={setEditing}
@@ -988,6 +939,6 @@ export function ReportsPageClient({
         {' · '}
         <Link href="/settings">Kuruluş</Link>
       </p>
-    </SistemModuleLayout>
+    </ReportsModuleShell>
   );
 }

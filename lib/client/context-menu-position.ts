@@ -2,45 +2,97 @@ import { useLayoutEffect, useState, type RefObject } from 'react';
 
 export type ContextMenuAnchorY = 'cursor' | 'topBar';
 
+export type ContextMenuPosition = {
+  x: number;
+  y: number;
+  maxHeight: number;
+};
+
+const PAD = 8;
+const MIN_MENU_HEIGHT = 120;
+
 function topBarBottom(): number {
-  if (typeof document === 'undefined') return 8;
+  if (typeof document === 'undefined') return PAD;
   const bar =
     document.querySelector('.roomio-top-menu') ?? document.querySelector('.roomio-header--app');
-  return bar ? bar.getBoundingClientRect().bottom : 8;
+  return bar ? bar.getBoundingClientRect().bottom : PAD;
 }
 
-/** Sağ tık menüsünü viewport içinde tutar; topBar = üst menü çubuğunun altından açılır */
+function clampHorizontal(x: number, width: number): number {
+  let next = x;
+  if (next + width > window.innerWidth - PAD) {
+    next = Math.max(PAD, window.innerWidth - width - PAD);
+  }
+  return Math.max(PAD, next);
+}
+
+function fitMenuInViewport(
+  anchor: { x: number; y: number },
+  el: HTMLElement,
+  anchorY: ContextMenuAnchorY,
+): ContextMenuPosition {
+  const vh = window.innerHeight;
+  let y = anchorY === 'topBar' ? topBarBottom() : anchor.y;
+  let x = anchor.x;
+
+  el.style.maxHeight = '';
+  const width = el.offsetWidth;
+  const naturalHeight = el.scrollHeight;
+  x = clampHorizontal(x, width);
+
+  if (anchorY === 'topBar') {
+    const maxHeight = Math.max(MIN_MENU_HEIGHT, vh - y - PAD);
+    return { x, y, maxHeight };
+  }
+
+  const spaceBelow = vh - y - PAD;
+  const spaceAbove = y - PAD;
+  const openUp = naturalHeight > spaceBelow && spaceAbove > spaceBelow;
+
+  let maxHeight: number;
+  if (openUp) {
+    maxHeight = Math.max(MIN_MENU_HEIGHT, spaceAbove);
+    y = Math.max(PAD, y - Math.min(naturalHeight, maxHeight));
+  } else {
+    maxHeight = Math.max(MIN_MENU_HEIGHT, spaceBelow);
+  }
+
+  const usedHeight = Math.min(naturalHeight, maxHeight);
+  if (y + usedHeight > vh - PAD) {
+    y = Math.max(PAD, vh - usedHeight - PAD);
+    maxHeight = Math.max(MIN_MENU_HEIGHT, vh - y - PAD);
+  }
+
+  return { x, y, maxHeight };
+}
+
+/** Sağ tık menüsünü viewport içinde tutar; taşarsa maxHeight ile dikey kaydırma */
 export function useContextMenuPosition(
   anchor: { x: number; y: number } | null,
   menuRef: RefObject<HTMLElement | null>,
   anchorY: ContextMenuAnchorY = 'cursor',
-) {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+): ContextMenuPosition {
+  const [pos, setPos] = useState<ContextMenuPosition>({ x: 0, y: 0, maxHeight: 480 });
 
   useLayoutEffect(() => {
     if (!anchor) return;
     const el = menuRef.current;
-    const pad = 8;
-    let x = anchor.x;
-    let y = anchorY === 'topBar' ? topBarBottom() : anchor.y;
+    if (!el) return;
 
-    if (el) {
-      const rect = el.getBoundingClientRect();
-      if (x + rect.width > window.innerWidth - pad) {
-        x = Math.max(pad, window.innerWidth - rect.width - pad);
-      }
-      if (y + rect.height > window.innerHeight - pad) {
-        y = Math.max(pad, window.innerHeight - rect.height - pad);
-      }
-    }
+    const fit = () => {
+      setPos(fitMenuInViewport(anchor, el, anchorY));
+    };
 
-    if (x < pad) x = pad;
-    if (y < pad) y = pad;
-    setPos({ x, y });
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    window.addEventListener('resize', fit);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', fit);
+    };
     // `anchor` is deliberately destructured to x/y: callers often pass a
-    // freshly-created `{ x, y }` literal (e.g. from a mouse event) on every
-    // render, so depending on the object itself would re-run this effect
-    // even when the position hasn't actually changed.
+    // freshly-created `{ x, y }` literal on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchor?.x, anchor?.y, anchorY, menuRef]);
 

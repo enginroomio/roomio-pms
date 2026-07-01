@@ -138,6 +138,34 @@ const tests = [
       );
     },
   },
+  {
+    name: 'cloud backup config',
+    run: async () => {
+      const r = await adminJson('GET', '/api/cloud-backup/config');
+      return r.ok && typeof r.data.provider === 'string';
+    },
+  },
+  {
+    name: 'cloud backup manual run',
+    run: async () => {
+      const r = await adminJson('POST', '/api/cloud-backup/run', {});
+      return r.ok && r.data.ok === true && typeof r.data.runId === 'string';
+    },
+  },
+  {
+    name: 'cloud backup history',
+    run: async () => {
+      const r = await adminJson('GET', '/api/cloud-backup/history?limit=3');
+      return r.ok && Array.isArray(r.data.runs);
+    },
+  },
+  {
+    name: 'cloud backup remote prune',
+    run: async () => {
+      const r = await adminJson('POST', '/api/cloud-backup/prune', {});
+      return r.ok && typeof r.data.removed === 'number';
+    },
+  },
 ];
 
 let passed = 0;

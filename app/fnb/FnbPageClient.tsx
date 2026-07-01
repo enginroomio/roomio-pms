@@ -1,9 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ModuleLayout } from '@/components/ModuleLayout';
 import { useI18n } from '@/components/i18n/I18nProvider';
+import { BanketModuleShell } from '@/components/fnb/BanketModuleShell';
 import { BanketEventsPanel } from '@/components/fnb/BanketEventsPanel';
 import { BanketCatalogPanel } from '@/components/fnb/BanketCatalogPanel';
 import {
@@ -42,14 +41,9 @@ export default function FnbPageClient() {
 
   if (hub === 'banket' && !mode && !tab) {
     return (
-      <ModuleLayout
-        breadcrumb="Banket"
-        title="Banket Merkezi"
-        description={t('fnb.desc')}
-        sideTitle={t('fnb.sideTitle')}
-      >
+      <BanketModuleShell segment="Merkezi" title="Banket Merkezi" description={t('fnb.desc')}>
         <BanketHubPanel />
-      </ModuleLayout>
+      </BanketModuleShell>
     );
   }
 
@@ -61,22 +55,16 @@ export default function FnbPageClient() {
         ? CATALOG_LABELS[tab]
         : t('fnb.title.banket');
 
-  return (
-    <ModuleLayout
-      breadcrumb={t('fnb.breadcrumb')}
-      title={title}
-      description={t('fnb.desc')}
-      sideTitle={t('fnb.sideTitle')}
-    >
-      <nav className="roomio-tabs">
-        <Link href="/fnb" className={`roomio-tab${!mode && !tab ? ' is-active' : ''}`}>{t('fnb.tab.banket')}</Link>
-        <Link href="/fnb?tab=calendar" className={`roomio-tab${tab === 'calendar' ? ' is-active' : ''}`}>Ajanda</Link>
-        <Link href="/fnb?tab=agreements" className={`roomio-tab${tab === 'agreements' ? ' is-active' : ''}`}>Anlaşmalar</Link>
-        <Link href="/fnb?mode=quick" className={`roomio-tab${mode === 'quick' ? ' is-active' : ''}`}>{t('fnb.tab.quickPos')}</Link>
-        <Link href="/fnb?tab=definitions" className={`roomio-tab${tab === 'definitions' ? ' is-active' : ''}`}>Tanımlar</Link>
-        <Link href="/fnb?tab=reports" className={`roomio-tab${tab === 'reports' ? ' is-active' : ''}`}>Raporlar</Link>
-      </nav>
+  const segment = tab && CATALOG_LABELS[tab]
+    ? CATALOG_LABELS[tab]
+    : mode === 'quick'
+      ? 'Hızlı POS'
+      : mode === 'card-prep'
+        ? 'POS Kart Hazırlama'
+        : 'Rezervasyon';
 
+  return (
+    <BanketModuleShell segment={segment} title={title} description={t('fnb.desc')}>
       {mode ? (
         <FnbQuickPosPanel cardPrep={mode === 'card-prep'} />
       ) : tab === 'calendar' ? (
@@ -94,6 +82,6 @@ export default function FnbPageClient() {
       ) : (
         <BanketEventsPanel />
       )}
-    </ModuleLayout>
+    </BanketModuleShell>
   );
 }

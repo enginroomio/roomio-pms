@@ -21,6 +21,8 @@ export type ShowcaseScreen = {
   preview?: ShowcasePreviewKind;
   /** PNG referans görseli */
   mockupImage?: string;
+  /** Tarayıcı mockup HTML (public/) */
+  mockupHtml?: string;
 };
 
 const MOCKUP_IMAGES: Record<string, string> = {
@@ -36,11 +38,14 @@ const MOCKUP_IMAGES: Record<string, string> = {
   gunsonu: '/mockups/alternatif2-sapphire-dashboard.png',
 };
 
-const STEP_PREVIEWS: Record<string, { preview?: ShowcasePreviewKind; mockupImage?: string }> = {
+const STEP_PREVIEWS: Record<string, { preview?: ShowcasePreviewKind; mockupImage?: string; mockupHtml?: string }> = {
   'rez-grafik': { preview: 'elektra-f1' },
   'hk-hub': { preview: 'hk-ops' },
   'hk-rooms': { preview: 'hk-assign' },
-  'home-welcome': { mockupImage: MOCKUP_IMAGES.home },
+  'home-welcome': {
+    mockupImage: MOCKUP_IMAGES.home,
+    mockupHtml: '/mockups/otel-pms-orijinal-tarayici.html',
+  },
   'home-rack': { mockupImage: '/mockups/roomio-alt-1-operasyon-merkezi.png' },
   'sys-kurulus': { mockupImage: MOCKUP_IMAGES.sistem },
   'rez-new': { mockupImage: MOCKUP_IMAGES.rezervasyon },
@@ -68,6 +73,7 @@ export function buildShowcaseScreens(): ShowcaseScreen[] {
         screenRef: step.screenRef,
         preview: extra.preview,
         mockupImage: extra.mockupImage ?? phaseFallbackImage(phase.id),
+        mockupHtml: extra.mockupHtml,
       };
     }),
   );

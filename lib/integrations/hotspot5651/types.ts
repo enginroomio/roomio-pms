@@ -34,6 +34,8 @@ export type Hotspot5651Config = {
   /** Misafir captive portal (5651 kimlik doğrulama) */
   captivePortalEnabled: boolean;
   captivePortalUrl: string;
+  /** Tek misafir bilgisiyle eşzamanlı bağlanabilecek maksimum cihaz sayısı */
+  maxDevicesPerUser: number;
   /** RADIUS accounting webhook — FreeRADIUS / MikroTik */
   radiusWebhookEnabled: boolean;
   /** Arka plan otomasyonu */
@@ -180,6 +182,7 @@ export const DEFAULT_HOTSPOT_5651_CONFIG: Hotspot5651Config = {
   autoCloseOnCheckOut: true,
   captivePortalEnabled: true,
   captivePortalUrl: '/wifi',
+  maxDevicesPerUser: 5,
   radiusWebhookEnabled: true,
   automationEnabled: true,
   automationIntervalMinutes: 5,

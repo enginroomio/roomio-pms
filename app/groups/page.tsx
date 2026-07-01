@@ -1,13 +1,16 @@
-import { PageHeader } from '@/components/PageHeader';
+'use client';
+
 import { GroupManagementHub } from '@/components/groups/GroupManagementHub';
 import { Button } from '@/components/ui';
+import { RezervasyonModuleLayout } from '@/components/rezervasyon/RezervasyonModuleLayout';
 
 export default function GroupsPage() {
   return (
-    <PageHeader
-      breadcrumb="Rezervasyon > Grup & Blok"
+    <RezervasyonModuleLayout
+      segment="Toplu Rezervasyon"
       title="Grup & Blok Yönetimi"
       description="Opera / Fidelio uyumlu allotment, pickup takibi, release cutoff ve blok envanter yönetimi."
+      menuSearch=""
       actions={
         <Button variant="secondary" href="/reservations?tab=group">
           Rezervasyon sekmesi
@@ -15,6 +18,6 @@ export default function GroupsPage() {
       }
     >
       <GroupManagementHub />
-    </PageHeader>
+    </RezervasyonModuleLayout>
   );
 }

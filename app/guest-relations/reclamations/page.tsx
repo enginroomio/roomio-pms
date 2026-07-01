@@ -1,14 +1,16 @@
 'use client';
 
-import { GuestRelationsTabs } from '@/components/GuestRelationsTabs';
+import { GuestRelationsModuleShell } from '@/components/guest-relations/GuestRelationsModuleShell';
 import { ReclamationsPanel } from '@/components/guest-relations/ReclamationsPanel';
-import { PageHeader } from '@/components/PageHeader';
 
 export default function ReclamationsPage() {
   return (
-    <PageHeader breadcrumb="Misafir İlişkileri > Reklamasyon" title="Reklamasyon" description="Misafir tazminat ve reklamasyon süreç takibi.">
-      <GuestRelationsTabs />
+    <GuestRelationsModuleShell
+      segment="Reklamasyon"
+      title="Reklamasyon"
+      description="Misafir tazminat ve reklamasyon süreç takibi."
+    >
       <ReclamationsPanel />
-    </PageHeader>
+    </GuestRelationsModuleShell>
   );
 }

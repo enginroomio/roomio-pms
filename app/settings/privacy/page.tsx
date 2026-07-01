@@ -3,8 +3,8 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui';
+import { AyarlarModuleShell } from '@/components/settings/AyarlarModuleShell';
 import { roomioFetch } from '@/lib/client/api';
 import { appendAudit, maskEmail, maskPhone } from '@/lib/kvkk';
 
@@ -59,17 +59,14 @@ function PrivacyPageInner() {
 
   if (activeTab === 'sql') {
     return (
-      <PageHeader
-        breadcrumb="Ayarlar › Kayıt İzleme"
+      <AyarlarModuleShell
+        segment="Kayıt İzleme"
         title="Kayıt İzleme (Audit Log)"
         description="Sistem işlemleri ve SQL mesaj günlüğü — son 80 kayıt"
         actions={
-          <>
-            <Button variant="secondary" onClick={() => void loadLogs()} disabled={loading}>
-              {loading ? 'Yükleniyor…' : 'Yenile'}
-            </Button>
-            <Button variant="ghost" href="/settings">← Ayarlar</Button>
-          </>
+          <Button variant="secondary" onClick={() => void loadLogs()} disabled={loading}>
+            {loading ? 'Yükleniyor…' : 'Yenile'}
+          </Button>
         }
       >
         {tabs}
@@ -101,16 +98,15 @@ function PrivacyPageInner() {
             </tbody>
           </table>
         </div>
-      </PageHeader>
+      </AyarlarModuleShell>
     );
   }
 
   return (
-    <PageHeader
-      breadcrumb="Ayarlar › Gizlilik"
+    <AyarlarModuleShell
+      segment="Gizlilik"
       title="Gizlilik & Veri Talepleri"
       description="KVKK md. 11 — ilgili kişi hakları"
-      actions={<Button variant="ghost" href="/settings">← Ayarlar</Button>}
     >
       {tabs}
       <div className="roomio-card">
@@ -125,7 +121,7 @@ function PrivacyPageInner() {
         <Button onClick={requestExport}>Verilerimi İndir (talep)</Button>
         <Button variant="secondary" onClick={requestDelete}>Verilerimi Sil (talep)</Button>
       </div>
-    </PageHeader>
+    </AyarlarModuleShell>
   );
 }
 

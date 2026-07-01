@@ -44,6 +44,7 @@ type Props = {
   elektra?: boolean;
   onRefresh?: () => void;
   hkInteractive?: boolean;
+  hkPrimary?: boolean;
   savingRoom?: string | null;
   onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
   onRoomPmsContextMenu?: (cell: RackCell, event: React.MouseEvent) => void;
@@ -89,6 +90,7 @@ function RackPreviewCell({
   cell,
   ctx,
   hkInteractive,
+  hkPrimary,
   savingRoom,
   previewDetail,
   dragDrop,
@@ -100,6 +102,7 @@ function RackPreviewCell({
   cell: RackCell;
   ctx: RackDisplayContext;
   hkInteractive?: boolean;
+  hkPrimary?: boolean;
   savingRoom?: string | null;
   previewDetail?: boolean;
   dragDrop?: boolean;
@@ -111,7 +114,7 @@ function RackPreviewCell({
   const homeMenu = useHomeScreenMenu();
   const display = getRackDisplay(cell, ctx);
   const saving = savingRoom === cell.room.roomNo;
-  const hint = rackContextMenuHint(Boolean(homeMenu), hkInteractive);
+  const hint = rackContextMenuHint(Boolean(homeMenu), hkInteractive, hkPrimary);
   const canDrag = Boolean(dragDrop && !fixPositions && onReorder);
 
   return (
@@ -144,6 +147,7 @@ function RackPreviewCell({
         handleRackCellContextMenu(event, cell, {
           homeMenu,
           hkInteractive,
+          hkPrimary,
           onRoomContextMenu,
           onRoomPmsContextMenu,
         })
@@ -171,6 +175,7 @@ function RackCellButton({
   ctx,
   elektra = false,
   hkInteractive,
+  hkPrimary,
   dragDrop,
   fixPositions,
   onReorder,
@@ -183,6 +188,7 @@ function RackCellButton({
   ctx: RackDisplayContext;
   elektra?: boolean;
   hkInteractive?: boolean;
+  hkPrimary?: boolean;
   dragDrop?: boolean;
   fixPositions?: boolean;
   onReorder?: (fromRoomNo: string, toRoomNo: string) => void;
@@ -191,13 +197,13 @@ function RackCellButton({
 }) {
   const homeMenu = useHomeScreenMenu();
   const display = getRackDisplay(cell, ctx);
-  const hint = rackContextMenuHint(Boolean(homeMenu), hkInteractive);
+  const hint = rackContextMenuHint(Boolean(homeMenu), hkInteractive, hkPrimary);
   const canDrag = Boolean(dragDrop && !fixPositions && onReorder);
 
   return (
     <button
       type="button"
-      className={`roomio-nr-cell${selected ? ' is-selected' : ''}${elektra ? ' roomio-nr-cell--elektra' : ''}${canDrag ? ' is-draggable' : ''}`}
+      className={`roomio-nr-cell${selected ? ' is-selected' : ''}${elektra ? ' roomio-nr-cell--elektra' : ''}${hkInteractive ? ' roomio-nr-cell--hk-interactive' : ''}${canDrag ? ' is-draggable' : ''}`}
       draggable={canDrag}
       onDragStart={(event) => {
         if (!canDrag) return;
@@ -225,6 +231,7 @@ function RackCellButton({
         handleRackCellContextMenu(event, cell, {
           homeMenu,
           hkInteractive,
+          hkPrimary,
           onRoomContextMenu,
           onRoomPmsContextMenu,
         })
@@ -265,6 +272,7 @@ export function RoomRackGrid({
   elektra = false,
   onRefresh,
   hkInteractive = false,
+  hkPrimary = false,
   savingRoom = null,
   onRoomContextMenu,
   onRoomPmsContextMenu,
@@ -397,6 +405,7 @@ export function RoomRackGrid({
           ctx={displayCtx}
           elektra={elektra}
           hkInteractive={hkInteractive}
+          hkPrimary={hkPrimary}
           dragDrop={dragDrop}
           fixPositions={fixPositions}
           onReorder={(from, to) => reorderFloor(floorKey, roomNos, from, to)}
@@ -460,6 +469,7 @@ export function RoomRackGrid({
                     cell={cell}
                     ctx={displayCtx}
                     hkInteractive={hkInteractive}
+                    hkPrimary={hkPrimary}
                     savingRoom={savingRoom}
                     previewDetail={previewDetail}
                     dragDrop={dragDrop}

@@ -30,6 +30,8 @@ model Property {
   reservations          Reservation[]
   roomBlocks            RoomBlock[]
   eodArchives           EodArchive[]
+  eodGrSnapshots        EodGrSnapshot[]
+  cloudBackupRuns       CloudBackupRun[]
   identityNotifications IdentityNotification[]
   guestIdentityArchives GuestIdentityArchive[]
   invoices              Invoice[]
@@ -190,14 +192,58 @@ model RoomBlock {
 }
 
 model EodArchive {
-  id           String   @id
+  id           String           @id
   propertyId   String
   businessDate String
   closedAt     String
   closedBy     String
   occupancy    Int
   revenue      Float
-  property     Property @relation(fields: [propertyId], references: [id])
+  status       String           @default("closed")
+  generatedAt  String?
+  reportCount  Int              @default(0)
+  property     Property         @relation(fields: [propertyId], references: [id])
+  grSnapshots  EodGrSnapshot[]
+
+  @@unique([propertyId, businessDate])
+}
+
+model EodGrSnapshot {
+  id           String     @id
+  propertyId   String
+  archiveId    String
+  businessDate String
+  reportId     String
+  text         String
+  generatedAt  String
+  property     Property   @relation(fields: [propertyId], references: [id])
+  archive      EodArchive @relation(fields: [archiveId], references: [id], onDelete: Cascade)
+
+  @@unique([archiveId, reportId])
+  @@index([propertyId, businessDate])
+}
+
+model CloudBackupRun {
+  id               String    @id
+  propertyId       String?
+  businessDate     String?
+  provider         String
+  status           String
+  startedAt        String
+  finishedAt       String?
+  localPath        String?
+  remotePath       String?
+  sizeBytes        Int       @default(0)
+  simulated        Boolean   @default(false)
+  message          String?
+  includesDatabase Boolean   @default(true)
+  includesEod      Boolean   @default(false)
+  trigger          String    @default("manual")
+  property         Property? @relation(fields: [propertyId], references: [id])
+
+  @@index([startedAt])
+  @@index([propertyId, startedAt])
+  @@index([propertyId, businessDate])
 }
 
 model IdentityNotification {
@@ -223,6 +269,11 @@ model IdentityNotification {
   sentAt         String?
   egmRef         String?
   errorMessage   String?
+  // EGM/KBS çıkış (departure) bildirimi — check-out sonrası otomatik gönderim durumu
+  checkOutStatus       String?
+  checkOutSentAt       String?
+  checkOutEgmRef       String?
+  checkOutErrorMessage String?
   createdAt      String
   property       Property @relation(fields: [propertyId], references: [id])
 }

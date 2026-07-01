@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { QrCode, Receipt, UserCheck } from 'lucide-react';
 import { GuestServiceLinks } from '@/components/GuestServiceLinks';
 import { PROPERTY } from '@/lib/navigation';
-import type { GuestPortalSession } from '@/lib/guest-portal/types';
+import type { GuestPortalSession, GuestServiceLinksConfig } from '@/lib/guest-portal/types';
 
 function GuestPortal() {
   const params = useSearchParams();
@@ -18,10 +18,20 @@ function GuestPortal() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkInMsg, setCheckInMsg] = useState<string | null>(null);
+  const [serviceLinks, setServiceLinks] = useState<GuestServiceLinksConfig | undefined>(undefined);
 
   useEffect(() => {
     if (tokenParam) void loadSession({ token: tokenParam });
   }, [tokenParam]);
+
+  useEffect(() => {
+    void fetch('/api/guest-portal/services')
+      .then((r) => r.json())
+      .then((j: { ok: boolean; serviceLinks?: GuestServiceLinksConfig }) => {
+        if (j.serviceLinks) setServiceLinks(j.serviceLinks);
+      })
+      .catch(() => undefined);
+  }, []);
 
   async function loadSession(body: { token?: string; refNo?: string; email?: string }) {
     setLoading(true);
@@ -141,7 +151,7 @@ function GuestPortal() {
           </div>
         )}
 
-        <GuestServiceLinks />
+        <GuestServiceLinks enabled={serviceLinks} token={token || tokenParam} />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Anchor, Banknote, Bot, Building2, ClipboardCheck, Cloud, CreditCard, Dumbbell, Gamepad2, Headphones, Leaf, MessageCircle, Monitor, Package, Plane, ScanLine, ShoppingCart, Smartphone, Sparkles, Star, Ticket, Trophy, Truck, UtensilsCrossed, Users, FileText, Globe2, KeyRound, Phone, QrCode, Shield, TrendingUp, Wifi } from 'lucide-react';
+import { Anchor, Banknote, Bot, Building2, CalendarDays, ClipboardCheck, Cloud, ConciergeBell, CreditCard, Dumbbell, Gamepad2, Headphones, Leaf, MessageCircle, Monitor, Package, Plane, ScanLine, ShoppingCart, Smartphone, Sparkles, Star, Ticket, Trophy, Truck, UtensilsCrossed, Users, FileText, Globe2, KeyRound, Phone, QrCode, Server, Shield, TrendingUp, Wifi } from 'lucide-react';
 import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout';
 
 const INTEGRATIONS = [
@@ -19,6 +19,14 @@ const INTEGRATIONS = [
     description: 'Booking, Expedia, Google Hotel ve tur operatörleri — iki yönlü fiyat, müsaitlik ve rezervasyon senkronu.',
     href: '/settings/integrations/channel-manager',
     icon: Globe2,
+    status: 'Aktif',
+  },
+  {
+    id: 'ical-import',
+    title: 'OTA Takvim (iCal) Aktarım',
+    description: 'Booking.com / Expedia iCal linklerini kaydedin — tarih ve misafir adını rezervasyona aktarın.',
+    href: '/settings/integrations/ical-import',
+    icon: CalendarDays,
     status: 'Aktif',
   },
   {
@@ -182,6 +190,14 @@ const INTEGRATIONS = [
     status: 'Yeni',
   },
   {
+    id: 'room-service',
+    title: 'Oda Servisi',
+    description: 'Misafirler cep telefonundan oda servisi siparişi verir, mutfak/personel paneli karşılar.',
+    href: '/settings/integrations/room-service',
+    icon: ConciergeBell,
+    status: 'Yeni',
+  },
+  {
     id: 'virtual-pos',
     title: 'Sanal POS',
     description: 'Online ödeme tahsilatı — 3D Secure ve taksit desteği.',
@@ -222,10 +238,18 @@ const INTEGRATIONS = [
     status: 'Yeni',
   },
   {
+    id: 'cloud-backup',
+    title: 'Bulut Yedekleme',
+    description: 'Veritabanı ve gün sonu arşivini Google Drive, S3 veya webhook ile yedekleyin.',
+    href: '/settings/integrations/cloud-backup',
+    icon: Cloud,
+    status: 'Aktif',
+  },
+  {
     id: 'google-backup',
     title: 'Google BigQuery Yedekleme',
-    description: 'Otel verilerinin Google Cloud BigQuery üzerinde yedeklenmesi.',
-    href: '/settings/integrations/google-backup',
+    description: 'Eski BigQuery entegrasyonu — yeni bulut yedek sayfasına yönlendirilir.',
+    href: '/settings/integrations/cloud-backup',
     icon: Cloud,
     status: 'Yeni',
   },
@@ -278,6 +302,14 @@ const INTEGRATIONS = [
     status: 'Yeni',
   },
   {
+    id: 'elektra-server',
+    title: 'SNI Elektra v5 Sunucu',
+    description: 'TGA, TIH otomatik EGM, TESA ve Grandstream santral — Elektra v5 servis programları köprüsü.',
+    href: '/settings/integrations/elektra-server',
+    icon: Server,
+    status: 'Aktif',
+  },
+  {
     id: 'egm',
     title: 'EGM / KBS Kimlik Bildirimi',
     description: 'Konaklama kimlik bildirimi — check-in, rezervasyon ve 5651 uyumu.',
@@ -295,8 +327,8 @@ const INTEGRATIONS = [
   },
   {
     id: 'pbx',
-    title: 'Grandstream UCM6301 Santral',
-    description: 'HTTPS API + PMS API — check-in/out, oda durumu, uyandırma (port 8089).',
+    title: 'Grandstream / Gulf Stream Santral',
+    description: 'UCM6301 HTTPS API + PMS API — check-in/out, oda durumu, uyandırma (port 8089).',
     href: '/settings/integrations/pbx',
     icon: Phone,
     status: 'Aktif',
@@ -319,7 +351,7 @@ const INTEGRATIONS = [
   },
 ];
 
-const CORE_INTEGRATION_IDS = new Set(['egm', 'tesa', 'pbx', '5651']);
+const CORE_INTEGRATION_IDS = new Set(['elektra-server', 'egm', 'tesa', 'pbx', '5651']);
 
 const ORDERED_INTEGRATIONS = [
   ...INTEGRATIONS.filter((item) => CORE_INTEGRATION_IDS.has(item.id)),
@@ -331,7 +363,7 @@ export default function IntegrationsHubPage() {
     <IntegrationPageLayout
       segment="Servis Programları"
       title="Servis Programları & Entegrasyonlar"
-      description="TESA kapı sistemi, Grandstream santral, 5651 hotspot uyumluluğu ve yasal modüller."
+      description="SNI Elektra v5 sunucu, TESA kapı sistemi, Grandstream santral, 5651 hotspot uyumluluğu ve yasal modüller."
     >
       <div className="roomio-integration-grid">
         {ORDERED_INTEGRATIONS.map((item) => {

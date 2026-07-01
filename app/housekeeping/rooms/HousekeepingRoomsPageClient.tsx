@@ -3,8 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { HousekeepingRoomsClient } from '@/components/housekeeping/HousekeepingScreens';
 import { HkRoomControlPanel } from '@/components/housekeeping/HkRoomControlPanel';
-import { PageHeader } from '@/components/PageHeader';
-import { HousekeepingTabs } from '@/components/HousekeepingTabs';
+import { HousekeepingModuleShell } from '@/components/housekeeping/HousekeepingModuleShell';
 
 export default function HousekeepingRoomsPageClient() {
   const searchParams = useSearchParams();
@@ -12,14 +11,13 @@ export default function HousekeepingRoomsPageClient() {
 
   if (tab === 'control') {
     return (
-      <PageHeader
-        breadcrumb="Kat Hizmetleri > Oda Kontrolü"
+      <HousekeepingModuleShell
+        segment="Oda Kontrolü"
         title="House Keeping Oda Kontrolü"
         description="Temizlik sonrası süpervizör kontrol listesi — geçti/kaldı."
       >
-        <HousekeepingTabs />
         <HkRoomControlPanel />
-      </PageHeader>
+      </HousekeepingModuleShell>
     );
   }
 

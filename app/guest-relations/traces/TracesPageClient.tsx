@@ -1,9 +1,8 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { GuestRelationsTabs } from '@/components/GuestRelationsTabs';
+import { GuestRelationsModuleShell } from '@/components/guest-relations/GuestRelationsModuleShell';
 import { GuestTracesPanel } from '@/components/guest-relations/GuestTracesPanel';
-import { PageHeader } from '@/components/PageHeader';
 import type { TraceKind } from '@/lib/guest-relations/trace-meta';
 
 export default function TracesPageClient() {
@@ -25,12 +24,16 @@ export default function TracesPageClient() {
     tab === 'agenda' ? 'Ajanda'
       : type === 'wakeup' ? 'Uyandırma Listesi'
         : type === 'yellow' ? 'Sarı Notlar'
-          : view === 'notes' ? 'Not Gör'
-            : 'Takip Listesi (Traces)';
+          : type === 'note' ? 'Notlar'
+            : view === 'notes' ? 'Not Gör'
+              : 'Takip Listesi (Traces)';
 
   return (
-    <PageHeader breadcrumb={`Misafir İlişkileri > ${title}`} title={title} description="Misafir talepleri ve departman takipleri — kısayol: Alt+P">
-      <GuestRelationsTabs />
+    <GuestRelationsModuleShell
+      segment={title}
+      title={title}
+      description="Misafir talepleri ve departman takipleri — kısayol: Alt+P"
+    >
       <GuestTracesPanel
         filterKind={filterKind}
         view={panelView}
@@ -38,6 +41,6 @@ export default function TracesPageClient() {
         defaultTraceKind={type === 'wakeup' ? 'wakeup' : type === 'yellow' ? 'yellow' : action === 'new-note' ? 'note' : 'general'}
         showNotes={showNotes}
       />
-    </PageHeader>
+    </GuestRelationsModuleShell>
   );
 }

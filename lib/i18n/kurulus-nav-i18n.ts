@@ -53,7 +53,6 @@ export function findKurulusNavTitle(t: TFn, section: string | null, tab: string 
       : '/settings';
   const match = walkNav(KURULUS_NAV, href);
   if (match) return kurulusNavLabel(t, match);
-  if (!section && !tab) return t('nav.settings.title');
   return t('nav.kurulus.otel-bilgileri');
 }
 

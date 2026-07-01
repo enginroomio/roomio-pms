@@ -13,7 +13,7 @@ import { useI18n } from '@/components/i18n/I18nProvider';
 const MAX_CASCADE_COLUMNS = 5;
 const PANEL_EST_WIDTH = 480;
 
-type PanelPos = { top: number; left: number; flip: boolean };
+type PanelPos = { top: number; left: number; flip: boolean; maxHeight: number };
 
 function buildColumns(root: SidebarNavItem[], path: string[]): SidebarNavItem[][] {
   const columns: SidebarNavItem[][] = [root];
@@ -140,7 +140,8 @@ function panelPosition(anchor: HTMLElement): PanelPos {
   const rect = anchor.getBoundingClientRect();
   const flip = rect.left + PANEL_EST_WIDTH > window.innerWidth - 8;
   const left = flip ? Math.max(8, rect.right - PANEL_EST_WIDTH) : rect.left;
-  return { top: rect.bottom, left, flip };
+  const maxHeight = Math.max(200, window.innerHeight - rect.bottom - 8);
+  return { top: rect.bottom, left, flip, maxHeight };
 }
 
 export function TopMenuNav() {
@@ -214,7 +215,7 @@ export function TopMenuNav() {
       ? createPortal(
           <div
             className={`roomio-top-menu__panel roomio-top-menu__panel--portal${panelPos.flip ? ' is-flip-panel' : ''}`}
-            style={{ top: panelPos.top, left: panelPos.left }}
+            style={{ top: panelPos.top, left: panelPos.left, maxHeight: panelPos.maxHeight }}
             role="menu"
             onMouseEnter={cancelClose}
             onMouseLeave={scheduleClose}

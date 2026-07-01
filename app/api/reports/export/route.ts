@@ -10,6 +10,8 @@ import { hasPermission } from '@/lib/auth/roles';
 import { resolveApiUser } from '@/lib/auth/require-api-user';
 import { requestPropertyDenied } from '@/lib/auth/property-access';
 import { logApiError } from '@/lib/server/api-error';
+import { isComplianceReportCategory } from '@/lib/data/eod';
+import { appendAuditLog } from '@/lib/server/audit-log';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +30,30 @@ export async function GET(req: Request) {
   const format = searchParams.get('format') ?? 'csv';
   const category = searchParams.get('category');
   const report = searchParams.get('report') ?? 'reservations';
+
+  // TGA/TİS: resmi mevzuat raporları — mevzuata uygun gönderim öncesi sadece
+  // sistem yöneticisi görüntüleyebilir/dışa aktarabilir; tüm erişimler korumalı
+  // saklama (audit) altına alınır (bkz. lib/data/eod.ts isComplianceReportCategory).
+  if (isComplianceReportCategory(category) && !hasPermission(user, 'settings.admin')) {
+    return NextResponse.json(
+      { error: 'Yetkisiz — TGA/TİS raporları sadece sistem yöneticisi tarafından görüntülenebilir/dışa aktarılabilir' },
+      { status: 403 },
+    );
+  }
+  if (isComplianceReportCategory(category)) {
+    // Korumalı saklama: TGA/TİS rapor erişimleri (kim, ne zaman, hangi format) audit log'a yazılır.
+    await appendAuditLog(
+      {
+        module: 'reports',
+        action: 'compliance_report_export',
+        entityType: 'category_report',
+        entityId: `${category}:${report}`,
+        user: user.name,
+        detail: `${(category ?? '').toUpperCase()} raporu görüntülendi/dışa aktarıldı (${format})`,
+      },
+      propertyId,
+    ).catch(() => undefined);
+  }
 
   try {
     if (format === 'csv' || format === 'xlsx') {

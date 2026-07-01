@@ -51,21 +51,21 @@ export function ProductionDeployHub() {
 
   return (
     <>
-      <div className="roomio-kpi-strip">
+      <div className="roomio-kpi-grid">
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Geçen</span>
+          <span className="roomio-kpi-label">Geçen</span>
           <strong>{summary?.passed ?? '—'}</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Uyarı</span>
+          <span className="roomio-kpi-label">Uyarı</span>
           <strong>{summary?.warned ?? '—'}</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Başarısız</span>
+          <span className="roomio-kpi-label">Başarısız</span>
           <strong>{summary?.failed ?? '—'}</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Durum</span>
+          <span className="roomio-kpi-label">Durum</span>
           <strong>{readiness?.ok ? 'Hazır' : 'Eksik var'}</strong>
         </div>
       </div>

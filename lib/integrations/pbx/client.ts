@@ -1,6 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { effectiveSimulateWhenOffline } from '@/lib/integrations/live-mode';
+import {
+  callElektraService,
+  isElektraRelayEnabled,
+  loadElektraServerConfig,
+} from '@/lib/integrations/elektra-server/client';
 import { ucmLogin, ucmPmsAction } from '@/lib/integrations/pbx/https-api';
 import {
   DEFAULT_PBX_CONFIG,
@@ -100,9 +105,28 @@ export async function testPbxConnection(config = DEFAULT_PBX_CONFIG): Promise<Pb
   });
 }
 
+async function relayPbxThroughElektra(
+  action: 'checkin' | 'checkout' | 'room-status',
+  payload: Record<string, unknown>,
+): Promise<PbxActionResult | null> {
+  const elektra = await loadElektraServerConfig();
+  if (!isElektraRelayEnabled(elektra, 'pbx')) return null;
+  const result = await callElektraService('pbx', action, payload, elektra);
+  return {
+    ok: result.ok,
+    simulated: result.simulated,
+    message: result.message,
+    rawRequest: result.rawRequest,
+    rawResponse: result.rawResponse,
+  };
+}
+
 export async function pbxCheckIn(req: PbxGuestRequest, config?: PbxConfig): Promise<PbxActionResult> {
   const cfg = config ?? (await loadPbxConfig());
   const ext = mapExtension(req.roomNo, cfg.extensionMappings);
+  const relay = await relayPbxThroughElektra('checkin', { ...req, extension: ext, model: cfg.model });
+  if (relay) return relay;
+
   const { firstname, lastname } = splitGuestName(req.guestName);
   const payload = {
     checkin: {
@@ -154,6 +178,9 @@ export async function pbxCheckIn(req: PbxGuestRequest, config?: PbxConfig): Prom
 export async function pbxCheckOut(roomNo: string, config?: PbxConfig): Promise<PbxActionResult> {
   const cfg = config ?? (await loadPbxConfig());
   const ext = mapExtension(roomNo, cfg.extensionMappings);
+  const relay = await relayPbxThroughElektra('checkout', { roomNo, extension: ext });
+  if (relay) return relay;
+
   const payload = { checkout: { address: ext, room: ext, account: ext } };
 
   return withSession(cfg, async (cookie) => {
@@ -182,6 +209,9 @@ export async function pbxUpdateRoomStatus(
 ): Promise<PbxActionResult> {
   const cfg = config ?? (await loadPbxConfig());
   const ext = mapExtension(roomNo, cfg.extensionMappings);
+  const relay = await relayPbxThroughElektra('room-status', { roomNo, extension: ext, status });
+  if (relay) return relay;
+
   const payload = {
     update: {
       address: ext,

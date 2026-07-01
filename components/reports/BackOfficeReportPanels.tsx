@@ -88,6 +88,37 @@ export function ManagementSummaryPanel({ variant }: { variant: string }) {
           </table>
         </div>
       ) : null}
+      {variant === 'cube' ? (
+        <div className="roomio-card roomio-table-wrap" style={{ marginTop: 12 }}>
+          <p className="roomio-page-desc" style={{ marginBottom: 8 }}>
+            Segment × departman gelir matrisi — çok boyutlu kesit.
+          </p>
+          <table className="roomio-table">
+            <thead>
+              <tr>
+                <th>Segment</th>
+                <th>Oda</th>
+                <th>F&amp;B</th>
+                <th>Spa</th>
+                <th>Diğer</th>
+                <th>Toplam</th>
+              </tr>
+            </thead>
+            <tbody>
+              {DEMO_MARKET_DISTRIBUTION.map((row) => (
+                <tr key={row.segment}>
+                  <td><strong>{row.segment}</strong></td>
+                  <td>{formatMoney(row.revenue * 0.7)}</td>
+                  <td>{formatMoney(row.revenue * 0.18)}</td>
+                  <td>{formatMoney(row.revenue * 0.07)}</td>
+                  <td>{formatMoney(row.revenue * 0.05)}</td>
+                  <td>{formatMoney(row.revenue)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
     </div>
   );
 }

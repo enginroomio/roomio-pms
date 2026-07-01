@@ -91,6 +91,28 @@ async function runHotspotAutomationInner(): Promise<AutomationRunResult> {
     }
   }
 
+  // Çıkış günü 23:59'u geçmiş ama hâlâ "active" kalan WiFi bilgileri — manuel check-out
+  // yapılmamış olsa bile süresi geçen misafirleri otomatik olarak sistemden düşür.
+  if (config.autoCloseOnCheckOut) {
+    const expiredCredentials = (await loadHotspot5651Credentials()).filter(
+      (c) => c.active && new Date(c.expiresAt).getTime() <= Date.now(),
+    );
+    for (const cred of expiredCredentials) {
+      try {
+        const res = await handleGuestHotspotSession({
+          action: 'close',
+          roomNo: cred.roomNo,
+          guestName: cred.guestName,
+          reservationId: cred.reservationId ?? undefined,
+        });
+        if (res.ok) result.closed += res.closed ?? 1;
+        else result.errors.push(`Süre dolumu ${cred.roomNo}: ${res.message}`);
+      } catch (e) {
+        result.errors.push(`Süre dolumu ${cred.roomNo}: ${e instanceof Error ? e.message : 'hata'}`);
+      }
+    }
+  }
+
   await saveHotspot5651Config({
     ...config,
     lastAutomationRun: result.at,

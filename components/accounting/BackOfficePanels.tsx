@@ -280,9 +280,40 @@ export function BudgetPanel({ view }: { view: BudgetView }) {
     );
   }
 
-  const lines = view === 'budget-dept'
-    ? DEMO_BUDGET_LINES
-    : DEMO_BUDGET_LINES;
+  if (view === 'budget-dept') {
+    const sorted = [...DEMO_BUDGET_LINES].sort(
+      (a, b) => (b.actual - b.budget) - (a.actual - a.budget),
+    );
+    return (
+      <div className="roomio-card" style={{ marginTop: 16, padding: 20 }}>
+        <h2 className="roomio-card-title">{title}</h2>
+        <p className="roomio-page-desc" style={{ marginTop: 8 }}>
+          Departman bazlı bütçe / gerçekleşen karşılaştırması — fark büyüklüğüne göre sıralı.
+        </p>
+        <div className="roomio-kpi-grid" style={{ marginTop: 16 }}>
+          {sorted.map((row) => {
+            const diff = row.actual - row.budget;
+            const pct = row.budget > 0 ? Math.round((row.actual / row.budget) * 100) : 0;
+            return (
+              <div className="roomio-kpi" key={row.id}>
+                <span className="roomio-kpi-label">{row.department}</span>
+                <strong className="roomio-kpi-value">{formatMoney(row.actual)}</strong>
+                <span className={diff < 0 ? 'roomio-text-warn' : 'roomio-text-ok'}>
+                  {pct}% · {formatMoney(diff)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="roomio-form-actions" style={{ marginTop: 16 }}>
+          <Button variant="ghost" href="/accounting?tab=budget-hotel">Otel bütçe</Button>
+          <Button variant="ghost" href="/accounting?tab=budget">Bütçe girişleri</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const lines = DEMO_BUDGET_LINES;
 
   return (
     <div className="roomio-card roomio-table-wrap" style={{ marginTop: 16 }}>

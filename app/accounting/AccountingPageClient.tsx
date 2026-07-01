@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ModuleLayout } from '@/components/ModuleLayout';
+import { ArkaBuroModuleShell } from '@/components/accounting/ArkaBuroModuleShell';
 import { Button } from '@/components/ui';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { roomioFetch } from '@/lib/client/api';
@@ -17,7 +17,7 @@ import {
   ProformaInvoicesPanel,
 } from '@/components/accounting/BackOfficePanels';
 import { ArkaBuroHubPanel } from '@/components/accounting/ArkaBuroHubPanel';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { normalizeAccountingTab } from '@/lib/navigation/menu-route-params';
 
 type Invoice = {
@@ -64,14 +64,6 @@ export default function AccountingPageClient() {
   const isCariCards = rawTab === 'cari';
   const isCariPayments = rawTab === 'cari-payments';
   const isBankCards = rawTab === 'bank-cards';
-  const menuSearch = useMemo(() => {
-    const params = new URLSearchParams();
-    if (hub) params.set('hub', hub);
-    if (rawTab) params.set('tab', rawTab);
-    if (searchParams.get('new') === '1') params.set('new', '1');
-    const qs = params.toString();
-    return qs ? `?${qs}` : '';
-  }, [hub, rawTab, searchParams]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [stock, setStock] = useState<StockItem[]>([]);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
@@ -262,15 +254,13 @@ export default function AccountingPageClient() {
 
   if (hub === 'arkaburo' && !rawTab) {
     return (
-      <ModuleLayout
+      <ArkaBuroModuleShell
         breadcrumb="ArkaBüro"
         title="Arka Büro"
         description="Fatura, cari, bütçe ve yönetim raporları."
-        sideTitle="Arka Büro"
-        menuSearch="?hub=arkaburo"
       >
         <ArkaBuroHubPanel />
-      </ModuleLayout>
+      </ArkaBuroModuleShell>
     );
   }
 
@@ -283,12 +273,10 @@ export default function AccountingPageClient() {
               : t('accounting.title');
 
   return (
-    <ModuleLayout
+    <ArkaBuroModuleShell
       breadcrumb="ArkaBüro › Muhasebe"
       title={pageTitle}
       description="Prisma DB — fatura, cari, stok CRUD."
-      sideTitle={t('accounting.title')}
-      menuSearch={menuSearch}
     >
       <nav className="roomio-tabs">
         {tabs.map((t) => (
@@ -536,6 +524,6 @@ export default function AccountingPageClient() {
       ) : null}
 
       {tab === 'fiscal' && !isBankCards ? <AccountingFiscalPanel /> : null}
-    </ModuleLayout>
+    </ArkaBuroModuleShell>
   );
 }

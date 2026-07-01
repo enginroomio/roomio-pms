@@ -86,3 +86,18 @@ export async function requireIntegrationIdentityRead(
 ): Promise<{ user: SessionUser } | NextResponse> {
   return requireApiAnyPermission(req, ['settings.admin', 'identity.read']);
 }
+
+/**
+ * Uyumluluk (5651 / EGM / TGA / TIS) ham kayıt görüntüleme ve export'u —
+ * sadece settings.admin (sistem yöneticisi). `/settings/compliance/*` sayfaları
+ * zaten `canAccessRoute` üzerinden settings.admin'e kilitli (lib/auth/roles.ts);
+ * bu fonksiyon aynı kısıtı API katmanında da zorunlu kılar, böylece ilgili API
+ * uç noktasına doğrudan erişen oturum sahibi kullanıcılar sayfa kısıtını
+ * atlayamaz. `requireIntegrationAdminRead`'in aksine herhangi bir oturumu değil,
+ * yalnızca admin iznini kabul eder.
+ */
+export async function requireComplianceExportRead(
+  req: Request,
+): Promise<{ user: SessionUser } | NextResponse> {
+  return requireApiPermission(req, 'settings.admin');
+}

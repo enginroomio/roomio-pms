@@ -7,6 +7,7 @@ import { GuestServiceLinks } from '@/components/GuestServiceLinks';
 import { PROPERTY } from '@/lib/navigation';
 import type { OnlineBookingResult } from '@/lib/booking-engine/types';
 import type { CarbonOffsetQuote } from '@/lib/integrations/carbon/types';
+import type { GuestServiceLinksConfig } from '@/lib/guest-portal/types';
 
 type AvailDay = {
   date: string;
@@ -53,6 +54,16 @@ function BookingForm() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<OnlineBookingResult | null>(null);
   const [carbonOffer, setCarbonOffer] = useState<CarbonOffsetQuote | null>(null);
+  const [serviceLinks, setServiceLinks] = useState<GuestServiceLinksConfig | undefined>(undefined);
+
+  useEffect(() => {
+    void fetch('/api/guest-portal/services')
+      .then((r) => r.json())
+      .then((j: { ok: boolean; serviceLinks?: GuestServiceLinksConfig }) => {
+        if (j.serviceLinks) setServiceLinks(j.serviceLinks);
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (!result?.ok) {
@@ -162,7 +173,7 @@ function BookingForm() {
             <a className="roomio-btn roomio-btn--primary" href={guestUrl} style={{ marginTop: 16 }}>
               Misafir Portalına Git
             </a>
-            <GuestServiceLinks />
+            <GuestServiceLinks enabled={serviceLinks} token={result.guestPortalToken} />
           </div>
         </div>
       </div>

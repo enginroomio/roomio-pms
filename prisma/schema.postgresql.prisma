@@ -30,6 +30,8 @@ model Property {
   reservations          Reservation[]
   roomBlocks            RoomBlock[]
   eodArchives           EodArchive[]
+  eodGrSnapshots        EodGrSnapshot[]
+  cloudBackupRuns       CloudBackupRun[]
   identityNotifications IdentityNotification[]
   guestIdentityArchives GuestIdentityArchive[]
   invoices              Invoice[]
@@ -108,14 +110,8 @@ model User {
   properties         UserProperty[]
 }
 
-/**
- * Redis yoksa (tek-instance/SQLite deploy — projenin varsayılan senaryosu)
- * JWT revoke/session takibi için DB tabanlı fallback. `lib/auth/session-store.ts`
- * Redis yapılandırılmışsa onu kullanır, yoksa bu tabloları kullanır — böylece
- * "şifre değiştir / oturumları sonlandır" gibi işlemler Redis olmadan da
- * sessizce no-op kalmaz. `expiresAt` token'ın kendi süresiyle aynıdır;
- * süresi geçmiş kayıtlar periyodik olarak temizlenir (bkz. cleanupExpired*).
- */
+// Redis yoksa (tek-instance/SQLite deploy) JWT revoke/session takibi için DB tabanlı fallback.
+// Bkz. lib/auth/session-store.ts — süresi geçmiş kayıtlar periyodik temizlenir.
 model RevokedToken {
   jti       String @id
   expiresAt String
@@ -134,14 +130,7 @@ model UserSession {
   @@index([expiresAt])
 }
 
-/**
- * Self-service şifre sıfırlama için tek kullanımlık token. `token` alanı
- * kriptografik olarak rastgele üretilir (bkz. lib/server/password-reset.ts)
- * ve hash'lenmeden saklanır — bu kasıtlı bir tasarım: token zaten
- * tek-kullanımlık ve kısa ömürlü (1 saat), JWT secret'ları gibi uzun ömürlü
- * bir kimlik bilgisi değil. `usedAt` set edildiğinde token bir daha
- * kullanılamaz (tekrar oynatma/replay koruması).
- */
+// Self-service şifre sıfırlama için tek kullanımlık token. Bkz. lib/server/password-reset.ts
 model PasswordResetToken {
   token     String  @id
   userId    String
@@ -203,14 +192,58 @@ model RoomBlock {
 }
 
 model EodArchive {
-  id           String   @id
+  id           String           @id
   propertyId   String
   businessDate String
   closedAt     String
   closedBy     String
   occupancy    Int
   revenue      Float
-  property     Property @relation(fields: [propertyId], references: [id])
+  status       String           @default("closed")
+  generatedAt  String?
+  reportCount  Int              @default(0)
+  property     Property         @relation(fields: [propertyId], references: [id])
+  grSnapshots  EodGrSnapshot[]
+
+  @@unique([propertyId, businessDate])
+}
+
+model EodGrSnapshot {
+  id           String     @id
+  propertyId   String
+  archiveId    String
+  businessDate String
+  reportId     String
+  text         String     @db.Text
+  generatedAt  String
+  property     Property   @relation(fields: [propertyId], references: [id])
+  archive      EodArchive @relation(fields: [archiveId], references: [id], onDelete: Cascade)
+
+  @@unique([archiveId, reportId])
+  @@index([propertyId, businessDate])
+}
+
+model CloudBackupRun {
+  id               String    @id
+  propertyId       String?
+  businessDate     String?
+  provider         String
+  status           String
+  startedAt        String
+  finishedAt       String?
+  localPath        String?
+  remotePath       String?
+  sizeBytes        Int       @default(0)
+  simulated        Boolean   @default(false)
+  message          String?
+  includesDatabase Boolean   @default(true)
+  includesEod      Boolean   @default(false)
+  trigger          String    @default("manual")
+  property         Property? @relation(fields: [propertyId], references: [id])
+
+  @@index([startedAt])
+  @@index([propertyId, startedAt])
+  @@index([propertyId, businessDate])
 }
 
 model IdentityNotification {
@@ -236,6 +269,11 @@ model IdentityNotification {
   sentAt         String?
   egmRef         String?
   errorMessage   String?
+  // EGM/KBS çıkış (departure) bildirimi — check-out sonrası otomatik gönderim durumu
+  checkOutStatus       String?
+  checkOutSentAt       String?
+  checkOutEgmRef       String?
+  checkOutErrorMessage String?
   createdAt      String
   property       Property @relation(fields: [propertyId], references: [id])
 }
@@ -985,14 +1023,7 @@ model UserGroup {
   userCount           Int      @default(0)
   description         String?
   permissions         String?
-  /**
-   * Rolün varsayılan izinlerinden ÇIKARILACAK izinler (JSON dizi, Permission[]).
-   * `permissions` alanı sadece EKLEME yapar (union); bu alan ise rolün
-   * varsayılanından daha kısıtlı özel roller oluşturmayı sağlar (örn. "kasa
-   * erişimi olmayan resepsiyonist"). Bkz. lib/server/user-groups.ts ->
-   * resolvePermissionsForUser. Boş/null ise hiçbir izin çıkarılmaz (eski
-   * davranışla tam geriye dönük uyumlu).
-   */
+  // Rol varsayılan izinlerinden çıkarılacak izinler (JSON dizi). Bkz. user-groups.ts
   excludedPermissions String?
   active              Boolean  @default(true)
   property            Property @relation(fields: [propertyId], references: [id])

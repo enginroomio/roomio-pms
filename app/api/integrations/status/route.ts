@@ -31,12 +31,20 @@ import { loadQualityConfig } from '@/lib/integrations/quality/client';
 import { loadCarbonConfig } from '@/lib/integrations/carbon/client';
 import { loadFairEventsConfig } from '@/lib/integrations/fair-events/client';
 import { loadGoogleBackupConfig, testGoogleBackupConnection } from '@/lib/integrations/google-backup/client';
+import { loadCloudBackupConfig } from '@/lib/server/cloud-backup/config';
+import { listCloudBackupHistory, testCloudBackupConnection } from '@/lib/server/cloud-backup/service';
 import { loadFixedAssetsConfig } from '@/lib/integrations/fixed-assets/client';
 import { loadProcurementConfig } from '@/lib/integrations/procurement/client';
 import { loadWebsiteBuilderConfig } from '@/lib/integrations/website-builder/client';
 import { loadGymConfig } from '@/lib/integrations/gym/client';
 import { loadEdispatchConfig, testEdispatchConnection } from '@/lib/integrations/e-dispatch/client';
 import { loadIdReaderConfig, testIdReaderConnection } from '@/lib/integrations/id-reader/client';
+import { loadElektraServerConfig, testElektraServerConnection } from '@/lib/integrations/elektra-server/client';
+import { loadTgaConfig, testTgaConnection } from '@/lib/integrations/tga/client';
+import { loadTihConfig, testTihConnection } from '@/lib/integrations/tih/client';
+import { loadTisConfig, testTisConnection } from '@/lib/integrations/tis/client';
+import { loadRoomServiceConfig, listRoomServiceOrders } from '@/lib/integrations/room-service/client';
+import { loadIcalFeeds } from '@/lib/integrations/ical-import/client';
 import { isIntegrationLiveMode } from '@/lib/integrations/live-mode';
 
 export const dynamic = 'force-dynamic';
@@ -56,8 +64,13 @@ export async function GET(req: Request) {
     restaurantBookingConfig, virtualPosConfig, virtualPosTest,
     liteMobileConfig, qualityConfig, carbonConfig,
     fairEventsConfig, googleBackupConfig, googleBackupTest,
+    cloudBackupConfig, cloudBackupTest, cloudBackupHistory,
     fixedAssetsConfig, procurementConfig, websiteBuilderConfig, gymConfig,
     edispatchConfig, edispatchTest, idReaderConfig, idReaderTest,
+    elektraServerConfig, elektraServerTest, tgaConfig, tgaTest, tihConfig, tihTest,
+    tisConfig, tisTest,
+    roomServiceConfig, roomServiceOrders,
+    icalFeeds,
   ] = await Promise.all([
     loadTesaConfig(),
     testTesaConnection(),
@@ -104,6 +117,9 @@ export async function GET(req: Request) {
     loadFairEventsConfig(),
     loadGoogleBackupConfig(),
     loadGoogleBackupConfig().then((cfg) => testGoogleBackupConnection(cfg)),
+    loadCloudBackupConfig(),
+    loadCloudBackupConfig().then((cfg) => testCloudBackupConnection(cfg)),
+    listCloudBackupHistory(3),
     loadFixedAssetsConfig(),
     loadProcurementConfig(),
     loadWebsiteBuilderConfig(),
@@ -112,11 +128,49 @@ export async function GET(req: Request) {
     loadEdispatchConfig().then((cfg) => testEdispatchConnection(cfg)),
     loadIdReaderConfig(),
     loadIdReaderConfig().then((cfg) => testIdReaderConnection(cfg)),
+    loadElektraServerConfig(),
+    loadElektraServerConfig().then((cfg) => testElektraServerConnection(cfg)),
+    loadTgaConfig(),
+    loadTgaConfig().then((cfg) => testTgaConnection(cfg)),
+    loadTihConfig(),
+    loadTihConfig().then((cfg) => testTihConnection(cfg)),
+    loadTisConfig(),
+    loadTisConfig().then((cfg) => testTisConnection(cfg)),
+    loadRoomServiceConfig(),
+    listRoomServiceOrders(),
+    loadIcalFeeds(),
   ]);
 
   return NextResponse.json({
     ok: true,
     mode: isIntegrationLiveMode() ? 'live' : 'simulated',
+    elektraServer: {
+      enabled: elektraServerConfig.enabled,
+      host: elektraServerConfig.host,
+      port: elektraServerConfig.port,
+      hotelCode: elektraServerConfig.hotelCode,
+      relayServices: elektraServerConfig.relayServices,
+      connection: elektraServerTest,
+    },
+    tga: {
+      enabled: tgaConfig.enabled,
+      useElektraServer: tgaConfig.useElektraServer,
+      autoSubmitDaily: tgaConfig.autoSubmitDaily,
+      connection: tgaTest,
+    },
+    tih: {
+      enabled: tihConfig.enabled,
+      useElektraServer: tihConfig.useElektraServer,
+      autoSubmitOnCheckIn: tihConfig.autoSubmitOnCheckIn,
+      connection: tihTest,
+    },
+    tis: {
+      enabled: tisConfig.enabled,
+      useElektraServer: tisConfig.useElektraServer,
+      autoSubmitDaily: tisConfig.autoSubmitDaily,
+      autoSubmitMonthly: tisConfig.autoSubmitMonthly,
+      connection: tisTest,
+    },
     tesa: {
       enabled: tesaConfig.enabled,
       host: tesaConfig.host,
@@ -145,6 +199,15 @@ export async function GET(req: Request) {
       syncIntervalMinutes: channelConfig.syncIntervalMinutes,
       autoConfirmReservations: channelConfig.autoConfirmReservations,
       connection: channelTest,
+    },
+    icalImport: {
+      feedCount: icalFeeds.feeds.length,
+      channels: [...new Set(icalFeeds.feeds.map((f) => f.channel))],
+      lastPulledAt: icalFeeds.feeds.reduce<string | null>((latest, f) => {
+        if (!f.lastPulledAt) return latest;
+        if (!latest || f.lastPulledAt > latest) return f.lastPulledAt;
+        return latest;
+      }, null),
     },
     bookingEngine: {
       enabled: bookingConfig.enabled,
@@ -298,6 +361,15 @@ export async function GET(req: Request) {
       backupIntervalHours: googleBackupConfig.backupIntervalHours,
       connection: googleBackupTest,
     },
+    cloudBackup: {
+      enabled: cloudBackupConfig.enabled,
+      provider: cloudBackupConfig.provider,
+      backupIntervalHours: cloudBackupConfig.backupIntervalHours,
+      backupOnEodClose: cloudBackupConfig.backupOnEodClose,
+      backupAfterDailyArchive: cloudBackupConfig.backupAfterDailyArchive,
+      connection: cloudBackupTest,
+      recentRuns: cloudBackupHistory,
+    },
     fixedAssets: {
       enabled: fixedAssetsConfig.enabled,
       assetCount: fixedAssetsConfig.assets.length,
@@ -329,6 +401,12 @@ export async function GET(req: Request) {
       deviceCount: idReaderConfig.devices.filter((d) => d.enabled).length,
       autoFillOnCheckIn: idReaderConfig.autoFillOnCheckIn,
       connection: idReaderTest,
+    },
+    roomService: {
+      enabled: roomServiceConfig.enabled,
+      serviceHours: `${roomServiceConfig.serviceHoursStart}–${roomServiceConfig.serviceHoursEnd}`,
+      openOrders: roomServiceOrders.filter((o) => o.status !== 'delivered' && o.status !== 'cancelled').length,
+      totalOrders: roomServiceOrders.length,
     },
   });
 }

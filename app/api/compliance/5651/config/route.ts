@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { requireIntegrationAdminRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
+import { requireComplianceExportRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
 import { loadHotspot5651Config, saveHotspot5651Config } from '@/lib/integrations/hotspot5651/server';
 import type { Hotspot5651Config } from '@/lib/integrations/hotspot5651/types';
 
 export async function GET(req: Request) {
-    const auth = await requireIntegrationAdminRead(req);
+  // bridgeSecret + MikroTik/UniFi parolalarını döndürür — sadece sistem yöneticisi.
+  const auth = await requireComplianceExportRead(req);
   if (auth instanceof NextResponse) return auth;
 
   return NextResponse.json(await loadHotspot5651Config());

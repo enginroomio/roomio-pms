@@ -1,42 +1,63 @@
-import { loadJsonConfig, saveJsonConfig } from '@/lib/integrations/_config-store';
-import { isIntegrationLiveMode } from '@/lib/integrations/live-mode';
-import { probeLiveGateway } from '@/lib/integrations/live-probe';
+import { loadCloudBackupConfig, saveCloudBackupConfig } from '@/lib/server/cloud-backup/config';
+import { runCloudBackup, testCloudBackupConnection } from '@/lib/server/cloud-backup/service';
+import type { CloudBackupConfig } from '@/lib/integrations/cloud-backup/types';
 import { DEFAULT_GOOGLE_BACKUP_CONFIG, type GoogleBackupConfig, type GoogleBackupResult } from '@/lib/integrations/google-backup/types';
 
-const FILE = 'google-backup-config.json';
+/** Eski Google BigQuery ayarlarını yeni bulut yedek yapılandırmasına taşır. */
+function migrateGoogleConfig(legacy: GoogleBackupConfig) {
+  return {
+    enabled: legacy.enabled,
+    backupIntervalHours: legacy.backupIntervalHours,
+    retainRemoteDays: legacy.retainDays,
+    googleDrive: {
+      folderId: legacy.datasetId,
+      serviceAccountEmail: legacy.serviceAccountEmail,
+    },
+    simulateWhenOffline: legacy.simulateWhenOffline,
+  };
+}
 
 export async function loadGoogleBackupConfig(): Promise<GoogleBackupConfig> {
-  return loadJsonConfig(FILE, DEFAULT_GOOGLE_BACKUP_CONFIG);
+  const { loadJsonConfig } = await import('@/lib/integrations/_config-store');
+  return loadJsonConfig('google-backup-config.json', DEFAULT_GOOGLE_BACKUP_CONFIG);
 }
 
 export async function saveGoogleBackupConfig(config: GoogleBackupConfig): Promise<void> {
-  await saveJsonConfig(FILE, config);
+  const { saveJsonConfig } = await import('@/lib/integrations/_config-store');
+  await saveJsonConfig('google-backup-config.json', config);
+  const cloud = await loadCloudBackupConfig();
+  await saveCloudBackupConfig({
+    ...cloud,
+    ...migrateGoogleConfig(config),
+    provider: 'google-drive',
+  });
 }
 
 export async function runGoogleBackup(config = DEFAULT_GOOGLE_BACKUP_CONFIG): Promise<GoogleBackupResult> {
-  if (!config.enabled) return { ok: false, message: 'Google yedekleme kapalı' };
-  const simulated = !isIntegrationLiveMode() || config.simulateWhenOffline;
-  if (!simulated && process.env.ROOMIO_GOOGLE_BACKUP_GATEWAY_URL?.trim()) {
-    const probe = await probeLiveGateway('ROOMIO_GOOGLE_BACKUP_GATEWAY_URL', 'Google BigQuery');
-    if (!probe.ok) return { ok: false, message: probe.message, simulated: false };
-  }
-  const rowsExported = config.tables.length * 1250;
+  const cloud = await loadCloudBackupConfig();
+  const merged: CloudBackupConfig = {
+    ...cloud,
+    ...migrateGoogleConfig(config),
+    enabled: config.enabled || cloud.enabled,
+    provider: 'google-drive',
+  };
+  const result = await runCloudBackup({ trigger: 'legacy-google', config: merged });
   return {
-    ok: true,
-    rowsExported,
-    simulated,
-    message: simulated
-      ? `Simülasyon: ${rowsExported} satır BigQuery'ye aktarıldı (${config.datasetId})`
-      : `${rowsExported} satır yedeklendi`,
+    ok: result.ok,
+    message: result.message,
+    rowsExported: result.includesEod ? 51 : undefined,
+    simulated: result.simulated,
   };
 }
 
 export async function testGoogleBackupConnection(config = DEFAULT_GOOGLE_BACKUP_CONFIG) {
-  if (!config.enabled) return { ok: false, message: 'Google yedekleme kapalı' };
-  const simulated = !isIntegrationLiveMode() || config.simulateWhenOffline;
-  if (!simulated && process.env.ROOMIO_GOOGLE_BACKUP_GATEWAY_URL?.trim()) {
-    const probe = await probeLiveGateway('ROOMIO_GOOGLE_BACKUP_GATEWAY_URL', 'Google BigQuery');
-    return { ok: probe.ok, simulated: probe.simulated, message: probe.message };
-  }
-  return { ok: true, simulated: true, message: `Simülasyon — ${config.projectId || 'BigQuery'} hazır` };
+  const cloud = await loadCloudBackupConfig();
+  const merged: CloudBackupConfig = {
+    ...cloud,
+    ...migrateGoogleConfig(config),
+    enabled: true,
+    provider: 'google-drive',
+  };
+  const result = await testCloudBackupConnection(merged);
+  return { ok: result.ok, simulated: result.simulated, message: result.message };
 }

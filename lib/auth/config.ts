@@ -14,3 +14,6 @@ export function isDemoAuthEnabled(): boolean {
 
 export const AUTH_COOKIE = 'roomio-token';
 export const TOKEN_MAX_AGE_SEC = 8 * 3600;
+
+/** Demo modda API isteklerinde seçili rol (yalnızca ROOMIO_AUTH_REQUIRED=0) */
+export const DEMO_ROLE_HEADER = 'x-roomio-demo-role';

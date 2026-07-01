@@ -5,7 +5,7 @@ import { Button } from '@/components/ui';
 
 const PANEL_LINKS = [
   { label: 'Ana Sayfa', href: '/', desc: 'Dashboard ve oda rack özeti' },
-  { label: 'Ana Ekran Dizayn', href: '/tools/theme', desc: 'Tema ve panel düzeni sihirbazı' },
+  { label: 'Ana Ekran Dizayn', href: '/?design=1', desc: 'Ana sayfa şablonları ve panel düzeni sihirbazı' },
   { label: 'Oda Rack', href: '/rooms', desc: 'Tam ekran oda planı (F12)' },
   { label: 'Günlük Oda Durumu', href: '/?view=daily-status', desc: 'Kat ve durum özeti' },
   { label: 'HK Oda Listesi', href: '/housekeeping/rooms', desc: 'Kat hizmetleri oda listesi' },

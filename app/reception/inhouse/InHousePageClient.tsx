@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PageHeader } from '@/components/PageHeader';
-import { ReceptionTabs } from '@/components/ReceptionTabs';
+import { ReceptionModuleShell } from '@/components/reception/ReceptionModuleShell';
 import { StatusBadge, Button } from '@/components/ui';
 import { ReceptionLoading } from '@/components/reception/ReceptionLoading';
 import { ReceptionSubTabContent, receptionSubTabMeta } from '@/components/reception/ReceptionSubTabContent';
@@ -40,26 +39,24 @@ export default function InHousePageClient() {
 
   if (action === 'share') {
     return (
-      <PageHeader breadcrumb="Resepsiyon > Share Oda" title="Share Oda Oluşturma" description="Aynı odayı paylaşan ikinci misafir kaydı.">
-        <ReceptionTabs />
+      <ReceptionModuleShell segment="Share Oda" title="Share Oda Oluşturma" description="Aynı odayı paylaşan ikinci misafir kaydı.">
         <ShareRoomPanel />
-      </PageHeader>
+      </ReceptionModuleShell>
     );
   }
 
   if (tab && INHOUSE_TABS.has(tab)) {
     const meta = receptionSubTabMeta(tab);
     return (
-      <PageHeader breadcrumb={`Resepsiyon > ${meta.title}`} title={meta.title} description={meta.description}>
-        <ReceptionTabs />
+      <ReceptionModuleShell segment={meta.title} title={meta.title} description={meta.description}>
         <ReceptionSubTabContent tab={tab} />
-      </PageHeader>
+      </ReceptionModuleShell>
     );
   }
 
   return (
-    <PageHeader
-      breadcrumb="Resepsiyon > Konaklayanlar Listesi"
+    <ReceptionModuleShell
+      segment="Konaklayanlar"
       title="Konaklayanlar"
       description="Tesiste konaklayan misafirler — oda, bakiye ve çıkış tarihi."
       actions={
@@ -75,7 +72,6 @@ export default function InHousePageClient() {
         </Button>
       }
     >
-      <ReceptionTabs />
       <ReceptionLoading loading={loading} error={error} folioError={folioError} />
       <div className="roomio-card roomio-filter-bar">
         <input
@@ -122,6 +118,6 @@ export default function InHousePageClient() {
         </table>
         <p className="roomio-table-footer">{guests.length} konaklayan</p>
       </div>
-    </PageHeader>
+    </ReceptionModuleShell>
   );
 }

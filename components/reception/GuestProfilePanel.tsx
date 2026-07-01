@@ -103,30 +103,30 @@ export function GuestProfilePanel({ initialQuery = '' }: { initialQuery?: string
 
       {profile ? (
         <>
-          <div className="roomio-kpi-strip">
+          <div className="roomio-kpi-grid">
             <div className="roomio-kpi">
-              <span className="roomio-kpi__label">Segment</span>
+              <span className="roomio-kpi-label">Segment</span>
               <strong>{profile.segment}</strong>
             </div>
             <div className="roomio-kpi">
-              <span className="roomio-kpi__label">Konaklama</span>
+              <span className="roomio-kpi-label">Konaklama</span>
               <strong>{profile.visits}</strong>
             </div>
             <div className="roomio-kpi">
-              <span className="roomio-kpi__label">Toplam gece</span>
+              <span className="roomio-kpi-label">Toplam gece</span>
               <strong>{profile.totalNights}</strong>
             </div>
             <div className="roomio-kpi">
-              <span className="roomio-kpi__label">Folyo harcama</span>
+              <span className="roomio-kpi-label">Folyo harcama</span>
               <strong>{profile.totalSpend.toLocaleString('tr-TR')} {profile.currency}</strong>
             </div>
             <div className="roomio-kpi">
-              <span className="roomio-kpi__label">VIP</span>
+              <span className="roomio-kpi-label">VIP</span>
               <strong>{profile.isVip ? profile.vipLevel ?? 'Evet' : 'Hayır'}</strong>
             </div>
             {profile.loyalty ? (
               <div className="roomio-kpi">
-                <span className="roomio-kpi__label">Sadakat</span>
+                <span className="roomio-kpi-label">Sadakat</span>
                 <strong>{profile.loyalty.tierName} · {profile.loyalty.points} puan</strong>
               </div>
             ) : null}

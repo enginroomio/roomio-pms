@@ -1,5 +1,11 @@
 import type { HomeLayout } from '@/lib/dashboard/home-layout';
-import { DEFAULT_HOME_LAYOUT, normalizeHomeLayout } from '@/lib/dashboard/home-layout';
+import {
+  DEFAULT_HOME_LAYOUT,
+  loadHomeLayout,
+  normalizeHomeLayout,
+  saveHomeLayout,
+  shouldMigrateToOrijinalLayout,
+} from '@/lib/dashboard/home-layout';
 
 export type HomeUserTemplate = {
   id: string;
@@ -12,9 +18,11 @@ export type HomeUserTemplate = {
 const ARCHIVE_KEY = 'roomio:home-archive-v1';
 const DEFAULT_TEMPLATE_KEY = 'roomio:home-default-template-id';
 const ARCHIVE_VERSION_KEY = 'roomio:home-archive-version';
-const ARCHIVE_VERSION = 1;
+const LAYOUT_MIGRATION_KEY = 'roomio:home-layout-migration-v';
+const LAYOUT_MIGRATION_VERSION = 1;
+const ARCHIVE_VERSION = 3;
 
-/** Ana ekran dizayn arşivi — 10 hazır şablon */
+/** Ana ekran dizayn arşivi — hazır şablonlar (orijinal mockup dahil) */
 export const BUILTIN_HOME_ARCHIVE: Omit<HomeUserTemplate, 'id' | 'createdAt'>[] = [
   {
     name: 'Ana Ekran Klasik',
@@ -136,6 +144,43 @@ export const BUILTIN_HOME_ARCHIVE: Omit<HomeUserTemplate, 'id' | 'createdAt'>[] 
       showKpiStrip: false,
     },
   },
+  {
+    name: 'Orijinal · Operasyon Paneli',
+    description:
+      'Otel PMS orijinal mockup — emerald hızlı işlemler, koyu karşılama bandı, geniş rack ve operasyon uyarıları.',
+    layout: {
+      presetId: 'orijinal-operasyon',
+      panelOrder: ['quickActions', 'welcome', 'alerts', 'rack'],
+      hiddenPanels: ['portfolio', 'kpiStrip'],
+      theme: 'orijinal',
+      rackExpanded: true,
+      showKpiStrip: false,
+    },
+  },
+  {
+    name: 'Orijinal · Kompakt',
+    description: 'Orijinal düzenin sıkı varyantı — operasyon uyarıları açık, şube/KPI gizli.',
+    layout: {
+      presetId: 'orijinal-kompakt',
+      panelOrder: ['quickActions', 'welcome', 'alerts', 'rack'],
+      hiddenPanels: ['portfolio', 'kpiStrip'],
+      theme: 'orijinal',
+      rackExpanded: true,
+      showKpiStrip: false,
+    },
+  },
+  {
+    name: 'Orijinal · Klasik',
+    description: 'En sade orijinal görünüm — hızlı işlemler, günlük özet ve oda rack.',
+    layout: {
+      presetId: 'orijinal-klasik',
+      panelOrder: ['quickActions', 'welcome', 'rack'],
+      hiddenPanels: ['portfolio', 'kpiStrip', 'alerts'],
+      theme: 'orijinal',
+      rackExpanded: true,
+      showKpiStrip: false,
+    },
+  },
 ];
 
 function seedArchive(): HomeUserTemplate[] {
@@ -157,6 +202,33 @@ function readArchiveVersion(): number {
 function writeArchiveVersion(version: number): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(ARCHIVE_VERSION_KEY, String(version));
+}
+
+export function migrateHomeLayoutForOrijinalDefault(): HomeLayout {
+  if (typeof window === 'undefined') return DEFAULT_HOME_LAYOUT;
+
+  const migrated = Number(localStorage.getItem(LAYOUT_MIGRATION_KEY) || 0);
+  if (migrated >= LAYOUT_MIGRATION_VERSION) return loadHomeLayout();
+
+  localStorage.setItem(LAYOUT_MIGRATION_KEY, String(LAYOUT_MIGRATION_VERSION));
+
+  let raw: Partial<HomeLayout> | null = null;
+  try {
+    const stored = localStorage.getItem('roomio:home-layout-v1');
+    raw = stored ? (JSON.parse(stored) as Partial<HomeLayout>) : null;
+  } catch {
+    raw = null;
+  }
+
+  if (!shouldMigrateToOrijinalLayout(raw)) return loadHomeLayout();
+
+  const next = normalizeHomeLayout(DEFAULT_HOME_LAYOUT);
+  saveHomeLayout(next);
+  if (!getDefaultHomeTemplateId()) {
+    const builtinId = getBuiltinTemplateIdByPreset('orijinal-operasyon');
+    if (builtinId) setDefaultHomeTemplateId(builtinId);
+  }
+  return next;
 }
 
 export function loadHomeArchive(): HomeUserTemplate[] {
@@ -229,6 +301,12 @@ export function setDefaultHomeTemplateId(id: string | null): void {
 
 export function findHomeTemplate(id: string): HomeUserTemplate | undefined {
   return loadHomeArchive().find((t) => t.id === id);
+}
+
+export function getBuiltinTemplateIdByPreset(presetId: string): string | undefined {
+  const idx = BUILTIN_HOME_ARCHIVE.findIndex((t) => t.layout.presetId === presetId);
+  if (idx < 0) return undefined;
+  return `builtin-${idx}`;
 }
 
 export function getBuiltinHomeTemplateName(id: string): string | undefined {

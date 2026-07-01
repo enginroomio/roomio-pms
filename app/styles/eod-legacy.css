@@ -1,0 +1,279 @@
+/* Elektra Gün Sonu Raporları — legacy Windows görünümü */
+
+.roomio-eod-legacy {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  border: 2px solid #808080;
+  background: #ece9d8;
+  font-family: Tahoma, 'MS Sans Serif', 'Segoe UI', sans-serif;
+  font-size: 11px;
+  color: #000;
+  min-height: 640px;
+  box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #404040;
+}
+
+.roomio-eod-legacy__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  background: linear-gradient(180deg, #3a6ea5 0%, #1f4f82 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+}
+
+.roomio-eod-legacy__titlebar-icon {
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, #fff 0%, #c0d8f0 100%);
+  border: 1px solid #0a246a;
+}
+
+.roomio-eod-legacy__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 4px;
+  background: linear-gradient(180deg, #fff 0%, #ece9d8 100%);
+  border-bottom: 1px solid #808080;
+}
+
+.roomio-eod-legacy__tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 22px;
+  padding: 1px 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #000;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.roomio-eod-legacy__tool:hover {
+  border-color: #316ac5;
+  background: linear-gradient(180deg, #fff 0%, #d8e4f8 100%);
+}
+
+.roomio-eod-legacy__tool-icon {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #808080;
+  background: #f0f0f0;
+  display: inline-block;
+}
+
+.roomio-eod-legacy__tool-icon[data-icon='save'] {
+  background: linear-gradient(180deg, #fff 0%, #d4d0c8 100%);
+}
+
+.roomio-eod-legacy__zoom-field {
+  margin-left: 4px;
+}
+
+.roomio-eod-legacy__zoom-field input {
+  width: 34px;
+  height: 20px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  font: inherit;
+  font-size: 11px;
+  text-align: center;
+  padding: 0 2px;
+}
+
+.roomio-eod-legacy__zoom-field--page input {
+  width: 28px;
+}
+
+.roomio-eod-legacy__body {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  flex: 1 1 auto;
+  min-height: 520px;
+  border-top: 1px solid #fff;
+}
+
+.roomio-eod-legacy__nav {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #f0f0f0;
+  border-right: 1px solid #808080;
+}
+
+.roomio-eod-legacy__date-row {
+  padding: 4px;
+  border-bottom: 1px solid #bbb;
+  background: #ece9d8;
+}
+
+.roomio-eod-legacy__date-input {
+  width: 100%;
+  height: 22px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  font: inherit;
+  font-size: 11px;
+  padding: 0 6px;
+  text-align: center;
+}
+
+.roomio-eod-legacy__categories {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px;
+  max-height: 180px;
+  overflow: auto;
+  border-bottom: 1px solid #bbb;
+  background: #ece9d8;
+}
+
+.roomio-eod-legacy__cat {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 3px 6px;
+  border: 1px solid #808080;
+  background: linear-gradient(180deg, #fff 0%, #ece9d8 100%);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.roomio-eod-legacy__cat:hover {
+  border-color: #316ac5;
+}
+
+.roomio-eod-legacy__cat.is-active {
+  border-color: #000;
+  background: #c0d8f8;
+  font-weight: 700;
+}
+
+.roomio-eod-legacy__tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 160px;
+  background: #fff;
+}
+
+.roomio-eod-legacy__tree-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 2px 6px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roomio-eod-legacy__tree-item:hover {
+  background: #e8f0fe;
+}
+
+.roomio-eod-legacy__tree-item.is-selected {
+  background: #000080;
+  color: #fff;
+}
+
+.roomio-eod-legacy__archive-hint {
+  padding: 4px;
+  border-top: 1px solid #bbb;
+  background: #ece9d8;
+  font-size: 10px;
+}
+
+.roomio-eod-legacy__archive-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.roomio-eod-legacy__archive-day {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 2px 4px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.roomio-eod-legacy__archive-day:hover {
+  text-decoration: underline;
+}
+
+.roomio-eod-legacy__preview {
+  overflow: auto;
+  background: #808080;
+  padding: 8px;
+}
+
+.roomio-eod-legacy__preview-text {
+  margin: 0;
+  padding: 12px 14px;
+  min-height: 100%;
+  background: #fff;
+  color: #000;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  line-height: 1.22;
+  white-space: pre;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.roomio-eod-legacy__statusbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 2px 8px;
+  border-top: 1px solid #808080;
+  background: #ece9d8;
+  font-size: 10px;
+}
+
+.roomio-eod-legacy__status-link {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #000080;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.roomio-eod-legacy__status-link:hover {
+  color: #0000cc;
+}
+
+@media (max-width: 900px) {
+  .roomio-eod-legacy__body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .roomio-eod-legacy__nav {
+    max-height: 280px;
+  }
+}

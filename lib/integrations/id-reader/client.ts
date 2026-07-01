@@ -1,5 +1,5 @@
 import { loadJsonConfig, saveJsonConfig } from '@/lib/integrations/_config-store';
-import { isIntegrationLiveMode } from '@/lib/integrations/live-mode';
+import { effectiveSimulateWhenOffline } from '@/lib/integrations/live-mode';
 import { probeLiveGateway } from '@/lib/integrations/live-probe';
 import { validateIdScanDocument } from '@/lib/integrations/id-reader/validate';
 import {
@@ -132,10 +132,11 @@ export async function saveIdReaderConfig(config: IdReaderConfig): Promise<void> 
 export async function testIdReaderConnection(config = DEFAULT_ID_READER_CONFIG): Promise<IdScanResult> {
   if (!config.enabled) return { ok: false, message: 'Kimlik okuyucu kapalı' };
   const active = config.devices.filter((d) => d.enabled).length;
-  const simulated = !isIntegrationLiveMode() || config.simulateWhenOffline;
-  if (!simulated && gatewayBaseUrl()) {
+  if (gatewayBaseUrl()) {
     const probe = await probeLiveGateway('ROOMIO_ID_READER_GATEWAY_URL', 'Kimlikokur');
-    return { ok: probe.ok, simulated: probe.simulated, message: probe.message };
+    if (!probe.simulated || !effectiveSimulateWhenOffline(config.simulateWhenOffline)) {
+      return { ok: probe.ok, simulated: probe.simulated, message: probe.message };
+    }
   }
   return { ok: true, simulated: true, message: `Simülasyon — ${active} cihaz hazır` };
 }
@@ -152,11 +153,12 @@ export async function scanIdDocument(
     : config.devices.find((d) => d.enabled);
   if (!device) return { ok: false, message: 'Aktif cihaz bulunamadı' };
 
-  const simulated = !isIntegrationLiveMode() || config.simulateWhenOffline;
-  const useGateway = !simulated && Boolean(gatewayBaseUrl());
-
-  if (useGateway) {
-    return scanViaKimlikokurGateway(device, reservationId);
+  if (gatewayBaseUrl()) {
+    const result = await scanViaKimlikokurGateway(device, reservationId);
+    if (result.ok || !effectiveSimulateWhenOffline(config.simulateWhenOffline)) {
+      return result;
+    }
+    // Gateway unreachable/failed and simulation fallback is allowed — fall through to demo.
   }
 
   const data = demoDocument();

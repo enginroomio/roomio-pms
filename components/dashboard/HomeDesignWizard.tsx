@@ -12,6 +12,7 @@ import {
   type HomeThemeId,
 } from '@/lib/dashboard/home-layout';
 import type { HomeUserTemplate } from '@/lib/dashboard/home-templates';
+import { BUILTIN_HOME_ARCHIVE } from '@/lib/dashboard/home-templates';
 
 type Props = {
   open: boolean;
@@ -33,10 +34,14 @@ const THEME_OPTIONS = Object.keys(HOME_THEME_LABELS) as HomeThemeId[];
 
 function activeLabel(layout: HomeLayout, archive: HomeUserTemplate[]): string {
   if (layout.presetId === 'custom') return 'Özel düzen';
-  const tpl = archive.find((t) => t.id === layout.presetId);
+  const tpl = archive.find((t) => t.id === layout.presetId || t.layout.presetId === layout.presetId);
   if (tpl) return tpl.name;
   const preset = HOME_PRESETS.find((p) => p.id === layout.presetId);
   return preset?.label ?? layout.presetId;
+}
+
+function archiveTemplateActive(layout: HomeLayout, tpl: HomeUserTemplate): boolean {
+  return layout.presetId === tpl.id || layout.presetId === tpl.layout.presetId;
 }
 
 export function HomeDesignWizard({
@@ -112,13 +117,13 @@ export function HomeDesignWizard({
 
         <section className="roomio-home-wizard__presets">
           <h3>
-            <Archive size={16} aria-hidden /> Arşiv — 10 hazır ana ekran dizaynı
+            <Archive size={16} aria-hidden /> Arşiv — {BUILTIN_HOME_ARCHIVE.length} hazır ana ekran dizaynı
           </h3>
           <div className="roomio-home-wizard__archive">
             {archive.map((tpl) => (
               <div
                 key={tpl.id}
-                className={`roomio-home-wizard__archive-item${layout.presetId === tpl.id ? ' is-active' : ''}${defaultTemplateId === tpl.id ? ' is-default' : ''}`}
+                className={`roomio-home-wizard__archive-item${archiveTemplateActive(layout, tpl) ? ' is-active' : ''}${defaultTemplateId === tpl.id ? ' is-default' : ''}`}
               >
                 <button type="button" className="roomio-home-wizard__archive-main" onClick={() => onApplyTemplate(tpl.id)}>
                   <strong>{tpl.name}</strong>
@@ -246,7 +251,7 @@ export function HomeDesignWizard({
             </span>
             <button type="button" className="roomio-home-wizard__reset" onClick={onResetTemplate}>
               <RotateCcw size={14} aria-hidden />
-              Ana Ekran Şablonuna dön
+              Varsayılan şablona dön
             </button>
           </div>
           <button type="button" className="roomio-btn roomio-btn--primary roomio-btn--sm" onClick={onClose}>

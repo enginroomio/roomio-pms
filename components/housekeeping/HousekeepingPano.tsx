@@ -120,6 +120,7 @@ export function HousekeepingPano({
                         hkInteractive && onRoomContextMenu
                           ? (event) => {
                               event.preventDefault();
+                              event.stopPropagation();
                               onRoomContextMenu(room.roomNo, event);
                             }
                           : undefined

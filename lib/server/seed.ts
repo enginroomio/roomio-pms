@@ -5,6 +5,7 @@ import { DEMO_ROOM_BLOCKS } from '@/lib/data/room-blocks';
 import { PROPERTY } from '@/lib/navigation';
 import { DEFAULT_PROPERTY_ID, DEMO_SECONDARY_PROPERTY_ID, DEMO_USER_PROPERTY_IDS } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
+import { archiveEodDayPackage } from '@/lib/server/eod-archive-package';
 
 const DEMO_PASSWORD = 'roomio123';
 const PROP_IST = DEFAULT_PROPERTY_ID;
@@ -139,8 +140,8 @@ async function performSeed(): Promise<boolean> {
     }),
     prisma.eodArchive.createMany({
       data: [
-        { id: 'arc-1', propertyId: PROP_IST, businessDate: '2026-06-17', closedAt: '2026-06-17 23:58', closedBy: 'Murat S.', occupancy: 72, revenue: 284500 },
-        { id: 'arc-2', propertyId: PROP_IST, businessDate: '2026-06-16', closedAt: '2026-06-16 23:55', closedBy: 'Selin K.', occupancy: 68, revenue: 251200 },
+        { id: 'arc-1', propertyId: PROP_IST, businessDate: '2026-06-17', closedAt: '2026-06-17 23:58', closedBy: 'Murat S.', occupancy: 72, revenue: 284500, status: 'closed', reportCount: 51 },
+        { id: 'arc-2', propertyId: PROP_IST, businessDate: '2026-06-16', closedAt: '2026-06-16 23:55', closedBy: 'Selin K.', occupancy: 68, revenue: 251200, status: 'closed', reportCount: 51 },
       ],
     }),
     prisma.identityNotification.createMany({
@@ -213,12 +214,35 @@ async function performSeed(): Promise<boolean> {
       })),
     }),
   ]);
+    await ensureDemoGrSnapshots();
     return true;
   } catch (err) {
     if ((await prisma.property.count()) > 0) return false;
     const code = err && typeof err === 'object' && 'code' in err ? String((err as { code: string }).code) : '';
     if (code === 'P2002' || code === 'P2003') return false;
     throw err;
+  }
+}
+
+async function ensureDemoGrSnapshots(): Promise<void> {
+  const expectedSnapshots = 51;
+  const archives = await prisma.eodArchive.findMany({
+    where: { id: { in: ['arc-1', 'arc-2'] } },
+    select: { id: true, propertyId: true, businessDate: true, closedBy: true },
+  });
+  for (const arc of archives) {
+    const existing = await prisma.eodGrSnapshot.count({ where: { archiveId: arc.id } });
+    if (existing >= expectedSnapshots) continue;
+    try {
+      const result = await archiveEodDayPackage(arc.id, arc.businessDate, arc.closedBy, arc.propertyId);
+      console.log(`[seed] EOD arşiv: ${arc.id} → ${result.totalCount} rapor (önceki: ${existing})`);
+      await prisma.eodArchive.update({
+        where: { id: arc.id },
+        data: { reportCount: result.totalCount, generatedAt: result.manifest.generatedAt },
+      });
+    } catch {
+      // Demo snapshot üretimi başarısız olsa da seed devam etsin
+    }
   }
 }
 

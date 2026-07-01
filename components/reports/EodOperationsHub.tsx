@@ -6,10 +6,11 @@ import { Button } from '@/components/ui';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { useI18n } from '@/components/i18n/I18nProvider';
 import { roomioFetch } from '@/lib/client/api';
-import { DEMO_EOD_REPORTS, type EodArchive, type EodReport } from '@/lib/data/eod';
+import { type EodArchive, type EodReport } from '@/lib/data/eod';
 import { formatMoney } from '@/lib/data/reservations';
 import { NightAuditPanel } from '@/components/reports/NightAuditPanel';
 import { NightAuditPreClosePanel } from '@/components/reports/NightAuditPreClosePanel';
+import { EodLegacyReportWorkspace } from '@/components/reports/EodLegacyReportWorkspace';
 
 type ExtraCharge = { code: string; name: string; price: number; priceUnit: string; active: boolean };
 type ProfileIssue = { room: string; guest: string; issue: string };
@@ -25,9 +26,15 @@ export function EodOperationsHub({ action }: { action: string | null }) {
   const active = action ?? 'fetch';
   const [businessDate, setBusinessDate] = useState('2026-06-18');
   const [eodArchive, setEodArchive] = useState<EodArchive[]>([]);
-  const [reports, setReports] = useState<EodReport[]>(DEMO_EOD_REPORTS);
+  const [reports, setReports] = useState<EodReport[]>([
+    { id: 'pkg-audit', businessDate, generatedAt: '—', type: 'Gece Denetim Paketi', status: 'pending' },
+    { id: 'pkg-gr', businessDate, generatedAt: '—', type: 'Elektra GR Paketi (49 rapor)', status: 'pending' },
+  ]);
   const [eodMsg, setEodMsg] = useState<string | null>(null);
   const [eodBusy, setEodBusy] = useState(false);
+  const [backupHistory, setBackupHistory] = useState<
+    { id: string; startedAt: string; provider: string; status: string; sizeBytes: number }[]
+  >([]);
   const [eodCanClose, setEodCanClose] = useState(true);
   const [extraCharges, setExtraCharges] = useState<ExtraCharge[]>([]);
   const [profileIssues, setProfileIssues] = useState<ProfileIssue[]>([]);
@@ -58,6 +65,15 @@ export function EodOperationsHub({ action }: { action: string | null }) {
     ]);
   }, [active]);
 
+  useEffect(() => {
+    if (active !== 'backup') return;
+    void roomioFetch('/api/cloud-backup/history?limit=5')
+      .then((r) => r.json())
+      .then((j: { runs?: { id: string; startedAt: string; provider: string; status: string; sizeBytes: number }[] }) =>
+        setBackupHistory(j.runs ?? []),
+      );
+  }, [active]);
+
   const title =
     active === 'close' ? 'Günü Kapat'
       : active === 'archive' ? 'Eski Gün Sonu Raporları'
@@ -76,9 +92,22 @@ export function EodOperationsHub({ action }: { action: string | null }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ closedBy: 'Arda Yılmaz' }),
     });
-    const j = (await r.json()) as { ok?: boolean; newBusinessDate?: string; error?: string; pdfBase64?: string };
+    const j = (await r.json()) as {
+      ok?: boolean;
+      newBusinessDate?: string;
+      error?: string;
+      pdfBase64?: string;
+      archivedReports?: { gr: number; total: number };
+      cloudBackup?: { ok?: boolean; message?: string; skipped?: boolean; sizeBytes?: number };
+    };
     if (r.ok && j.ok) {
-      setEodMsg(`Gün kapatıldı. Yeni iş günü: ${j.newBusinessDate}`);
+      const archiveMsg = j.archivedReports
+        ? ` ${j.archivedReports.gr} GR + gece denetim arşivlendi (toplam ${j.archivedReports.total}).`
+        : '';
+      const backupMsg = j.cloudBackup?.message
+        ? ` Bulut yedek: ${j.cloudBackup.message}${j.cloudBackup.sizeBytes ? ` (${Math.round(j.cloudBackup.sizeBytes / 1024)} KB)` : ''}.`
+        : '';
+      setEodMsg(`Gün kapatıldı. Yeni iş günü: ${j.newBusinessDate}.${archiveMsg}${backupMsg}`);
       if (j.newBusinessDate) setBusinessDate(j.newBusinessDate);
       if (j.pdfBase64) {
         const blob = new Blob([Uint8Array.from(atob(j.pdfBase64), (c) => c.charCodeAt(0))], { type: 'application/pdf' });
@@ -94,21 +123,84 @@ export function EodOperationsHub({ action }: { action: string | null }) {
     setEodBusy(false);
   }
 
+  useEffect(() => {
+    setReports((prev) =>
+      prev.map((r) => (r.id.startsWith('pkg-') ? { ...r, businessDate } : r)),
+    );
+  }, [businessDate]);
+
   async function fetchAllReports() {
     setEodBusy(true);
     setEodMsg(null);
+    const generatedAt = new Date().toISOString().replace('T', ' ').slice(0, 19);
     try {
-      const res = await roomioFetch('/api/eod/night-audit-package', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-      const j = (await res.json()) as { ok?: boolean; error?: string };
-      if (res.ok && j.ok !== false) {
-        setReports((prev) => prev.map((r) => ({ ...r, status: 'ready' as const })));
-        setEodMsg('Gün sonu rapor paketi hazırlandı.');
+      const [grRes, auditRes] = await Promise.all([
+        roomioFetch('/api/eod/gr-package', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ businessDate, persist: true }),
+        }),
+        roomioFetch('/api/eod/night-audit-package', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ businessDate }),
+        }),
+      ]);
+      const grJson = grRes.ok
+        ? ((await grRes.json()) as {
+            reportCount?: number;
+            reports?: { id: string; title: string }[];
+            persisted?: boolean;
+            archived?: { totalCount: number };
+            cloudBackup?: { ok?: boolean; message?: string; skipped?: boolean };
+          })
+        : null;
+      const auditOk = auditRes.ok;
+
+      if (grJson?.reportCount) {
+        const grRows: EodReport[] = grJson.reports?.slice(0, 12).map((r) => ({
+          id: `gr-${r.id}`,
+          businessDate,
+          generatedAt,
+          type: `${r.id} — ${r.title}`,
+          status: 'ready' as const,
+        })) ?? [];
+        const summary: EodReport = {
+          id: 'pkg-gr',
+          businessDate,
+          generatedAt,
+          type: `Elektra GR Paketi (${grJson.reportCount} rapor)`,
+          status: 'ready',
+        };
+        const auditRow: EodReport = {
+          id: 'pkg-audit',
+          businessDate,
+          generatedAt,
+          type: 'Gece Denetim Paketi',
+          status: auditOk ? 'ready' : 'pending',
+        };
+        const overflow =
+          (grJson.reportCount ?? 0) > 12
+            ? [{
+                id: 'pkg-gr-more',
+                businessDate,
+                generatedAt,
+                type: `… ve ${(grJson.reportCount ?? 0) - 12} rapor daha (arşiv)`,
+                status: 'ready' as const,
+              }]
+            : [];
+        setReports([auditRow, summary, ...grRows, ...overflow]);
+        setEodMsg(
+          `Gün sonu paketi DB'ye kaydedildi — ${grJson.reportCount} GR raporu + gece denetim${
+            grJson.archived?.totalCount ? ` (toplam ${grJson.archived.totalCount} snapshot)` : ''
+          }${grJson.cloudBackup?.message ? ` · ${grJson.cloudBackup.message}` : ''}.`,
+        );
+        await loadEod();
       } else {
-        setEodMsg(j.error ?? 'Rapor alınamadı');
+        setEodMsg('GR paketi alınamadı');
       }
     } catch {
-      setReports((prev) => prev.map((r) => ({ ...r, status: 'ready' as const })));
-      setEodMsg('Raporlar güncellendi (demo).');
+      setEodMsg('Rapor paketi alınamadı');
     } finally {
       setEodBusy(false);
     }
@@ -142,15 +234,24 @@ export function EodOperationsHub({ action }: { action: string | null }) {
   async function runBackup() {
     setEodBusy(true);
     setEodMsg(null);
-    const res = await roomioFetch('/api/integrations/google-backup/backup', { method: 'POST' });
-    const j = (await res.json()) as { ok?: boolean; message?: string; error?: string };
-    if (res.ok) {
-      setEodMsg(j.message ?? 'Yedek paketi hazırlandı.');
+    const res = await roomioFetch('/api/cloud-backup/run', { method: 'POST' });
+    const j = (await res.json()) as { ok?: boolean; message?: string; sizeBytes?: number; simulated?: boolean };
+    if (res.ok && j.ok) {
+      setEodMsg(`${j.message ?? 'Yedek tamamlandı'}${j.sizeBytes ? ` · ${Math.round(j.sizeBytes / 1024)} KB` : ''}${j.simulated ? ' (simülasyon)' : ''}`);
+      void roomioFetch('/api/cloud-backup/history?limit=5')
+        .then((r) => r.json())
+        .then((hist: { runs?: typeof backupHistory }) => setBackupHistory(hist.runs ?? []));
     } else {
-      setEodMsg(j.error ?? 'Yedek alınamadı — CSV dışa aktarma kullanılıyor.');
+      setEodMsg(j.message ?? 'Yedek alınamadı');
       window.open('/api/reports/export?format=csv', '_blank');
     }
     setEodBusy(false);
+  }
+
+  if (active === 'archive') {
+    return (
+      <EodLegacyReportWorkspace businessDate={businessDate} archive={eodArchive} />
+    );
   }
 
   return (
@@ -177,11 +278,35 @@ export function EodOperationsHub({ action }: { action: string | null }) {
 
       {active === 'backup' ? (
         <div style={{ marginTop: 16 }}>
-          <p className="roomio-page-desc">İş günü veritabanı ve rapor arşivi yedeklenir.</p>
+          <p className="roomio-page-desc">
+            Veritabanı + gün sonu GR arşivi paketlenir; Google Drive, S3 veya webhook ile buluta gönderilir.
+          </p>
           <div className="roomio-form-actions" style={{ marginTop: 12 }}>
             <Button disabled={eodBusy} onClick={() => void runBackup()}>Yedek al</Button>
-            <Button variant="secondary" href="/settings/integrations/google-backup">Google yedek ayarları</Button>
+            <Button variant="secondary" href="/settings/integrations/cloud-backup">Bulut yedek ayarları</Button>
           </div>
+          {backupHistory.length > 0 ? (
+            <div className="roomio-table-wrap" style={{ marginTop: 16 }}>
+              <table className="roomio-table">
+                <thead><tr><th>Tarih</th><th>Sağlayıcı</th><th>Durum</th><th>Boyut</th><th></th></tr></thead>
+                <tbody>
+                  {backupHistory.map((h) => (
+                    <tr key={h.id}>
+                      <td>{h.startedAt}</td>
+                      <td>{h.provider}</td>
+                      <td>{h.status}</td>
+                      <td>{h.sizeBytes ? `${Math.round(h.sizeBytes / 1024)} KB` : '—'}</td>
+                      <td>
+                        {h.status === 'ok' ? (
+                          <a className="roomio-link" href={`/api/cloud-backup/download?runId=${encodeURIComponent(h.id)}`}>İndir</a>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -255,34 +380,6 @@ export function EodOperationsHub({ action }: { action: string | null }) {
         </div>
       ) : null}
 
-      {active === 'archive' ? (
-        <div className="roomio-table-wrap" style={{ marginTop: 16 }}>
-          <table className="roomio-table">
-            <thead>
-              <tr><th>İş günü</th><th>Kapanış</th><th>Kullanıcı</th><th>Doluluk</th><th>Gelir</th><th /></tr>
-            </thead>
-            <tbody>
-              {eodArchive.length === 0 ? (
-                <tr><td colSpan={6} className="roomio-table-empty">Arşiv kaydı yok.</td></tr>
-              ) : eodArchive.map((a) => (
-                <tr key={a.id}>
-                  <td><strong>{a.businessDate}</strong></td>
-                  <td>{a.closedAt}</td>
-                  <td>{a.closedBy}</td>
-                  <td>%{a.occupancy}</td>
-                  <td>{formatMoney(a.revenue)}</td>
-                  <td>
-                    <Button variant="secondary" href={`/api/reports/export?format=pdf&category=gunluk&date=${encodeURIComponent(a.businessDate)}`}>
-                      İndir
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
-
       {active === 'room-prices' ? (
         <div style={{ marginTop: 16 }}>
           <p className="roomio-page-desc">BAR ve kontrat fiyatları gece posting ile folyolara işlenir.</p>
@@ -326,13 +423,38 @@ export function EodOperationsHub({ action }: { action: string | null }) {
                     <td>{r.generatedAt}</td>
                     <td><span className={`roomio-badge roomio-badge--${r.status === 'ready' ? 'ok' : 'warn'}`}>{r.status === 'ready' ? 'Hazır' : 'Bekliyor'}</span></td>
                     <td>
-                      <Button
-                        variant="secondary"
-                        disabled={r.status !== 'ready'}
-                        href="/api/eod/night-audit-package?format=pdf"
-                      >
-                        İndir
-                      </Button>
+                      {r.id === 'pkg-gr' ? (
+                        <Button
+                          variant="secondary"
+                          disabled={r.status !== 'ready'}
+                          href={`/api/eod/gr-package?businessDate=${encodeURIComponent(businessDate)}&format=txt`}
+                        >
+                          TXT
+                        </Button>
+                      ) : r.id === 'pkg-audit' ? (
+                        <Button
+                          variant="secondary"
+                          disabled={r.status !== 'ready'}
+                          href={`/api/eod/night-audit-package?businessDate=${encodeURIComponent(businessDate)}&format=pdf`}
+                        >
+                          PDF
+                        </Button>
+                      ) : r.id.startsWith('gr-') && r.id !== 'pkg-gr-more' ? (
+                        <Button
+                          variant="secondary"
+                          href={`/reports?tab=eod&action=archive&rpr=${encodeURIComponent(r.id.replace(/^gr-/, ''))}&date=${encodeURIComponent(businessDate)}`}
+                        >
+                          Aç
+                        </Button>
+                      ) : r.id === 'pkg-gr-more' ? (
+                        <Button variant="secondary" href={`/reports?tab=eod&action=archive&date=${encodeURIComponent(businessDate)}`}>
+                          Arşiv
+                        </Button>
+                      ) : (
+                        <Button variant="secondary" disabled>
+                          —
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -341,8 +463,10 @@ export function EodOperationsHub({ action }: { action: string | null }) {
           </div>
           <div className="roomio-form-actions" style={{ marginTop: 16 }}>
             <Button disabled={eodBusy} onClick={() => void fetchAllReports()}>Tüm raporları al</Button>
+            <Button variant="secondary" href="/reports?tab=eod&action=archive">GR arşivi</Button>
             <Button variant="secondary" href="/reports?tab=eod&action=close">Günü kapat</Button>
-            <Button variant="ghost" href="/api/eod/night-audit-package?format=pdf">Paket PDF</Button>
+            <Button variant="ghost" href={`/api/eod/gr-package?businessDate=${encodeURIComponent(businessDate)}&format=txt`}>GR TXT paket</Button>
+            <Button variant="ghost" href={`/api/eod/night-audit-package?businessDate=${encodeURIComponent(businessDate)}&format=pdf`}>Denetim PDF</Button>
           </div>
         </>
       ) : null}

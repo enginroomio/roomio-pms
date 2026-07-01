@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { requireIntegrationAdminRead } from '@/lib/auth/require-permission';
+import { requireComplianceExportRead } from '@/lib/auth/require-permission';
 import { bundleToBtkCsv, exportBtkBundle } from '@/lib/integrations/hotspot5651/server';
 
 export async function GET(req: Request) {
-  const auth = await requireIntegrationAdminRead(req);
+  // KVKK/5651: BTK export bundle'ı (ham IP/MAC/misafir adı) sadece sistem yöneticisi indirebilir.
+  const auth = await requireComplianceExportRead(req);
   if (auth instanceof NextResponse) return auth;
 
   const url = new URL(req.url);

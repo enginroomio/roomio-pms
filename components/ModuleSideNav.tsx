@@ -19,10 +19,32 @@ function navActive(pathname: string, search: string, href: string): boolean {
 
   if (query) {
     if (href.includes('phase=')) return current === href;
+    if (query.startsWith('section=language') && pathname === '/settings' && search) {
+      const sec = new URLSearchParams(search).get('section');
+      if (
+        sec === 'language' ||
+        sec === 'lang-forms' ||
+        sec === 'lang-menus' ||
+        sec === 'lang-reports' ||
+        sec === 'nationalities'
+      ) {
+        return true;
+      }
+    }
     return current === href || current.startsWith(`${href}&`);
   }
   if (base === '/') return pathname === '/';
-  if (base === '/reception' || base === '/housekeeping' || base === '/settings' || base === '/reports') {
+  if (
+    base === '/reception' ||
+    base === '/housekeeping' ||
+    base === '/guest-relations' ||
+    base === '/accounting' ||
+    base === '/settings' ||
+    base === '/reports' ||
+    base === '/tools/sistem' ||
+    base === '/reservations' ||
+    base === '/reservations/calendar'
+  ) {
     return pathname === base && !search;
   }
   return pathname === base || pathname.startsWith(`${base}/`);
@@ -55,19 +77,21 @@ function NavBranch({
             className={`roomio-module-side__link${active ? ' is-active' : ''}`}
           >
             {item.label}
-            <ChevronRight size={13} />
+            <ChevronRight size={13} className={active ? ' is-open' : ''} />
           </Link>
         ) : (
           <div className={`roomio-module-side__label${active ? ' is-active' : ''}`}>
             {item.label}
-            <ChevronRight size={13} />
+            <ChevronRight size={13} className={active ? ' is-open' : ''} />
           </div>
         )}
-        <div className="roomio-module-side__children">
-          {item.children.map((child) => (
-            <NavBranch key={child.id} item={child} depth={depth + 1} pathname={pathname} search={search} />
-          ))}
-        </div>
+        {active ? (
+          <div className="roomio-module-side__children">
+            {item.children.map((child) => (
+              <NavBranch key={child.id} item={child} depth={depth + 1} pathname={pathname} search={search} />
+            ))}
+          </div>
+        ) : null}
       </div>
     );
   }

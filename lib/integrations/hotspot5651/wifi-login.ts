@@ -21,6 +21,8 @@ export async function handleGuestWifiLogin(req: GuestWifiLoginRequest): Promise<
   message: string;
   guestName?: string;
   authUser?: string;
+  deviceCount?: number;
+  maxDevices?: number;
 }> {
   const config = await loadHotspot5651Config();
   if (!config.enabled) return { ok: false, message: 'WiFi hizmeti şu an kullanılamıyor' };
@@ -37,6 +39,21 @@ export async function handleGuestWifiLogin(req: GuestWifiLoginRequest): Promise<
   const authUser = roomToAuthUser(req.roomNo);
   const mac = req.macAddress?.toUpperCase().replace(/-/g, ':') ?? 'PENDING';
   const ip = req.clientIp ?? '0.0.0.0';
+  const maxDevices = Math.max(1, config.maxDevicesPerUser || 5);
+
+  // Bu oda için şu an açık olan cihaz oturumları — 5651 logunda her cihaz kendi MAC'iyle ayrı satırdır.
+  const activeForRoom = await findActiveSessions({ roomNo: req.roomNo });
+  const alreadyThisDevice = mac !== 'PENDING' && activeForRoom.some((s) => s.macAddress === mac);
+
+  if (!alreadyThisDevice && activeForRoom.length >= maxDevices) {
+    return {
+      ok: false,
+      message: `Bu oda için en fazla ${maxDevices} cihaz bağlanabilir. Yeni cihaz eklemek için önce bağlı bir cihazın bağlantısını kapatın.`,
+      authUser,
+      deviceCount: activeForRoom.length,
+      maxDevices,
+    };
+  }
 
   const enriched = await enrichProvisionedSession(authUser, {
     macAddress: mac !== 'PENDING' ? mac : undefined,
@@ -44,31 +61,28 @@ export async function handleGuestWifiLogin(req: GuestWifiLoginRequest): Promise<
     hotspotZone: 'Captive-Portal',
   });
 
-  if (!enriched) {
-    const existing = await findActiveSessions({ authUser });
-    if (!existing.length) {
-      await appendHotspotLog({
-        startedAt: new Date().toISOString(),
-        endedAt: null,
-        internalIp: ip,
-        internalPort: 0,
-        externalIp: '0.0.0.0',
-        externalPort: 0,
-        macAddress: mac,
-        bytesIn: 0,
-        bytesOut: 0,
-        guestName: cred.guestName,
-        guestIdType: 'room_guest',
-        guestIdRaw: authUser,
-        roomNo: req.roomNo,
-        reservationId: cred.reservationId,
-        authUser,
-        source: 'api',
-        userAgent: req.userAgent ?? null,
-        hotspotZone: 'Captive-Portal',
-        provisioned: false,
-      });
-    }
+  if (!enriched && !alreadyThisDevice) {
+    await appendHotspotLog({
+      startedAt: new Date().toISOString(),
+      endedAt: null,
+      internalIp: ip,
+      internalPort: 0,
+      externalIp: '0.0.0.0',
+      externalPort: 0,
+      macAddress: mac,
+      bytesIn: 0,
+      bytesOut: 0,
+      guestName: cred.guestName,
+      guestIdType: 'room_guest',
+      guestIdRaw: authUser,
+      roomNo: req.roomNo,
+      reservationId: cred.reservationId,
+      authUser,
+      source: 'api',
+      userAgent: req.userAgent ?? null,
+      hotspotZone: 'Captive-Portal',
+      provisioned: false,
+    });
   }
 
   return {
@@ -76,5 +90,7 @@ export async function handleGuestWifiLogin(req: GuestWifiLoginRequest): Promise<
     message: 'İnternete bağlandınız. İyi konaklamalar!',
     guestName: cred.guestName,
     authUser,
+    deviceCount: Math.min(activeForRoom.length + (alreadyThisDevice ? 0 : 1), maxDevices),
+    maxDevices,
   };
 }

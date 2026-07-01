@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { requireIntegrationAdminRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
+import { requireComplianceExportRead, requireIntegrationAdminWrite } from '@/lib/auth/require-permission';
 import { appendHotspotLog, closeHotspotSession, listHotspotLogs } from '@/lib/integrations/hotspot5651/server';
 import type { HotspotSessionLog } from '@/lib/integrations/hotspot5651/types';
 
 export async function GET(req: Request) {
-  const auth = await requireIntegrationAdminRead(req);
+  // KVKK/5651: ham oturum kayıtları (IP/MAC/misafir) sadece sistem yöneticisi görebilir.
+  const auth = await requireComplianceExportRead(req);
   if (auth instanceof NextResponse) return auth;
 
   const url = new URL(req.url);

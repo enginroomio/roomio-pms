@@ -60,6 +60,13 @@
   overflow: hidden;
 }
 
+.roomio-one-screen-fit__body--page .roomio-page-stack--rez-new:has(.roomio-rez-quick) > *:not(.roomio-page-header),
+.roomio-one-screen-fit__body--page .roomio-page-stack--rez-new:has(.roomio-rez-new-screen) > *:not(.roomio-page-header) {
+  flex: 0 1 auto !important;
+  min-height: min-content !important;
+  overflow: visible !important;
+}
+
 .roomio-one-screen-fit__body--page .roomio-rez-tabs,
 .roomio-one-screen-fit__body--page .roomio-fn-bar {
   flex-shrink: 0;
@@ -242,22 +249,35 @@
   min-height: 0;
 }
 
-/* Yeni rezervasyon — tek ekran sihirbaz */
-.roomio-one-screen-fit:has(.roomio-page-stack--rez-new) {
+/* Yeni rezervasyon — tek ekran sihirbaz (hızlı kayıt hariç) */
+.roomio-one-screen-fit:has(.roomio-page-stack--rez-new):not(:has(.roomio-rez-new-screen)):not(:has(.roomio-rez-quick)) {
   overflow: hidden;
   min-height: 0;
 }
 
-.roomio-one-screen-fit:has(.roomio-page-stack--rez-new) .roomio-one-screen-fit__body--page {
+.roomio-one-screen-fit:has(.roomio-page-stack--rez-new):not(:has(.roomio-rez-new-screen)):not(:has(.roomio-rez-quick)) .roomio-one-screen-fit__body--page {
   overflow: hidden;
   min-height: 0;
 }
 
-.roomio-one-screen-fit__body--page .roomio-page-stack--rez-new {
+.roomio-one-screen-fit__body--page .roomio-page-stack--rez-new:not(:has(.roomio-rez-new-screen)):not(:has(.roomio-rez-quick)) {
   flex: 1;
   min-height: 0;
   gap: 4px;
   overflow: hidden;
+}
+
+.roomio-one-screen-fit:has(.roomio-page-stack--rez-new):has(.roomio-rez-quick) .roomio-one-screen-fit__body--page,
+.roomio-one-screen-fit:has(.roomio-page-stack--rez-new):has(.roomio-rez-new-screen) .roomio-one-screen-fit__body--page {
+  overflow: visible !important;
+  min-height: min-content !important;
+}
+
+.roomio-one-screen-fit__body--page .roomio-page-stack--rez-new:has(.roomio-rez-quick),
+.roomio-one-screen-fit__body--page .roomio-page-stack--rez-new:has(.roomio-rez-new-screen) {
+  flex: 0 1 auto !important;
+  min-height: min-content !important;
+  overflow: visible !important;
 }
 
 .roomio-page-stack--rez-new .roomio-page-header {
@@ -280,8 +300,66 @@
   margin-bottom: 2px;
 }
 
-.roomio-page-stack--rez-new > .roomio-rez-new-wizard {
+.roomio-page-stack--rez-new > .roomio-rez-new-wizard:not(.roomio-rez-new-screen):not(.roomio-rez-quick) {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+/* Yeni rezervasyon — tek ekran (konsolide form): JS sığdırmayı atlat, doğal sayfa
+   kaydırması kullan. !important: tek-ekran-sığdırma kancası (useOneScreenFit) bu
+   rotada da çalışmaya devam eder ve shell'e satır-içi height/overflow yazar; bu
+   kural seti onu (ve daha düşük önem derecesindeki eski genel kuralları) bilinçli
+   olarak ezer. */
+.roomio-content:has(.roomio-rez-new-screen),
+.roomio-content:has(.roomio-rez-quick) {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.roomio-one-screen-fit:has(.roomio-rez-new-screen),
+.roomio-one-screen-fit:has(.roomio-rez-quick) {
+  flex: 0 1 auto !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: min-content !important;
+  overflow: visible !important;
+}
+
+.roomio-one-screen-fit__body--page:has(.roomio-rez-new-screen),
+.roomio-one-screen-fit__body--page:has(.roomio-rez-quick) {
+  height: auto !important;
+  overflow: visible !important;
+  min-height: min-content !important;
+}
+
+.roomio-page-stack--rez-new:has(.roomio-rez-new-screen),
+.roomio-page-stack--rez-new:has(.roomio-rez-quick) {
+  flex: 0 1 auto !important;
+  min-height: min-content !important;
+  overflow: visible !important;
+}
+
+.roomio-page-stack--rez-new > .roomio-rez-new-wizard.roomio-rez-new-screen,
+.roomio-page-stack--rez-new > .roomio-rez-new-wizard.roomio-rez-quick {
+  flex: 0 1 auto !important;
+  min-height: min-content !important;
+  overflow: visible !important;
+}
+
+/* Modül kabuğu (breadcrumb + başlık + yan menü + içerik) — sayfanın
+   tamamı tek parça kaydığı için bu katmanların hiçbiri kendi içinde
+   yükseklik sınırlamasın veya kaydırmasın; doğal akışa bıraksın. */
+.roomio-module-layout:has(.roomio-rez-new-screen),
+.roomio-module-layout:has(.roomio-rez-quick),
+.roomio-module-layout__body:has(.roomio-rez-new-screen),
+.roomio-module-layout__body:has(.roomio-rez-quick),
+.roomio-module-layout__content:has(.roomio-rez-new-screen),
+.roomio-module-layout__content:has(.roomio-rez-quick) {
+  height: auto !important;
+  max-height: none !important;
+  min-height: min-content !important;
+  overflow: visible !important;
 }

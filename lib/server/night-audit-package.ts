@@ -12,22 +12,31 @@ export type NightAuditPackage = {
   auditLogs: Awaited<ReturnType<typeof getAuditLogsServer>>;
 };
 
-export async function buildNightAuditPackageServer(propertyId?: string): Promise<NightAuditPackage> {
+export { formatNightAuditPackageText } from '@/lib/reports/night-audit-text';
+
+export async function buildNightAuditPackageForDate(
+  propertyId?: string,
+  businessDate?: string,
+): Promise<NightAuditPackage> {
   await init();
   const prop = propertyId ?? DEFAULT_PROPERTY_ID;
-  const businessDate = await getBusinessDate(prop);
+  const date = businessDate ?? (await getBusinessDate(prop));
   const hotel = (await getProperty(prop))?.name ?? 'Hotel';
   const [preClose, auditLogs] = await Promise.all([
     runNightAuditPreCloseChecks(prop, { log: false }),
-    getAuditLogsServer(prop, { businessDate, limit: 100 }),
+    getAuditLogsServer(prop, { businessDate: date, limit: 100 }),
   ]);
 
   return {
     hotel,
-    businessDate,
+    businessDate: date,
     generatedAt: new Date().toISOString().replace('T', ' ').slice(0, 19),
     ready: preClose.ready,
     checks: preClose.checks,
     auditLogs,
   };
+}
+
+export async function buildNightAuditPackageServer(propertyId?: string): Promise<NightAuditPackage> {
+  return buildNightAuditPackageForDate(propertyId);
 }

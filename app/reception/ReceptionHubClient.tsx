@@ -3,9 +3,8 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui';
-import { ReceptionTabs } from '@/components/ReceptionTabs';
+import { ReceptionModuleShell } from '@/components/reception/ReceptionModuleShell';
 import { ReceptionLoading } from '@/components/reception/ReceptionLoading';
 import { formatMoney } from '@/lib/data/cash';
 import { useCash } from '@/lib/client/use-cash';
@@ -51,40 +50,36 @@ export function ReceptionHubClient() {
 
   if (hub === 'resepsiyon' && !tab) {
     return (
-      <PageHeader breadcrumb="Resepsiyon" title="Resepsiyon Merkezi" description={t('reception.description')}>
-        <ReceptionTabs />
+      <ReceptionModuleShell segment="Merkezi" title="Resepsiyon Merkezi" description={t('reception.description')}>
         <ResepsiyonHubPanel />
-      </PageHeader>
+      </ReceptionModuleShell>
     );
   }
 
   if (hub === 'onkasa' && !tab) {
     return (
-      <PageHeader breadcrumb="Ön Kasa" title="Ön Kasa Merkezi" description="Kasa defteri, tahsilat ve depozit işlemleri.">
-        <ReceptionTabs />
+      <ReceptionModuleShell segment="Merkezi" title="Ön Kasa Merkezi" description="Kasa defteri, tahsilat ve depozit işlemleri.">
         <OnKasaHubPanel />
-      </PageHeader>
+      </ReceptionModuleShell>
     );
   }
 
   if (tab === 'kimlik' || tab === 'kimlik-new') {
     const isNew = tab === 'kimlik-new';
     return (
-      <PageHeader
-        breadcrumb={`Resepsiyon > ${isNew ? 'Yeni Kimlik Bildirimi' : 'Kimlik Bildirimi'}`}
+      <ReceptionModuleShell
+        segment={isNew ? 'Yeni Kimlik Bildirimi' : 'Kimlik Bildirimi'}
         title={isNew ? 'Yeni Kimlik Bildirim Sistemi' : 'Polis Kimlik Bildirim Sistemi'}
         description={isNew ? 'Check-in entegrasyonlu hızlı kimlik kaydı ve gönderim.' : '5651 uyumlu günlük kimlik bildirim listesi.'}
       >
-        <ReceptionTabs />
         <KimlikBildirimPanel variant={isNew ? 'new' : 'list'} />
-      </PageHeader>
+      </ReceptionModuleShell>
     );
   }
 
   if (tab === 'kasa') {
     return (
-      <PageHeader breadcrumb="Ön Kasa > Kasa Defteri" title="Kasa Defteri (F6)" description="Günlük tahsilat, ödeme, avans ve manuel hareketler.">
-        <ReceptionTabs />
+      <ReceptionModuleShell segment="Kasa Defteri" title="Kasa Defteri (F6)" description="Günlük tahsilat, ödeme, avans ve manuel hareketler.">
         <div className="roomio-form-actions" style={{ marginTop: 0, marginBottom: 8 }}>
           <Button
             variant="secondary"
@@ -109,14 +104,13 @@ export function ReceptionHubClient() {
           </Button>
         </div>
         <CashLedgerPanel entries={cashEntries} onDone={() => void reloadCash()} />
-      </PageHeader>
+      </ReceptionModuleShell>
     );
   }
 
   if (tab === 'kasa-close') {
     return (
-      <PageHeader breadcrumb="Ön Kasa > Kasa Kapatma" title="Kasa Kapatma Listesi" description="Günlük kasa kapanışları ve fark kontrolü.">
-        <ReceptionTabs />
+      <ReceptionModuleShell segment="Kasa Kapatma" title="Kasa Kapatma Listesi" description="Günlük kasa kapanışları ve fark kontrolü.">
         <div className="roomio-form-actions" style={{ marginTop: 0, marginBottom: 8 }}>
           <Button
             variant="secondary"
@@ -169,22 +163,21 @@ export function ReceptionHubClient() {
             </tbody>
           </table>
         </div>
-      </PageHeader>
+      </ReceptionModuleShell>
     );
   }
 
   if (tab === 'advance') {
     return (
-      <PageHeader breadcrumb="Ön Kasa > Avans & Devir" title="Kasa Avans ve Devir Listesi" description="Vardiya devirleri ve avans kayıtları.">
-        <ReceptionTabs />
+      <ReceptionModuleShell segment="Avans & Devir" title="Kasa Avans ve Devir Listesi" description="Vardiya devirleri ve avans kayıtları.">
         <CashAdvancePanel />
-      </PageHeader>
+      </ReceptionModuleShell>
     );
   }
 
   return (
-    <PageHeader
-      breadcrumb="Resepsiyon"
+    <ReceptionModuleShell
+      segment="Özet"
       title={t('reception.title')}
       description={t('reception.description')}
       actions={
@@ -200,7 +193,6 @@ export function ReceptionHubClient() {
         </div>
       }
     >
-      <ReceptionTabs />
       <ReceptionLoading loading={loading || cashLoading} error={error} folioError={folioError} cashError={cashError} />
 
       <div className="roomio-kpi-grid">
@@ -278,6 +270,6 @@ export function ReceptionHubClient() {
           </ul>
         </div>
       </div>
-    </PageHeader>
+    </ReceptionModuleShell>
   );
 }

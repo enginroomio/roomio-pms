@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { requireApiPermission } from '@/lib/auth/require-permission';
-import { buildNightAuditPackageServer } from '@/lib/server/night-audit-package';
+import { parseNightAuditSnapshot } from '@/lib/server/eod-archive-package';
+import { nightAuditSnapshotDisplayText } from '@/lib/reports/night-audit-text';
+import { getEodGrSnapshotText } from '@/lib/server/eod-gr-snapshot';
+import { buildNightAuditPackageForDate } from '@/lib/server/night-audit-package';
 import { buildNightAuditPackagePdfKit } from '@/lib/server/pdf-templates';
 import { queueAndDeliverEmailServer } from '@/lib/server/email-outbox';
 import { getBusinessDate } from '@/lib/server/pms-store';
@@ -9,6 +12,16 @@ import { logApiError } from '@/lib/server/api-error';
 
 export const dynamic = 'force-dynamic';
 
+async function loadNightAuditPackage(propertyId: string, businessDate: string) {
+  const snapshot = await getEodGrSnapshotText(businessDate, 'NIGHT-AUDIT', propertyId);
+  if (snapshot) {
+    const archived = parseNightAuditSnapshot(snapshot);
+    if (archived) return { pkg: archived, source: 'archive' as const };
+  }
+  const pkg = await buildNightAuditPackageForDate(propertyId, businessDate);
+  return { pkg, source: 'live' as const };
+}
+
 export async function GET(req: Request) {
   const auth = await requireApiPermission(req, 'eod.close');
   if (auth instanceof NextResponse) return auth;
@@ -16,21 +29,34 @@ export async function GET(req: Request) {
   const propertyId = propertyIdFromRequest(req);
   const { searchParams } = new URL(req.url);
   const format = searchParams.get('format');
+  const businessDate = searchParams.get('businessDate') ?? (await getBusinessDate(propertyId));
 
   try {
-    const pkg = await buildNightAuditPackageServer(propertyId);
+    const { pkg, source } = await loadNightAuditPackage(propertyId, businessDate);
 
     if (format === 'pdf') {
       const pdf = await buildNightAuditPackagePdfKit(pkg, propertyId);
+      const suffix = source === 'archive' ? '-archive' : '';
       return new NextResponse(new Uint8Array(pdf), {
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="night-audit-package-${pkg.businessDate}.pdf"`,
+          'Content-Disposition': `attachment; filename="night-audit-package-${pkg.businessDate}${suffix}.pdf"`,
         },
       });
     }
 
-    return NextResponse.json({ ok: true, package: pkg });
+    if (format === 'txt') {
+      const snapshot = await getEodGrSnapshotText(businessDate, 'NIGHT-AUDIT', propertyId);
+      const text = snapshot ? nightAuditSnapshotDisplayText(snapshot) : nightAuditSnapshotDisplayText(JSON.stringify(pkg));
+      return new NextResponse(text, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Content-Disposition': `attachment; filename="night-audit-package-${pkg.businessDate}.txt"`,
+        },
+      });
+    }
+
+    return NextResponse.json({ ok: true, package: pkg, source });
   } catch (err) {
     logApiError('GET /api/eod/night-audit-package', err, { propertyId });
     return NextResponse.json({ error: 'package fetch failed' }, { status: 500 });
@@ -43,10 +69,10 @@ export async function POST(req: Request) {
   const { user } = auth;
 
   const propertyId = propertyIdFromRequest(req);
-  const body = (await req.json()) as { user?: string; email?: string };
+  const body = (await req.json()) as { user?: string; email?: string; businessDate?: string };
+  const businessDate = body.businessDate ?? (await getBusinessDate(propertyId));
   try {
-    const pkg = await buildNightAuditPackageServer(propertyId);
-    const businessDate = await getBusinessDate(propertyId);
+    const { pkg } = await loadNightAuditPackage(propertyId, businessDate);
     const email = body.email ?? 'muhasebe@hotelsapphire.com';
     const mail = await queueAndDeliverEmailServer({
       to: email,

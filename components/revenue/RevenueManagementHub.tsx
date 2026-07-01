@@ -73,25 +73,25 @@ export function RevenueManagementHub() {
 
   return (
     <>
-      <div className="roomio-kpi-strip">
+      <div className="roomio-kpi-grid">
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Ort. doluluk (14g)</span>
+          <span className="roomio-kpi-label">Ort. doluluk (14g)</span>
           <strong>{forecast.summary.avgOccupancy}%</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Tahmini gelir</span>
+          <span className="roomio-kpi-label">Tahmini gelir</span>
           <strong>{money(forecast.summary.totalForecastRevenue, forecast.currency)}</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">ADR</span>
+          <span className="roomio-kpi-label">ADR</span>
           <strong>{money(forecast.summary.avgAdr, forecast.currency)}</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">RevPAR</span>
+          <span className="roomio-kpi-label">RevPAR</span>
           <strong>{money(forecast.summary.avgRevpar, forecast.currency)}</strong>
         </div>
         <div className="roomio-kpi">
-          <span className="roomio-kpi__label">Rakip endeksi</span>
+          <span className="roomio-kpi-label">Rakip endeksi</span>
           <strong>{forecast.competitor.marketIndex}</strong>
         </div>
       </div>

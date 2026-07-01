@@ -127,7 +127,7 @@ export function RoomContextMenu({ menu, busy, rackPrefs, onAction, onClose }: Pr
       <div
         ref={menuRef}
         className="roomio-rack-ctx-menu roomio-rack-ctx-menu--elektra"
-        style={{ left: pos.x, top: pos.y }}
+        style={{ left: pos.x, top: pos.y, maxHeight: pos.maxHeight }}
         onContextMenu={(e) => e.preventDefault()}
         role="menu"
         aria-label={`Oda ${cell.room.roomNo} işlemleri`}

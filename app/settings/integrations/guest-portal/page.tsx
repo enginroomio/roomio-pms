@@ -6,7 +6,24 @@ import { IntegrationPageLayout } from '@/components/sistem/IntegrationPageLayout
 import { FormActions, FormGrid, FormSection } from '@/components/kit';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
-import { DEFAULT_GUEST_PORTAL_CONFIG, type GuestPortalConfig } from '@/lib/guest-portal/types';
+import {
+  DEFAULT_GUEST_PORTAL_CONFIG,
+  DEFAULT_GUEST_SERVICE_LINKS,
+  type GuestPortalConfig,
+  type GuestServiceKey,
+} from '@/lib/guest-portal/types';
+
+const SERVICE_LINK_LABELS: Array<{ key: GuestServiceKey; label: string }> = [
+  { key: 'restaurant', label: 'Restoran rezervasyonu' },
+  { key: 'roomService', label: 'Oda servisi siparişi' },
+  { key: 'carbon', label: 'Karbon dengeleme' },
+  { key: 'spa', label: 'SPA & Wellness' },
+  { key: 'gym', label: 'Spor salonu' },
+  { key: 'fair', label: 'Fuar & etkinlik' },
+  { key: 'hotel', label: 'Otel web sitesi' },
+  { key: 'viofun', label: 'Aktiviteler' },
+  { key: 'menu', label: 'Dijital menü' },
+];
 
 export default function GuestPortalSettingsPage() {
   const [config, setConfig] = useState<GuestPortalConfig>(DEFAULT_GUEST_PORTAL_CONFIG);
@@ -15,7 +32,13 @@ export default function GuestPortalSettingsPage() {
   useEffect(() => {
     void roomioFetch('/api/guest-portal/config')
       .then((r) => r.json())
-      .then((j: GuestPortalConfig) => setConfig({ ...DEFAULT_GUEST_PORTAL_CONFIG, ...j }));
+      .then((j: GuestPortalConfig) =>
+        setConfig({
+          ...DEFAULT_GUEST_PORTAL_CONFIG,
+          ...j,
+          serviceLinks: { ...DEFAULT_GUEST_SERVICE_LINKS, ...j.serviceLinks },
+        }),
+      );
   }, []);
 
   async function save() {
@@ -64,6 +87,34 @@ export default function GuestPortalSettingsPage() {
         <p className="roomio-page-desc" style={{ marginTop: 12 }}>
           Misafir URL: <Link href="/guest">/guest</Link> · Online rezervasyon sonrası otomatik token üretilir.
         </p>
+      </FormSection>
+
+      <FormSection title="Hizmet bağlantıları">
+        <p className="roomio-page-desc">
+          Otelin sunmadığı veya misafir panelinde göstermek istemediği hizmetleri kapatın — kapatılan bağlantı
+          /guest ve /book sayfalarında görünmez.
+        </p>
+        <FormGrid>
+          {SERVICE_LINK_LABELS.map((s) => (
+            <label key={s.key} className="roomio-field roomio-field--row">
+              <input
+                type="checkbox"
+                checked={config.serviceLinks?.[s.key] ?? true}
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    serviceLinks: { ...DEFAULT_GUEST_SERVICE_LINKS, ...config.serviceLinks, [s.key]: e.target.checked },
+                  })
+                }
+              />
+              <span>{s.label}</span>
+            </label>
+          ))}
+        </FormGrid>
+        <FormActions className="roomio-form-actions--spaced">
+          <Button onClick={() => void save()}>Kaydet</Button>
+        </FormActions>
+        {saved ? <p className="roomio-page-desc">Kaydedildi.</p> : null}
       </FormSection>
     </IntegrationPageLayout>
   );

@@ -17,6 +17,11 @@ import {
   type TesaEncodeResult,
 } from '@/lib/integrations/tesa/types';
 import { effectiveSimulateWhenOffline } from '@/lib/integrations/live-mode';
+import {
+  callElektraService,
+  isElektraRelayEnabled,
+  loadElektraServerConfig,
+} from '@/lib/integrations/elektra-server/client';
 
 const CONFIG_FILE = process.env.ROOMIO_TESA_CONFIG
   ?? path.join(process.cwd(), '.roomio-data', 'tesa-config.json');
@@ -81,9 +86,29 @@ export async function testTesaConnection(config = DEFAULT_TESA_CONFIG): Promise<
   }
 }
 
+async function relayTesaThroughElektra(
+  action: 'encode' | 'checkout' | 'copy',
+  payload: Record<string, unknown>,
+): Promise<TesaEncodeResult | null> {
+  const elektra = await loadElektraServerConfig();
+  if (!isElektraRelayEnabled(elektra, 'tesa')) return null;
+  const result = await callElektraService('tesa', action, payload, elektra);
+  return {
+    ok: result.ok,
+    simulated: result.simulated,
+    message: result.message,
+    rawRequest: result.rawRequest,
+    rawResponse: result.rawResponse,
+    encodedAt: result.ok ? new Date().toISOString() : undefined,
+  };
+}
+
 export async function encodeGuestKey(req: TesaEncodeRequest, config?: TesaConfig): Promise<TesaEncodeResult> {
   const cfg = config ?? (await loadTesaConfig());
   if (!cfg.enabled) return { ok: false, message: 'TESA entegrasyonu kapalı' };
+
+  const relay = await relayTesaThroughElektra('encode', { ...req, encoderNumber: cfg.encoderNumber });
+  if (relay) return relay;
 
   const lockRoom = mapRoom(req.roomNo, cfg.roomMappings);
   const msg = buildCheckInMessage(cfg.encoderNumber, lockRoom, req);
@@ -115,6 +140,9 @@ export async function encodeGuestKey(req: TesaEncodeRequest, config?: TesaConfig
 
 export async function checkoutGuest(roomNo: string, config?: TesaConfig): Promise<TesaEncodeResult> {
   const cfg = config ?? (await loadTesaConfig());
+  const relay = await relayTesaThroughElektra('checkout', { roomNo, encoderNumber: cfg.encoderNumber });
+  if (relay) return relay;
+
   const lockRoom = mapRoom(roomNo, cfg.roomMappings);
   const msg = buildCheckOutMessage(cfg.encoderNumber, lockRoom);
   try {
@@ -129,6 +157,9 @@ export async function checkoutGuest(roomNo: string, config?: TesaConfig): Promis
 
 export async function copyGuestKey(roomNo: string, keyCount = 1, config?: TesaConfig): Promise<TesaEncodeResult> {
   const cfg = config ?? (await loadTesaConfig());
+  const relay = await relayTesaThroughElektra('copy', { roomNo, keyCount, encoderNumber: cfg.encoderNumber });
+  if (relay) return relay;
+
   const lockRoom = mapRoom(roomNo, cfg.roomMappings);
   const msg = buildCopyKeyMessage(cfg.encoderNumber, lockRoom, keyCount);
   try {

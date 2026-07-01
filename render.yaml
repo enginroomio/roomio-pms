@@ -28,6 +28,8 @@ services:
         value: /tmp/pbx-config.json
       - key: ROOMIO_TESA_CONFIG
         value: /tmp/tesa-config.json
+      - key: ROOMIO_ELEKTRA_SERVER_CONFIG
+        value: /tmp/elektra-server-config.json
       - key: ROOMIO_5651_STORE
         value: /tmp/hotspot-5651.enc
       - key: ROOMIO_JWT_SECRET

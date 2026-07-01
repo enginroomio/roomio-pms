@@ -4,6 +4,8 @@ import type { HomeScreenMenuApi } from '@/components/HomeScreenMenuContext';
 type RackContextHandlers = {
   homeMenu: HomeScreenMenuApi | null;
   hkInteractive?: boolean;
+  /** HK ekranında varsayılan sağ tık HK menüsü (PMS yerine) */
+  hkPrimary?: boolean;
   onRoomContextMenu?: (roomNo: string, event: React.MouseEvent) => void;
   onRoomPmsContextMenu?: (cell: RackCell, event: React.MouseEvent) => void;
 };
@@ -12,7 +14,7 @@ type RackContextHandlers = {
 export function handleRackCellContextMenu(
   event: React.MouseEvent,
   cell: RackCell,
-  { homeMenu, hkInteractive, onRoomContextMenu, onRoomPmsContextMenu }: RackContextHandlers,
+  { homeMenu, hkInteractive, hkPrimary, onRoomContextMenu, onRoomPmsContextMenu }: RackContextHandlers,
 ) {
   event.preventDefault();
   event.stopPropagation();
@@ -29,6 +31,11 @@ export function handleRackCellContextMenu(
     return;
   }
 
+  if (hkPrimary && onRoomContextMenu && hkInteractive) {
+    onRoomContextMenu(cell.room.roomNo, event);
+    return;
+  }
+
   if (onRoomPmsContextMenu) {
     onRoomPmsContextMenu(cell, event);
     return;
@@ -39,7 +46,8 @@ export function handleRackCellContextMenu(
   }
 }
 
-export function rackContextMenuHint(homeMenu: boolean, hkInteractive?: boolean): string {
+export function rackContextMenuHint(homeMenu: boolean, hkInteractive?: boolean, hkPrimary?: boolean): string {
+  if (hkPrimary) return ' · Sağ tık: HK durum menüsü';
   if (homeMenu) {
     return ' · Sağ tık: oda · Ctrl+sağ tık: menü · Shift+sağ tık: HK';
   }

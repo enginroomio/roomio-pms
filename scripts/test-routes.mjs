@@ -155,6 +155,7 @@ const ROUTES = [
   '/settings/integrations/carbon',
   '/settings/integrations/fair-events',
   '/settings/integrations/google-backup',
+  '/settings/integrations/cloud-backup',
   '/settings/integrations/fixed-assets',
   '/settings/integrations/procurement',
   '/settings/integrations/website-builder',

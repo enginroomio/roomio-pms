@@ -286,7 +286,8 @@ input {
 .roomio-top-menu__cascade {
   display: flex;
   align-items: stretch;
-  max-height: min(72vh, 680px);
+  max-height: inherit;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -295,7 +296,7 @@ input {
   min-width: 220px;
   max-width: 300px;
   min-height: 0;
-  max-height: min(72vh, 680px);
+  max-height: inherit;
   overflow-x: hidden;
   overflow-y: auto;
   padding: 6px;

@@ -2,7 +2,9 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { DailyMovements } from '@/components/DailyMovements';
+import { DashboardOpsBottom } from '@/components/dashboard/DashboardOpsBottom';
 import { DashboardRoomRack } from '@/components/DashboardRoomRack';
+import { DashboardWeatherWidget } from '@/components/dashboard/DashboardWeatherWidget';
 import {
   HkRoomContextMenu,
   type HkRoomMenuState,
@@ -80,24 +82,33 @@ export function DashboardBoard({
 
   return (
     <>
-      <div className="roomio-dashboard-board">
-        <div className="roomio-dashboard-rack">
-          <DashboardRoomRack
-            reservations={reservations}
-            businessDate={businessDate}
-            hkMap={hkMap}
-            hkInteractive={pointerFine}
-            savingRoom={savingRoom}
-            onRoomContextMenu={openRoomMenu}
-            onRoomPmsContextMenu={openPmsMenu}
-          />
-          {rackStatus ? (
-            <div className="roomio-dashboard-rack-status" aria-live="polite">
-              {rackStatus}
-            </div>
-          ) : null}
+      <div className="roomio-dashboard-board-wrap">
+        <div className="roomio-dashboard-board">
+          <div className="roomio-dashboard-rack">
+            <DashboardRoomRack
+              reservations={reservations}
+              businessDate={businessDate}
+              hkMap={hkMap}
+              hkInteractive={pointerFine}
+              savingRoom={savingRoom}
+              onRoomContextMenu={openRoomMenu}
+              onRoomPmsContextMenu={openPmsMenu}
+            />
+            {rackStatus ? (
+              <div className="roomio-dashboard-rack-status" aria-live="polite">
+                {rackStatus}
+              </div>
+            ) : null}
+          </div>
+          <aside className="roomio-dashboard-side">
+            <DashboardWeatherWidget />
+            <DailyMovements arrivals={arrivals} departures={departures} alerts={alerts} />
+          </aside>
         </div>
-        <DailyMovements arrivals={arrivals} departures={departures} alerts={alerts} />
+        <DashboardOpsBottom
+          hkMap={hkMap}
+          onHkUpdate={(roomNo, status) => applyUpdate(roomNo, status)}
+        />
       </div>
 
       <HkRoomContextMenu

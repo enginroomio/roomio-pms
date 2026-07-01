@@ -1,3 +1,29 @@
+/** Misafir panelinde gösterilen hizmet bağlantıları — otel istemediği ekranı kapatabilir. */
+export type GuestServiceKey =
+  | 'restaurant'
+  | 'carbon'
+  | 'spa'
+  | 'gym'
+  | 'fair'
+  | 'hotel'
+  | 'viofun'
+  | 'menu'
+  | 'roomService';
+
+export type GuestServiceLinksConfig = Record<GuestServiceKey, boolean>;
+
+export const DEFAULT_GUEST_SERVICE_LINKS: GuestServiceLinksConfig = {
+  restaurant: true,
+  carbon: true,
+  spa: true,
+  gym: true,
+  fair: true,
+  hotel: true,
+  viofun: true,
+  menu: true,
+  roomService: true,
+};
+
 export type GuestPortalConfig = {
   enabled: boolean;
   allowOnlineCheckIn: boolean;
@@ -6,6 +32,7 @@ export type GuestPortalConfig = {
   allowServiceRequests: boolean;
   qrCheckInEnabled: boolean;
   tokenTtlHours: number;
+  serviceLinks: GuestServiceLinksConfig;
 };
 
 export const DEFAULT_GUEST_PORTAL_CONFIG: GuestPortalConfig = {
@@ -16,6 +43,7 @@ export const DEFAULT_GUEST_PORTAL_CONFIG: GuestPortalConfig = {
   allowServiceRequests: true,
   qrCheckInEnabled: true,
   tokenTtlHours: 72,
+  serviceLinks: DEFAULT_GUEST_SERVICE_LINKS,
 };
 
 export type GuestPortalTokenPayload = {

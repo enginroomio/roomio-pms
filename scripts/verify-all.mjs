@@ -227,6 +227,7 @@ async function main() {
   run('Prisma şema senkronu (sqlite ↔ postgresql)', 'npm', ['run', 'db:sync-pg-schema:check']);
   run('Typecheck', 'npm', ['run', 'typecheck']);
   run('Unit tests', 'npm', ['run', 'test:unit']);
+  run('Modül birim paketi', 'npm', ['run', 'test:modules:unit']);
 
   if (process.env.VERIFY_BUILD === '1') {
     run('Production build', 'npm', ['run', 'build']);
@@ -390,6 +391,13 @@ async function main() {
   await e2e('E2E — hızlı POS folyo', 'e2e/fnb-pos-folio.spec.ts');
 
   await e2e('E2E — çoklu şube canlı', 'e2e/multiproperty-live.spec.ts');
+
+  if (hasBrowser) {
+    await e2e('E2E — orijinal ana sayfa şablonları', 'e2e/home-orijinal-template.spec.ts');
+    await e2e('E2E — bulut yedek', 'e2e/cloud-backup.spec.ts');
+    await e2e('E2E — gün sonu sihirbazı', 'e2e/eod-wizard.spec.ts');
+    await e2e('E2E — gün sonu rollout', 'e2e/rollout-gunsonu.spec.ts');
+  }
 
   const i18nGrep = hasBrowser ? undefined : 'locale API';
   await e2e(hasBrowser ? 'E2E — i18n & PWA (tam)' : 'E2E — i18n (API)', 'e2e/i18n-pwa.spec.ts', i18nGrep);

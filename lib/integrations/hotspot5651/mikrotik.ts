@@ -175,10 +175,12 @@ add topics=hotspot,info action=roomio5651
 add topics=account,info action=roomio5651`;
 }
 
-export function mikrotikHotspotUserScript(profile: string, server: string): string {
+export function mikrotikHotspotUserScript(profile: string, server: string, sharedUsers = 5): string {
   return `/ip hotspot user profile
 :if ([:len [/ip hotspot user profile find name="${profile}"]] = 0) do={
-  add name="${profile}" rate-limit=20M/20M shared-users=3
+  add name="${profile}" rate-limit=20M/20M shared-users=${sharedUsers}
+} else={
+  set [/ip hotspot user profile find name="${profile}"] shared-users=${sharedUsers}
 }
 
 /ip hotspot
@@ -195,9 +197,12 @@ export function mikrotikRb5009SetupScript(opts: {
   hotspotServer: string;
   hotspotProfile: string;
   guestVlan?: number;
+  /** Tek misafir bilgisiyle eşzamanlı bağlanabilecek maksimum cihaz sayısı (varsayılan 5) */
+  maxDevicesPerUser?: number;
 }): string {
   const vlan = opts.guestVlan ?? 50;
   const port = opts.syslogPort ?? 5514;
+  const sharedUsers = opts.maxDevicesPerUser ?? 5;
   return `# Roomio — MikroTik RB5009UG+S+IN otel şablonu
 # ether1: ISP/WAN  |  ether2-7: UniFi AP trunk  |  sfp-sfpplus1: uplink (opsiyonel)
 
@@ -224,6 +229,14 @@ export function mikrotikRb5009SetupScript(opts: {
 /ip hotspot profile
 :if ([:len [find name="${opts.hotspotProfile}"]] = 0) do={
   add name=${opts.hotspotProfile} hotspot-address=10.10.${vlan}.1 dns-name=wifi.hotelsapphire.local rate-limit=50M/50M
+}
+
+# 1 misafir bilgisiyle (oda no) eşzamanlı en fazla ${sharedUsers} cihaz bağlanabilir
+/ip hotspot user profile
+:if ([:len [find name="${opts.hotspotProfile}"]] = 0) do={
+  add name=${opts.hotspotProfile} rate-limit=20M/20M shared-users=${sharedUsers}
+} else={
+  set [find name="${opts.hotspotProfile}"] shared-users=${sharedUsers}
 }
 
 /ip hotspot

@@ -75,7 +75,14 @@ const nextConfig: NextConfig = {
     webpackMemoryOptimizations: true,
     optimizePackageImports: ['lucide-react'],
   },
-  allowedDevOrigins: ['*.trycloudflare.com', '*.loca.lt'],
+  allowedDevOrigins: [
+    '127.0.0.1',
+    '127.0.0.1:3100',
+    'localhost',
+    'localhost:3100',
+    '*.trycloudflare.com',
+    '*.loca.lt',
+  ],
   webpack: (config, { dev, isServer }) => {
     if (!isServer) {
       config.resolve.alias = {

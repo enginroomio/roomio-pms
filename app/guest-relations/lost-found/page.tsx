@@ -1,14 +1,16 @@
 'use client';
 
-import { GuestRelationsTabs } from '@/components/GuestRelationsTabs';
+import { GuestRelationsModuleShell } from '@/components/guest-relations/GuestRelationsModuleShell';
 import { LostFoundPanel } from '@/components/guest-relations/LostFoundPanel';
-import { PageHeader } from '@/components/PageHeader';
 
 export default function LostFoundPage() {
   return (
-    <PageHeader breadcrumb="Misafir İlişkileri > Kayıp ve Bulunan Listesi" title="Kayıp ve Bulunan Listesi" description="Kayıp eşya ve buluntu takibi.">
-      <GuestRelationsTabs />
+    <GuestRelationsModuleShell
+      segment="Kayıp ve Bulunan"
+      title="Kayıp ve Bulunan Listesi"
+      description="Kayıp eşya ve buluntu takibi."
+    >
       <LostFoundPanel />
-    </PageHeader>
+    </GuestRelationsModuleShell>
   );
 }

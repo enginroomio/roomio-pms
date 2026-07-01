@@ -4,6 +4,8 @@ import { checkOutReservationServer } from '@/lib/server/folio-cash';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 import { requireApiPermission } from '@/lib/auth/require-permission';
 import { logApiError } from '@/lib/server/api-error';
+import { loadTihConfig } from '@/lib/integrations/tih/client';
+import { getIdentityNotifications, sendEgmDeparture } from '@/lib/server/pms-store';
 
 export async function POST(req: Request) {
   const auth = await requireApiPermission(req, 'reception.checkout');
@@ -38,5 +40,30 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json(result);
+  const egmMessages: string[] = [];
+  if (body.reservationId && result.ok) {
+    try {
+      const tihConfig = await loadTihConfig();
+      if (tihConfig.autoSubmitOnCheckOut) {
+        const notifications = await getIdentityNotifications(propertyId);
+        const record = notifications.find((n) => n.reservationId === body.reservationId);
+        if (record?.idNo?.trim()) {
+          const sent = await sendEgmDeparture(record.id);
+          if (sent?.checkOutStatus === 'sent') {
+            egmMessages.push(`EGM çıkış bildirimi otomatik gönderildi (${sent.checkOutEgmRef ?? 'ref yok'})`);
+          } else if (sent?.checkOutStatus === 'error') {
+            egmMessages.push(`EGM çıkış bildirimi hatası: ${sent.checkOutErrorMessage ?? 'bilinmiyor'}`);
+          }
+        }
+      }
+    } catch (err) {
+      logApiError('POST /api/reception/checkout (egm)', err, { propertyId, reservationId: body.reservationId });
+      egmMessages.push(`EGM çıkış: ${err instanceof Error ? err.message : 'kayıt hatası'}`);
+    }
+  }
+
+  return NextResponse.json({
+    ...result,
+    messages: [...(result.messages ?? []), ...egmMessages],
+  });
 }

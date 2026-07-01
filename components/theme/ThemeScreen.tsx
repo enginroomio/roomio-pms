@@ -135,6 +135,11 @@ export function ThemeScreen({ initialTheme, fixed: fixedProp }: Props) {
           <Link href="/tools/rollout" className="roomio-btn roomio-btn--ghost roomio-btn--sm">
             Rollout
           </Link>
+          {activeScreen?.phaseId === 'home' ? (
+            <Link href="/?design=1" className="roomio-btn roomio-btn--ghost roomio-btn--sm">
+              Ana ekran şablonları
+            </Link>
+          ) : null}
           {activeScreen ? (
             <Link
               href={activeScreen.href}
@@ -169,6 +174,16 @@ export function ThemeScreen({ initialTheme, fixed: fixedProp }: Props) {
           <strong>{activeScreen?.label}</strong>
           {activeScreen?.screenRef ? (
             <span className="roomio-badge">Ref: {activeScreen.screenRef}</span>
+          ) : null}
+          {activeScreen?.mockupHtml ? (
+            <a
+              href={activeScreen.mockupHtml}
+              className="roomio-btn roomio-btn--ghost roomio-btn--sm"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <ExternalLink size={14} /> Orijinal HTML mockup
+            </a>
           ) : null}
           <span className="roomio-theme-screen__preview-hint">
             {activeScreen?.preview ? 'Canlı mockup' : 'Referans görsel'}

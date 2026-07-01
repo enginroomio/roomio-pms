@@ -52,10 +52,12 @@ async function main() {
   }
 
   run('Typecheck', 'npm', ['run', 'typecheck']);
+  run('Modül birim paketi', 'npm', ['run', 'test:modules:unit']);
   run('Deploy checklist', 'npm', ['run', 'deploy:checklist'], {
     ROOMIO_URL: BASE,
     ROOMIO_PUBLIC_URL: BASE,
   });
+  run('Bulut yedek API', 'node', ['scripts/test-cloud-backup-api.mjs'], { ROOMIO_URL: BASE });
 
   const e2eEnv = {
     ROOMIO_URL: BASE,
@@ -65,9 +67,12 @@ async function main() {
   };
 
   const suites = [
+    ['E2E — HK sağ tık menü', 'e2e/hk-context-menu.spec.ts'],
     ['E2E — auth API', 'e2e/api-protected.spec.ts'],
     ['E2E — folio API', 'e2e/folio-cash.spec.ts', 'Folyo API|Kasa API'],
     ['E2E — entegrasyonlar', 'e2e/integrations.spec.ts'],
+    ['E2E — bulut yedek', 'e2e/cloud-backup.spec.ts'],
+    ['E2E — orijinal şablon', 'e2e/home-orijinal-template.spec.ts'],
   ];
 
   for (const [label, spec, grep] of suites) {

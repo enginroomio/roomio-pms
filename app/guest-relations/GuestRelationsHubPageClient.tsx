@@ -2,11 +2,10 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { GuestRelationsTabs } from '@/components/GuestRelationsTabs';
+import { GuestRelationsModuleShell } from '@/components/guest-relations/GuestRelationsModuleShell';
 import { GuestRelationsHubStats } from '@/components/guest-relations/GuestRelationsHubStats';
 import { GrCrmMessagesPanel, GrDirectoryPanel } from '@/components/guest-relations/GrHubPanels';
 import { MisafirIliskileriHubPanel } from '@/components/guest-relations/MisafirIliskileriHubPanel';
-import { PageHeader } from '@/components/PageHeader';
 import { GUEST_RELATIONS_NAV } from '@/lib/navigation/guest-relations-nav';
 
 export default function GuestRelationsHubPageClient() {
@@ -16,43 +15,47 @@ export default function GuestRelationsHubPageClient() {
 
   if (hub === 'misafir' && !tab) {
     return (
-      <PageHeader
-        breadcrumb="Misafir İlişkileri"
+      <GuestRelationsModuleShell
+        segment="Merkezi"
         title="Misafir İlişkileri Merkezi"
         description="Takip, aktivite, yorum ve VIP misafir yönetimi."
       >
-        <GuestRelationsTabs />
         <GuestRelationsHubStats />
         <MisafirIliskileriHubPanel />
-      </PageHeader>
+      </GuestRelationsModuleShell>
     );
   }
 
   if (tab === 'messages') {
     return (
-      <PageHeader breadcrumb="Misafir İlişkileri > CRM Mesajları" title="Online CRM Mesajları" description="Portal, WhatsApp ve e-posta kanallarından gelen misafir mesajları.">
-        <GuestRelationsTabs />
+      <GuestRelationsModuleShell
+        segment="CRM Mesajları"
+        title="Online CRM Mesajları"
+        description="Portal, WhatsApp ve e-posta kanallarından gelen misafir mesajları."
+      >
         <GrCrmMessagesPanel />
-      </PageHeader>
+      </GuestRelationsModuleShell>
     );
   }
 
   if (tab === 'directory') {
     return (
-      <PageHeader breadcrumb="Misafir İlişkileri > Rehber" title="Adres ve Tel Rehberi" description="Otel içi ve acil iletişim rehberi.">
-        <GuestRelationsTabs />
+      <GuestRelationsModuleShell
+        segment="Rehber"
+        title="Adres ve Tel Rehberi"
+        description="Otel içi ve acil iletişim rehberi."
+      >
         <GrDirectoryPanel />
-      </PageHeader>
+      </GuestRelationsModuleShell>
     );
   }
 
   return (
-    <PageHeader
-      breadcrumb="Misafir İlişkileri"
+    <GuestRelationsModuleShell
+      segment="Özet"
       title="Misafir İlişkileri Özeti"
       description="Takip, aktivite, yorum ve VIP misafir yönetimi."
     >
-      <GuestRelationsTabs />
       <GuestRelationsHubStats />
       <div className="roomio-gr-grid">
         {GUEST_RELATIONS_NAV.map((item) => (
@@ -62,6 +65,6 @@ export default function GuestRelationsHubPageClient() {
           </Link>
         ))}
       </div>
-    </PageHeader>
+    </GuestRelationsModuleShell>
   );
 }

@@ -5,8 +5,9 @@ import { useMemo } from 'react';
 import { Button } from '@/components/ui';
 import { formatMoney } from '@/lib/data/reservations';
 import { DEMO_MARKET_DISTRIBUTION } from '@/lib/data/back-office';
-import { CATEGORY_REPORTS } from '@/lib/data/eod';
+import { CATEGORY_REPORTS, isComplianceReportCategory } from '@/lib/data/eod';
 import { useReservations } from '@/lib/client/use-reservations';
+import { PermissionGate } from '@/components/auth/PermissionGate';
 
 export function SpecialReportsPanel() {
   const items = [
@@ -184,6 +185,8 @@ export function ReportCategoryHub({ category, label }: { category: string; label
     { id: 'default', name: `${label} — Özet`, format: 'PDF' },
     { id: 'detail', name: `${label} — Detay`, format: 'PDF / Excel' },
   ];
+  // TGA/TİS: korumalı resmi rapor — görüntüleme/export sadece sistem yöneticisi.
+  const exportPermission = isComplianceReportCategory(category) ? 'settings.admin' : 'reports.export';
 
   return (
     <div className="roomio-card" style={{ marginTop: 16 }}>
@@ -202,9 +205,11 @@ export function ReportCategoryHub({ category, label }: { category: string; label
                 <td><strong>{r.name}</strong></td>
                 <td>{r.format}</td>
                 <td>
-                  <Button variant="secondary" href={`/api/reports/export?format=pdf&category=${encodeURIComponent(category)}&report=${encodeURIComponent(r.id)}`}>PDF</Button>
-                  {' '}
-                  <Button variant="secondary" href={`/api/reports/export?format=csv&category=${encodeURIComponent(category)}&report=${encodeURIComponent(r.id)}`}>CSV</Button>
+                  <PermissionGate permission={exportPermission}>
+                    <Button variant="secondary" href={`/api/reports/export?format=pdf&category=${encodeURIComponent(category)}&report=${encodeURIComponent(r.id)}`}>PDF</Button>
+                    {' '}
+                    <Button variant="secondary" href={`/api/reports/export?format=csv&category=${encodeURIComponent(category)}&report=${encodeURIComponent(r.id)}`}>CSV</Button>
+                  </PermissionGate>
                 </td>
               </tr>
             ))}

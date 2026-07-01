@@ -19,6 +19,12 @@ export type GuestArchiveEntry = {
   lastStay: string;
   visits: number;
   source: 'archive' | 'egm';
+  /**
+   * Bu misafire ait (KVKK arşivinde tutulmayan, çünkü VUK uyarınca faturalar
+   * çok daha uzun süre saklanması gereken ayrı bir muhasebe kaydı olan)
+   * geçmiş fatura sayısı — sadece bilgi amaçlı, çapraz referans içindir.
+   */
+  invoiceCount?: number;
 };
 
 /** Misafir arşivi — önceki konaklamalardan EGM kimlik kayıtları */

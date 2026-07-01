@@ -32,6 +32,8 @@ export function isEgmLiveMode(): boolean {
     || process.env.ROOMIO_INTEGRATION_LIVE === 'true';
 }
 
+export type EgmNoticeType = 'arrival' | 'departure';
+
 export async function submitEgmToGateway(
   record: Pick<
     EgmIdentityRecord,
@@ -50,14 +52,18 @@ export async function submitEgmToGateway(
     | 'checkOut'
   >,
   config = loadEgmConfig(),
+  noticeType: EgmNoticeType = 'arrival',
 ): Promise<EgmSubmitResult> {
+  const refPrefix = noticeType === 'departure' ? 'EGM-OUT' : 'EGM';
   if (!config.gatewayUrl) {
     if (effectiveSimulateWhenOffline(config.simulateWhenOffline)) {
       return {
         ok: true,
         simulated: true,
-        egmRef: `EGM-SIM-${Date.now().toString(36).toUpperCase()}`,
-        message: 'Simülasyon — EGM/KBS gateway URL tanımlı değil',
+        egmRef: `${refPrefix}-SIM-${Date.now().toString(36).toUpperCase()}`,
+        message: noticeType === 'departure'
+          ? 'Simülasyon — EGM/KBS çıkış bildirimi: gateway URL tanımlı değil'
+          : 'Simülasyon — EGM/KBS gateway URL tanımlı değil',
       };
     }
     return { ok: false, message: 'ROOMIO_EGM_GATEWAY_URL tanımlı değil' };
@@ -65,6 +71,7 @@ export async function submitEgmToGateway(
 
   const payload = {
     facilityCode: config.facilityCode,
+    noticeType,
     guest: {
       firstName: record.firstName,
       lastName: record.lastName,
@@ -98,7 +105,7 @@ export async function submitEgmToGateway(
         return {
           ok: true,
           simulated: true,
-          egmRef: `EGM-SIM-${Date.now().toString(36).toUpperCase()}`,
+          egmRef: `${refPrefix}-SIM-${Date.now().toString(36).toUpperCase()}`,
           message: 'Simülasyon — EGM gateway yanıt vermedi',
           rawResponse: raw.slice(0, 500),
         };
@@ -106,20 +113,24 @@ export async function submitEgmToGateway(
       return { ok: false, message: `EGM gateway HTTP ${res.status}`, rawResponse: raw.slice(0, 500) };
     }
 
-    let egmRef = `EGM-${Date.now().toString(36).toUpperCase()}`;
+    let egmRef = `${refPrefix}-${Date.now().toString(36).toUpperCase()}`;
     try {
       const parsed = JSON.parse(raw) as { ref?: string; egmRef?: string };
       egmRef = parsed.egmRef ?? parsed.ref ?? egmRef;
     } catch {
       /* plain text ref */
     }
-    return { ok: true, egmRef, message: 'EGM/KBS bildirimi gönderildi' };
+    return {
+      ok: true,
+      egmRef,
+      message: noticeType === 'departure' ? 'EGM/KBS çıkış bildirimi gönderildi' : 'EGM/KBS bildirimi gönderildi',
+    };
   } catch (e) {
     if (effectiveSimulateWhenOffline(config.simulateWhenOffline)) {
       return {
         ok: true,
         simulated: true,
-        egmRef: `EGM-SIM-${Date.now().toString(36).toUpperCase()}`,
+        egmRef: `${refPrefix}-SIM-${Date.now().toString(36).toUpperCase()}`,
         message: 'Simülasyon — EGM gateway erişilemedi',
       };
     }

@@ -17,3 +17,6 @@ test-results/
 .roomio/
 tsconfig.tsbuildinfo
 .roomio-shortcut-tmp.ps1
+# Tesseract language models — downloaded by scripts/setup-id-reader-ocr.mjs,
+# not source (binary, no guest data, identical for every Tesseract install).
+lib/integrations/id-reader/tessdata/*.traineddata

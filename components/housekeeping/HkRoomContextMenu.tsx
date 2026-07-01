@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useContextMenuPosition } from '@/lib/client/context-menu-position';
 import type { HousekeepingBoardRow } from '@/lib/rooms/inventory';
 
 type HkQuickStatus = HousekeepingBoardRow['status'];
@@ -34,6 +35,7 @@ type Props = {
 
 export function HkRoomContextMenu({ menu, savingRoom, onSelect, onCompleteFault, onClose }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const pos = useContextMenuPosition(menu, panelRef);
 
   useEffect(() => {
     if (!menu) return;
@@ -62,16 +64,12 @@ export function HkRoomContextMenu({ menu, savingRoom, onSelect, onCompleteFault,
   if (!menu || typeof document === 'undefined') return null;
 
   const saving = savingRoom === menu.roomNo;
-  const maxX = Math.max(8, window.innerWidth - 220);
-  const maxY = Math.max(8, window.innerHeight - 320);
-  const left = Math.min(menu.x, maxX);
-  const top = Math.min(menu.y, maxY);
 
   return createPortal(
     <div
       ref={panelRef}
       className="roomio-hk-room-menu"
-      style={{ left, top }}
+      style={{ left: pos.x, top: pos.y, maxHeight: pos.maxHeight }}
       role="menu"
       aria-label={`Oda ${menu.roomNo} durum menüsü`}
     >

@@ -2,8 +2,7 @@
 
 import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PageHeader } from '@/components/PageHeader';
-import { ReceptionTabs } from '@/components/ReceptionTabs';
+import { ReceptionModuleShell } from '@/components/reception/ReceptionModuleShell';
 import { Button } from '@/components/ui';
 import { ReceptionLoading } from '@/components/reception/ReceptionLoading';
 import { ReceptionSubTabContent, receptionSubTabMeta } from '@/components/reception/ReceptionSubTabContent';
@@ -21,19 +20,18 @@ export default function VacantRoomsPageClient() {
   if (tab === 'deposit' || tab === 'deposit-collect' || tab === 'deposit-refund') {
     const meta = receptionSubTabMeta(tab === 'deposit' ? 'deposit' : tab);
     return (
-      <PageHeader breadcrumb={`Ön Kasa > ${meta.title}`} title={meta.title} description={meta.description}>
-        <ReceptionTabs />
+      <ReceptionModuleShell segment={meta.title} title={meta.title} description={meta.description}>
         <ReceptionSubTabContent tab={tab} />
         <div className="roomio-form-actions" style={{ marginTop: 16 }}>
           <Button href="/reception/vacant">← Boş odalara dön</Button>
         </div>
-      </PageHeader>
+      </ReceptionModuleShell>
     );
   }
 
   return (
-    <PageHeader
-      breadcrumb="Resepsiyon > Boş Oda Listesi"
+    <ReceptionModuleShell
+      segment="Boş Odalar"
       title="Boş Odalar"
       description="Check-in için müsait odalar — temiz / kirli durumu."
       actions={
@@ -42,7 +40,6 @@ export default function VacantRoomsPageClient() {
         </Button>
       }
     >
-      <ReceptionTabs />
       <ReceptionLoading loading={loading} error={error} />
       <div className="roomio-detail-grid">
         <div className="roomio-card">
@@ -66,6 +63,6 @@ export default function VacantRoomsPageClient() {
           </div>
         </div>
       </div>
-    </PageHeader>
+    </ReceptionModuleShell>
   );
 }

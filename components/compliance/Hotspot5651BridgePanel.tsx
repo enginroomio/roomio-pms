@@ -86,11 +86,25 @@ export function Hotspot5651BridgePanel({ config, onChange, onSave, saved }: Prop
             <span>Portal URL (MikroTik login-url)</span>
             <input className="roomio-input" value={config.captivePortalUrl} onChange={(e) => onChange({ ...config, captivePortalUrl: e.target.value })} />
           </label>
+          <label className="roomio-field">
+            <span>Oda başına maksimum cihaz</span>
+            <input
+              className="roomio-input"
+              type="number"
+              min={1}
+              max={20}
+              value={config.maxDevicesPerUser}
+              onChange={(e) => onChange({ ...config, maxDevicesPerUser: Math.max(1, Number(e.target.value) || 1) })}
+            />
+          </label>
         </div>
         <p className="roomio-page-desc">
           <Link href={config.captivePortalUrl} target="_blank">Misafir login ekranını aç</Link>
           {' · '}
           <code>{portalUrl}?mac=AA:BB:CC:DD:EE:FF&amp;ip=10.10.50.1</code>
+        </p>
+        <p className="roomio-page-desc">
+          1 oda/misafir bilgisiyle aynı anda en fazla <strong>{config.maxDevicesPerUser}</strong> cihaz bağlanabilir (telefon, tablet, bilgisayar vb.). Limit, MikroTik&apos;te <code>shared-users</code> ile eşleşir — Cihazlar sekmesindeki RouterOS şablonunu yeniden kopyalayıp çalıştırın.
         </p>
       </div>
 

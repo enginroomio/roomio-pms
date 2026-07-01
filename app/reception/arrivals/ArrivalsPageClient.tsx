@@ -2,8 +2,7 @@
 
 import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PageHeader } from '@/components/PageHeader';
-import { ReceptionTabs } from '@/components/ReceptionTabs';
+import { ReceptionModuleShell } from '@/components/reception/ReceptionModuleShell';
 import { Button, StatusBadge } from '@/components/ui';
 import { ReceptionLoading } from '@/components/reception/ReceptionLoading';
 import { ReceptionSubTabContent, receptionSubTabMeta } from '@/components/reception/ReceptionSubTabContent';
@@ -21,16 +20,15 @@ export default function ArrivalsPageClient() {
   if (tab && ARRIVAL_TABS.has(tab)) {
     const meta = receptionSubTabMeta(tab);
     return (
-      <PageHeader breadcrumb={`Ön Kasa > ${meta.title}`} title={meta.title} description={meta.description}>
-        <ReceptionTabs />
+      <ReceptionModuleShell segment={meta.title} title={meta.title} description={meta.description}>
         <ReceptionSubTabContent tab={tab} />
-      </PageHeader>
+      </ReceptionModuleShell>
     );
   }
 
   return (
-    <PageHeader
-      breadcrumb="Resepsiyon > Bugün Giriş"
+    <ReceptionModuleShell
+      segment="Bugün Giriş"
       title="Bugün Giriş Yapacaklar"
       description={`İş günü ${TODAY.split('-').reverse().join('.')} — check-in bekleyen rezervasyonlar.`}
       actions={
@@ -39,7 +37,6 @@ export default function ArrivalsPageClient() {
         </Button>
       }
     >
-      <ReceptionTabs />
       <ReceptionLoading loading={loading} error={error} />
       <div className="roomio-card roomio-table-wrap">
         <table className="roomio-table">
@@ -75,6 +72,6 @@ export default function ArrivalsPageClient() {
           </tbody>
         </table>
       </div>
-    </PageHeader>
+    </ReceptionModuleShell>
   );
 }

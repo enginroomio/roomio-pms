@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Geliştirme sunucusu — ağdan erişim (Windows vb.) için 0.0.0.0
- * Kullanım: npm run dev
+ * Geliştirme sunucusu — varsayılan 127.0.0.1 (CSS/JS cross-origin sorunu olmaz).
+ * LAN / Windows: npm run dev:lan  (ROOMIO_HOST=0.0.0.0)
  */
 import { spawn } from 'node:child_process';
 import { execSync } from 'node:child_process';
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = process.env.ROOMIO_PORT ?? '3100';
-const HOST = process.env.ROOMIO_HOST ?? '0.0.0.0';
+const HOST = process.env.ROOMIO_HOST ?? '127.0.0.1';
 
 function lanIp() {
   if (process.platform === 'win32') {
@@ -45,14 +45,17 @@ const lines = [
 ].filter(Boolean);
 
 writeFileSync(join(runtimeDir, 'lan-url.txt'), `${lines.join('\n')}\n`, 'utf8');
+writeFileSync(join(runtimeDir, 'active-port.txt'), `${PORT}\n`, 'utf8');
 
 console.log('\n════════════════════════════════════════');
 console.log('  Roomio dev — erişim adresleri');
 console.log(`  Mac / bu bilgisayar: http://127.0.0.1:${PORT}`);
-if (ip) {
+if (HOST === '0.0.0.0' && ip) {
   console.log(`  Windows / LAN:       http://${ip}:${PORT}`);
-} else {
+} else if (HOST === '0.0.0.0') {
   console.log('  Windows / LAN:       (IP bulunamadı — aynı ağda ipconfig/ifconfig ile bakın)');
+} else {
+  console.log(`  LAN erişimi:         npm run dev:lan`);
 }
 console.log('  Proxy hatası:        npm run share  (HTTPS tünel)');
 console.log('════════════════════════════════════════\n');

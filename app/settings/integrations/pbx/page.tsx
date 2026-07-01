@@ -42,9 +42,9 @@ export default function PbxIntegrationPage() {
 
   return (
     <IntegrationPageLayout
-      segment="Grandstream Santral"
+      segment="Grandstream / Gulf Stream Santral"
       title={`Grandstream ${UCM6301_DEFAULTS.model}`}
-      description="UCM6301 HTTPS API (port 8089) + PMS API — check-in/out, oda durumu, uyandırma."
+      description="Gulf Stream (Grandstream) UCM6301 HTTPS API (port 8089) + PMS API — check-in/out, oda durumu, uyandırma."
     >
       <div className="roomio-inline-panel" style={{ marginBottom: 16, padding: 12 }}>
         <Phone size={18} style={{ verticalAlign: 'middle', marginRight: 8 }} />

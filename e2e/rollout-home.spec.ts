@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { gotoWithDemo } from './helpers/demo-auth';
 
 test.describe('Ana Sayfa rollout — adım adım', () => {
+  test.describe.configure({ timeout: 120_000 });
+
   test.beforeEach(async ({ page }) => {
-    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 90_000 });
+    await gotoWithDemo(page, '/', 'admin', { waitForSideNav: false });
     await expect(page.getByRole('region', { name: 'Günlük özet' })).toBeVisible({ timeout: 60_000 });
   });
 
@@ -11,6 +14,7 @@ test.describe('Ana Sayfa rollout — adım adım', () => {
     await expect(page.getByRole('heading', { name: /Merhaba,/i })).toBeVisible();
     await expect(page.getByText(/Bugün giriş/i).first()).toBeVisible();
     await expect(page.getByText(/Bugün çıkış/i).first()).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Hızlı işlemler' })).toBeVisible();
   });
 
   test('Adım 2 — KPI kartları', async ({ page }) => {
@@ -43,8 +47,9 @@ test.describe('Ana Sayfa rollout — adım adım', () => {
     await expect(page.getByRole('heading', { name: 'Bugünkü Ayrılışlar', level: 2 })).toBeVisible();
   });
 
-  test('Adım 5 — Tam oda rack (F12)', async ({ page }) => {
-    await page.goto('/rooms', { waitUntil: 'domcontentloaded', timeout: 90_000 });
-    await expect(page.getByRole('heading', { name: /Room Rack/i }).first()).toBeVisible({ timeout: 30_000 });
+  test('Adım 6 — Orijinal şablon sihirbazı', async ({ page }) => {
+    await gotoWithDemo(page, '/?design=1', 'admin', { waitForSideNav: false });
+    await expect(page.locator('.roomio-home-wizard[role="dialog"]')).toBeVisible({ timeout: 45_000 });
+    await expect(page.locator('.roomio-home-wizard__card--orijinal').first()).toBeVisible();
   });
 });

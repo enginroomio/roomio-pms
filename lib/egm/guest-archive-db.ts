@@ -1,6 +1,6 @@
 import type { GuestArchiveEntry } from '@/lib/egm/guest-archive';
 import { splitGuestName } from '@/lib/egm/types';
-import { getAllReservationsServer } from '@/lib/server/pms-store';
+import { getAllReservationsServer, getInvoices } from '@/lib/server/pms-store';
 
 function norm(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -35,6 +35,7 @@ export async function searchGuestArchiveFromDb(
     motherName?: string;
     firstName?: string;
     lastName?: string;
+    reservationIds: Set<string>;
   }>();
 
   for (const r of reservations) {
@@ -45,6 +46,7 @@ export async function searchGuestArchiveFromDb(
     const existing = byKey.get(key);
     if (existing) {
       existing.visits += 1;
+      existing.reservationIds.add(r.id);
       if (r.checkOut > existing.lastStay) existing.lastStay = r.checkOut;
       if (!existing.idNo && rid) existing.idNo = rid;
       if (!existing.nationality && extra.nationality) existing.nationality = String(extra.nationality);
@@ -69,11 +71,12 @@ export async function searchGuestArchiveFromDb(
         motherName: extra.motherName ? String(extra.motherName) : undefined,
         firstName: extra.firstName ? String(extra.firstName) : undefined,
         lastName: extra.lastName ? String(extra.lastName) : undefined,
+        reservationIds: new Set([r.id]),
       });
     }
   }
 
-  const scored: Array<{ entry: GuestArchiveEntry; score: number }> = [];
+  const scored: Array<{ entry: GuestArchiveEntry; score: number; reservationIds: Set<string> }> = [];
 
   for (const [key, agg] of byKey) {
     let score = 0;
@@ -96,6 +99,7 @@ export async function searchGuestArchiveFromDb(
     const { firstName, lastName } = splitGuestName(agg.guestName);
     scored.push({
       score,
+      reservationIds: agg.reservationIds,
       entry: {
         id: `db-${key.slice(0, 24)}`,
         guestName: agg.guestName,
@@ -118,8 +122,22 @@ export async function searchGuestArchiveFromDb(
     });
   }
 
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .map((x) => x.entry)
-    .slice(0, 8);
+  const top = scored.sort((a, b) => b.score - a.score).slice(0, 8);
+
+  // "Fatura listesi" — KVKK arşivinde tutulmuyor (VUK gereği muhasebe kayıtları
+  // daha uzun saklanır) ama misafirin geçmiş faturalarını burada çapraz referans
+  // olarak göstermek staff'ın aynı ekrandan görmesini sağlar.
+  if (top.length > 0) {
+    const invoices = await getInvoices(propertyId).catch(() => []);
+    if (invoices.length > 0) {
+      for (const x of top) {
+        const gn = norm(x.entry.guestName);
+        x.entry.invoiceCount = invoices.filter(
+          (inv) => (inv.reservationId && x.reservationIds.has(inv.reservationId)) || norm(inv.guest) === gn,
+        ).length;
+      }
+    }
+  }
+
+  return top.map((x) => x.entry);
 }

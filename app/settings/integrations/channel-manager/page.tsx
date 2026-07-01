@@ -295,6 +295,17 @@ export default function ChannelManagerPage() {
           </table>
         </div>
       </FormSection>
+
+      <FormSection title="iCal takvim aktarımı" className="roomio-form-section--spaced">
+        <p className="roomio-page-desc">
+          API kanal yöneticisi yerine Booking.com / Expedia iCal linkleri kullanıyorsanız,
+          takvim URL&apos;lerini kaydedip rezervasyonları buradan içe aktarabilirsiniz.
+        </p>
+        <FormActions className="roomio-form-actions--spaced">
+          <Button variant="secondary" href="/settings/integrations/ical-import">OTA Takvim (iCal) ayarları</Button>
+          <Button variant="ghost" href="/reservations?tab=ical">Rezervasyon listesinde aç</Button>
+        </FormActions>
+      </FormSection>
     </IntegrationPageLayout>
   );
 }

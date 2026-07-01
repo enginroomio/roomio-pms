@@ -33,6 +33,8 @@ type Props = {
   propertyName?: string;
   totalRooms?: number;
   businessDate?: string;
+  /** Orijinal kompakt — durum kartlarını gizle */
+  compact?: boolean;
 };
 
 function formatBusinessDate(iso: string, locale: string) {
@@ -55,6 +57,7 @@ export function DashboardWelcome({
   propertyName = PROPERTY.name,
   totalRooms = PROPERTY.totalRooms,
   businessDate: businessDateIso = PROPERTY.businessDate,
+  compact = false,
 }: Props) {
   const { t, locale } = useI18n();
   const { user } = useSession();
@@ -129,24 +132,26 @@ export function DashboardWelcome({
         ))}
       </div>
 
-      <div className="roomio-welcome-bar__status">
-        <div className="roomio-welcome-status-card">
-          <span className="roomio-welcome-status-card__label">{t('dashboard.occupancy')}</span>
-          <strong className="roomio-welcome-status-card__value">%{occupancy}</strong>
-          <span className="roomio-welcome-status-card__trend roomio-welcome-status-card__trend--up">
-            <ArrowUpRight size={14} aria-hidden />
-            {t('dashboard.active')}
-          </span>
+      {!compact ? (
+        <div className="roomio-welcome-bar__status">
+          <div className="roomio-welcome-status-card">
+            <span className="roomio-welcome-status-card__label">{t('dashboard.occupancy')}</span>
+            <strong className="roomio-welcome-status-card__value">%{occupancy}</strong>
+            <span className="roomio-welcome-status-card__trend roomio-welcome-status-card__trend--up">
+              <ArrowUpRight size={14} aria-hidden />
+              {t('dashboard.active')}
+            </span>
+          </div>
+          <div className="roomio-welcome-status-card roomio-welcome-status-card--muted">
+            <span className="roomio-welcome-status-card__label">{t('dashboard.shift')}</span>
+            <strong className="roomio-welcome-status-card__value">{user.roleLabel}</strong>
+            <span className="roomio-welcome-status-card__trend">
+              <ArrowDownRight size={14} aria-hidden />
+              {user.name}
+            </span>
+          </div>
         </div>
-        <div className="roomio-welcome-status-card roomio-welcome-status-card--muted">
-          <span className="roomio-welcome-status-card__label">{t('dashboard.shift')}</span>
-          <strong className="roomio-welcome-status-card__value">{user.roleLabel}</strong>
-          <span className="roomio-welcome-status-card__trend">
-            <ArrowDownRight size={14} aria-hidden />
-            {user.name}
-          </span>
-        </div>
-      </div>
+      ) : null}
     </section>
   );
 }

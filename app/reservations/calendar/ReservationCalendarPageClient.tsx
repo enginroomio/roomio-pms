@@ -1,17 +1,24 @@
 'use client';
 
-import { PageHeader } from '@/components/PageHeader';
+import { useSearchParams } from 'next/navigation';
 import { ReservationCalendarContent } from './ReservationCalendarContent';
+import { RezervasyonModuleLayout } from '@/components/rezervasyon/RezervasyonModuleLayout';
 
 export function ReservationCalendarPageClient() {
+  const searchParams = useSearchParams();
+  const mode = searchParams.get('mode');
+  const menuSearch = mode ? `?mode=${mode}` : '';
+
   return (
-    <PageHeader
-      breadcrumb="Rezervasyon › Grafikler (F1)"
+    <RezervasyonModuleLayout
+      segment="Grafikler (F1)"
       title="Grafikler"
       description="Elektra v5 Forecast — canlı doluluk"
-      stackClassName="roomio-page-stack--grafik-f1"
+      menuSearch={menuSearch}
     >
-      <ReservationCalendarContent />
-    </PageHeader>
+      <div className="roomio-page-stack roomio-page-stack--grafik-f1">
+        <ReservationCalendarContent />
+      </div>
+    </RezervasyonModuleLayout>
   );
 }

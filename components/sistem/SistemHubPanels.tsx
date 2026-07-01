@@ -6,7 +6,7 @@ import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
 
 const SISTEM_LINKS = [
-  { label: 'Kuruluş', href: '/settings?section=config', desc: 'Otel ve sistem tanımları' },
+  { label: 'Kuruluş', href: '/settings', desc: 'Otel bilgileri ve tanımlar' },
   { label: 'Rapor Tasarım', href: '/reports?tab=design', desc: 'Kullanıcı tanımlı rapor şablonları' },
   { label: 'Raporla', href: '/reports', desc: 'Raporlama programı' },
   { label: 'Form Tasarım', href: '/reports?tab=forms', desc: 'Form ve sayfa şablonları' },

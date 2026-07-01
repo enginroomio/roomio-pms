@@ -15,6 +15,20 @@ type Options = {
 
 const REFIT_DELAYS_MS = [0, 80, 240, 600, 1200, 2000];
 
+/** Yeni rezervasyon hızlı kayıt — doğal sayfa kaydırması; sığdırma kancası devre dışı */
+function shouldSkipOneScreenFit(rootEl: HTMLElement): boolean {
+  return Boolean(rootEl.querySelector('.roomio-rez-quick, .roomio-rez-new-screen'));
+}
+
+function clearOneScreenFitStyles(shellEl: HTMLElement, rootEl: HTMLElement) {
+  shellEl.style.removeProperty('overflow');
+  shellEl.style.removeProperty('max-height');
+  shellEl.style.removeProperty('height');
+  rootEl.style.removeProperty('transform');
+  rootEl.style.removeProperty('width');
+  rootEl.style.removeProperty('transform-origin');
+}
+
 /**
  * İçeriği flex kabuğuna kaydırmasız sığdırır (orantılı scale veya yalnızca scaleY).
  * Kullanılabilir yükseklik .roomio-content içinde kardeş öğeler düşülerek hesaplanır.
@@ -118,6 +132,11 @@ export function useOneScreenFit<TShell extends HTMLElement, TRoot extends HTMLEl
           const shellEl2 = shellRef.current;
           const rootEl2 = rootRef.current;
           if (!shellEl2 || !rootEl2) return;
+
+          if (shouldSkipOneScreenFit(rootEl2)) {
+            clearOneScreenFitStyles(shellEl2, rootEl2);
+            return;
+          }
 
           const available = Math.floor(measureAvailable(shellEl2));
           if (available <= 0) return;

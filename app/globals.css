@@ -19,4 +19,5 @@
 @import './styles/theme-screen.css';
 @import './styles/elektra-context-menu.css';
 @import './styles/login.css';
+@import './styles/eod-legacy.css';
 @import './styles/pwa.css';

@@ -1,4 +1,7 @@
 import { CLIENT_PROPERTY_KEY, DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
+import { DEMO_ROLE_HEADER } from '@/lib/auth/config';
+
+const DEMO_ROLE_STORAGE = 'roomio-demo-role';
 
 export function getActivePropertyId(): string {
   if (typeof window === 'undefined') return DEFAULT_PROPERTY_ID;
@@ -17,7 +20,12 @@ export async function roomioFetch(input: string, init?: RequestInit): Promise<Re
   }
   if (typeof window !== 'undefined' && !headers.has('Authorization')) {
     const token = localStorage.getItem('roomio-token');
-    if (token) headers.set('Authorization', `Bearer ${token}`);
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    } else {
+      const demoRole = localStorage.getItem(DEMO_ROLE_STORAGE);
+      if (demoRole) headers.set(DEMO_ROLE_HEADER, demoRole);
+    }
   }
   return fetch(input, { ...init, headers, credentials: init?.credentials ?? 'include' });
 }

@@ -24,9 +24,18 @@ type Props = {
   refNo?: string;
   /** Yeni rezervasyon sihirbazı — tek ekrana sığan yoğun düzen */
   compact?: boolean;
+  /**
+   * Konsolide tek ekranda "Misafir" adımı (GuestArchiveLookup) zaten aynı
+   * arşivi aynı alanlarla arıyor ve uyguluyor — burada AYNI sorguyu tekrar
+   * atmak hem gereksiz ağ trafiği hem de KVKK kimlik-açma denetim kaydını
+   * (audit log) iki kez yazdırma riski oluşturuyordu. true ise bu panel
+   * kendi arşiv aramasını/otomatik-uygulamasını atlar (alanlar yine de
+   * GuestArchiveLookup'tan dolan değerlerle gelir).
+   */
+  skipArchiveSearch?: boolean;
 };
 
-export function EgmIdentityFormPanel({ values, onChange, refNo, compact = false }: Props) {
+export function EgmIdentityFormPanel({ values, onChange, refNo, compact = false, skipArchiveSearch = false }: Props) {
   const [results, setResults] = useState<GuestArchiveListItem[]>([]);
   const [selectedArchive, setSelectedArchive] = useState<GuestArchiveListItem | null>(null);
   const [searching, setSearching] = useState(false);
@@ -67,6 +76,7 @@ export function EgmIdentityFormPanel({ values, onChange, refNo, compact = false 
   });
 
   const searchArchive = useCallback(async () => {
+    if (skipArchiveSearch) return;
     const q = new URLSearchParams();
     if (guestName.trim()) q.set('guestName', guestName.trim());
     if (values.idNo) q.set('idNo', String(values.idNo));
@@ -81,12 +91,13 @@ export function EgmIdentityFormPanel({ values, onChange, refNo, compact = false 
     const j = (await res.json()) as { results?: GuestArchiveListItem[] };
     setResults(j.results ?? []);
     setSearching(false);
-  }, [guestName, values.email, values.idNo, values.phone]);
+  }, [skipArchiveSearch, guestName, values.email, values.idNo, values.phone]);
 
   useEffect(() => {
+    if (skipArchiveSearch) return;
     const t = setTimeout(() => { void searchArchive(); }, 400);
     return () => clearTimeout(t);
-  }, [searchArchive]);
+  }, [skipArchiveSearch, searchArchive]);
 
   const applyArchive = useCallback(
     async (archiveId: string) => {
@@ -100,10 +111,11 @@ export function EgmIdentityFormPanel({ values, onChange, refNo, compact = false 
   );
 
   useEffect(() => {
+    if (skipArchiveSearch) return;
     if (results.length === 1 && !appliedId && !values.birthDate) {
       void applyArchive(results[0]!.id);
     }
-  }, [results, appliedId, values.birthDate, applyArchive]);
+  }, [skipArchiveSearch, results, appliedId, values.birthDate, applyArchive]);
 
   function setField(key: string, val: string) {
     onChange({ [key]: val });
@@ -130,13 +142,14 @@ export function EgmIdentityFormPanel({ values, onChange, refNo, compact = false 
         <EgmStatusBadge status={egmStatus} compact />
       </div>
 
-      {selectedArchive ? (
+      {!skipArchiveSearch && selectedArchive ? (
         <div className="roomio-egm-archive-banner roomio-egm-archive-banner--applied">
           <strong>Arşiv:</strong> {selectedArchive.guestName}
           {!compact ? (
             <>
               {' · '}{selectedArchive.visits} konaklama · Son: {selectedArchive.lastStay}
               {' · '}{selectedArchive.source === 'egm' ? 'EGM kaydı' : 'Misafir arşivi'}
+              {selectedArchive.invoiceCount ? ` · ${selectedArchive.invoiceCount} fatura` : ''}
             </>
           ) : null}
           <button type="button" className="roomio-link" style={{ marginLeft: 8 }} onClick={() => { setSelectedArchive(null); setAppliedId(null); }}>
@@ -145,7 +158,7 @@ export function EgmIdentityFormPanel({ values, onChange, refNo, compact = false 
         </div>
       ) : null}
 
-      {results.length > 0 && !selectedArchive ? (
+      {!skipArchiveSearch && results.length > 0 && !selectedArchive ? (
         <div className="roomio-egm-archive-list roomio-card">
           <p className="roomio-card-title roomio-egm-archive-list__title">
             Misafir arşivi {searching ? '(aranıyor…)' : `(${results.length})`}
@@ -156,7 +169,12 @@ export function EgmIdentityFormPanel({ values, onChange, refNo, compact = false 
                 <button type="button" className="roomio-egm-archive-item" onClick={() => void applyArchive(entry.id)}>
                   <strong>{entry.guestName}</strong>
                   <span>{entry.nationality} · {entry.idNoMasked ?? entry.idNo} · {entry.visits} konaklama</span>
-                  {!compact ? <span className="roomio-text-muted">Son: {entry.lastStay}</span> : null}
+                  {!compact ? (
+                    <span className="roomio-text-muted">
+                      Son: {entry.lastStay}
+                      {entry.invoiceCount ? ` · ${entry.invoiceCount} fatura` : ''}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             ))}
@@ -202,7 +220,7 @@ export function EgmIdentityFormPanel({ values, onChange, refNo, compact = false 
         </div>
       </section>
 
-      {!compact ? (
+      {!compact && !skipArchiveSearch ? (
         <div className="roomio-form-actions" style={{ marginTop: 8 }}>
           <Button variant="secondary" onClick={() => void searchArchive()} disabled={searching}>
             {searching ? 'Aranıyor…' : 'Arşivi yeniden ara'}

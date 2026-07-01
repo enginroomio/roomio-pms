@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { LayoutTemplate } from 'lucide-react';
 import { DashboardBoard } from '@/components/DashboardBoard';
 import { DailyRoomStatusPanel } from '@/components/dashboard/DailyRoomStatusPanel';
@@ -16,7 +16,7 @@ import { PropertyPortfolioStrip } from '@/components/property/PropertyPortfolioS
 import { useProperty } from '@/components/property/PropertyProvider';
 import { useHomeLayout } from '@/lib/client/use-home-layout';
 import { useDashboardSnapshot } from '@/lib/client/use-dashboard-snapshot';
-import { visibleHomePanels, type HomePanelId } from '@/lib/dashboard/home-layout';
+import { visibleHomePanels, type HomePanelId, HOME_PRESETS } from '@/lib/dashboard/home-layout';
 import type { DashboardSnapshot } from '@/lib/server/dashboard-data';
 
 type Props = {
@@ -24,6 +24,7 @@ type Props = {
 };
 
 export function DashboardHome({ initial }: Props) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const hub = searchParams.get('hub');
   const view = searchParams.get('view');
@@ -43,10 +44,32 @@ export function DashboardHome({ initial }: Props) {
     patchLayout,
     togglePanel,
   } = useHomeLayout();
-  const [wizardOpen, setWizardOpen] = useState(false);
+  const designParam = searchParams.get('design');
+  const designFromUrl = designParam === '1' || designParam === 'wizard';
+  const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(() => designFromUrl);
   const [dragKey, setDragKey] = useState<HomePanelId | null>(null);
   const [overKey, setOverKey] = useState<HomePanelId | null>(null);
   const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    if (designFromUrl && !wizardDismissed) setWizardOpen(true);
+    if (!designFromUrl) {
+      setWizardOpen(false);
+      setWizardDismissed(false);
+    }
+  }, [designFromUrl, wizardDismissed]);
+
+  const closeWizard = () => {
+    setWizardDismissed(true);
+    setWizardOpen(false);
+    if (designFromUrl) {
+      const qs = new URLSearchParams(searchParams.toString());
+      qs.delete('design');
+      const next = qs.toString() ? `/?${qs.toString()}` : '/';
+      router.replace(next, { scroll: false });
+    }
+  };
 
   const panels = useMemo(() => visibleHomePanels(layout), [layout]);
 
@@ -89,15 +112,16 @@ export function DashboardHome({ initial }: Props) {
       case 'welcome':
         return (
           <DashboardWelcome
-            arrivals={snapshot.arrivals.length}
-            departures={snapshot.departures.length}
-            inHouse={snapshot.inHouse}
-            occupancy={snapshot.occupancy}
-            cleanVacant={snapshot.cleanVacant}
-            dirtyVacant={snapshot.dirtyVacant}
-            propertyName={activeProperty?.name}
-            totalRooms={activeProperty?.totalRooms ?? snapshot.totalRooms}
-            businessDate={snapshot.businessDate}
+              arrivals={snapshot.arrivals.length}
+              departures={snapshot.departures.length}
+              inHouse={snapshot.inHouse}
+              occupancy={snapshot.occupancy}
+              cleanVacant={snapshot.cleanVacant}
+              dirtyVacant={snapshot.dirtyVacant}
+              propertyName={activeProperty?.name}
+              totalRooms={activeProperty?.totalRooms ?? snapshot.totalRooms}
+              businessDate={snapshot.businessDate}
+              compact={layout.presetId === 'orijinal-kompakt'}
           />
         );
       case 'portfolio':
@@ -152,7 +176,7 @@ export function DashboardHome({ initial }: Props) {
           {editMode ? 'Düzenlemeyi bitir' : 'Panelleri taşı'}
         </button>
         <span className="roomio-home-toolbar__meta">
-          Şablon: <strong>{archive.find((t) => t.id === layout.presetId)?.name ?? (layout.presetId === 'custom' ? 'Özel' : layout.presetId)}</strong>
+          Şablon: <strong>{archive.find((t) => t.layout.presetId === layout.presetId || t.id === layout.presetId)?.name ?? HOME_PRESETS.find((p) => p.id === layout.presetId)?.label ?? (layout.presetId === 'custom' ? 'Özel' : layout.presetId)}</strong>
           {' · '}
           {layout.theme}
         </span>
@@ -188,7 +212,7 @@ export function DashboardHome({ initial }: Props) {
         layout={layout}
         archive={archive}
         defaultTemplateId={defaultTemplateId}
-        onClose={() => setWizardOpen(false)}
+        onClose={closeWizard}
         onApplyPreset={applyPreset}
         onApplyTemplate={applyTemplate}
         onResetTemplate={resetToTemplate}

@@ -1,5 +1,8 @@
 /** Rapor tasarım — tüm departman alan kataloğu ve hazır şablonlar */
 
+import { EOD_LEGACY_FIELD_DEFS } from './eod-legacy-fields';
+import { buildEodLegacyStarters } from './eod-legacy-wizard';
+
 export type ReportFieldDef = {
   key: string;
   label: string;
@@ -12,6 +15,10 @@ export type ReportStarter = {
   name: string;
   description: string;
   columns: string[];
+  /** Elektra GR kodu (örn. GR101) */
+  reportCode?: string;
+  /** Gün sonu kategori düğmesi veya modül grubu */
+  group?: string;
 };
 
 export type ReportModuleDef = {
@@ -236,22 +243,23 @@ export const REPORT_MODULES: ReportModuleDef[] = [
       { id: 'stk-move', name: 'Stok hareketleri', description: 'Giriş-çıkış kayıtları', columns: ['date', 'name', 'movement', 'qty', 'warehouse'] },
     ],
   ),
-  mod('eod', 'Gün Sonu', '🌙', 'Kapanış, doluluk ve gelir özetleri',
+  mod('eod', 'Gün Sonu', '🌙', 'Elektra GR gün sonu raporları — sütunları sihirbazda özelleştirin',
     ['businessDate', 'occupancy', 'revenue', 'closedBy'],
     [
-      { key: 'businessDate', label: 'İş günü', sample: '18.06.2026', group: 'Kapanış' },
+      ...EOD_LEGACY_FIELD_DEFS.map((f) => ({
+        key: f.key,
+        label: f.label,
+        sample: f.sample,
+        group: f.group,
+      })),
       { key: 'closedAt', label: 'Kapanış saati', sample: '23:58', group: 'Kapanış' },
-      { key: 'closedBy', label: 'Kapatan kullanıcı', sample: 'Murat S.', group: 'Kapanış' },
-      { key: 'occupancy', label: 'Doluluk %', sample: '72', group: 'İstatistik' },
-      { key: 'roomsSold', label: 'Satılan oda', sample: '55', group: 'İstatistik' },
-      { key: 'revenue', label: 'Toplam gelir', sample: '₺284.500', group: 'Finans' },
-      { key: 'adr', label: 'Ortalama fiyat (ADR)', sample: '₺4.850', group: 'Finans' },
-      { key: 'revpar', label: 'RevPAR', sample: '₺3.492', group: 'Finans' },
+      { key: 'roomsSold', label: 'Satılan oda', sample: '55', group: 'KPI' },
       { key: 'reportType', label: 'Rapor tipi', sample: 'FO özet', group: 'Kapanış' },
     ],
     [
       { id: 'eod-summary', name: 'Gün sonu özet', description: 'Standart kapanış paketi', columns: ['businessDate', 'occupancy', 'revenue', 'adr', 'closedBy'] },
       { id: 'eod-archive', name: 'Arşiv listesi', description: 'Geçmiş iş günleri', columns: ['businessDate', 'closedAt', 'occupancy', 'revenue'] },
+      ...buildEodLegacyStarters(),
     ],
   ),
   mod('mg', 'Yönetim', '📊', 'Üst düzey KPI ve performans raporları',

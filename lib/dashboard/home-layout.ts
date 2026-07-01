@@ -6,7 +6,7 @@ export type HomePanelId =
   | 'kpiStrip'
   | 'rack';
 
-export type HomeThemeId = 'modern' | 'glass' | 'compact' | 'elektra' | 'midnight';
+export type HomeThemeId = 'modern' | 'glass' | 'compact' | 'elektra' | 'midnight' | 'orijinal';
 
 export type HomePresetId =
   | 'ana-ekran'
@@ -14,7 +14,10 @@ export type HomePresetId =
   | 'rack-focus'
   | 'executive'
   | 'ops-dense'
-  | 'aurora';
+  | 'aurora'
+  | 'orijinal-operasyon'
+  | 'orijinal-kompakt'
+  | 'orijinal-klasik';
 
 export type HomeLayout = {
   presetId: HomePresetId | 'custom' | string;
@@ -48,14 +51,15 @@ export const HOME_THEME_LABELS: Record<HomeThemeId, string> = {
   compact: 'Kompakt yoğun',
   elektra: 'Elektra klasik',
   midnight: 'Gece modu vurgusu',
+  orijinal: 'Orijinal PMS (emerald)',
 };
 
-/** Kayıtlı ana ekran şablonu — varsayılan atama */
+/** Kayıtlı ana ekran şablonu — Orijinal PMS operasyon varsayılanı */
 export const DEFAULT_HOME_LAYOUT: HomeLayout = {
-  presetId: 'ana-ekran',
-  panelOrder: ['welcome', 'portfolio', 'alerts', 'quickActions', 'kpiStrip', 'rack'],
-  hiddenPanels: [],
-  theme: 'modern',
+  presetId: 'orijinal-operasyon',
+  panelOrder: ['quickActions', 'welcome', 'alerts', 'rack'],
+  hiddenPanels: ['portfolio', 'kpiStrip'],
+  theme: 'orijinal',
   rackExpanded: true,
   showKpiStrip: false,
 };
@@ -139,11 +143,56 @@ export const HOME_PRESETS: HomePreset[] = [
       showKpiStrip: true,
     },
   },
+  {
+    id: 'orijinal-operasyon',
+    label: 'Orijinal · Operasyon',
+    description: 'Tarayıcı mockup — hızlı işlemler, koyu özet bandı, rack + uyarılar.',
+    preview: 'orijinal',
+    layout: {
+      panelOrder: ['quickActions', 'welcome', 'alerts', 'rack'],
+      hiddenPanels: ['portfolio', 'kpiStrip'],
+      theme: 'orijinal',
+      rackExpanded: true,
+      showKpiStrip: false,
+    },
+  },
+  {
+    id: 'orijinal-kompakt',
+    label: 'Orijinal · Kompakt',
+    description: 'Orijinal düzen — sıkı boşluklar, operasyon uyarıları açık.',
+    preview: 'orijinal',
+    layout: {
+      panelOrder: ['quickActions', 'welcome', 'alerts', 'rack'],
+      hiddenPanels: ['portfolio', 'kpiStrip'],
+      theme: 'orijinal',
+      rackExpanded: true,
+      showKpiStrip: false,
+    },
+  },
+  {
+    id: 'orijinal-klasik',
+    label: 'Orijinal · Klasik',
+    description: 'Sade orijinal — yalnızca hızlı işlemler, özet ve oda rack.',
+    preview: 'orijinal',
+    layout: {
+      panelOrder: ['quickActions', 'welcome', 'rack'],
+      hiddenPanels: ['portfolio', 'kpiStrip', 'alerts'],
+      theme: 'orijinal',
+      rackExpanded: true,
+      showKpiStrip: false,
+    },
+  },
 ];
 
 const STORAGE_KEY = 'roomio:home-layout-v1';
 
 const ALL_PANELS = Object.keys(HOME_PANEL_LABELS) as HomePanelId[];
+
+/** Eski `ana-ekran` + modern tema kaydı — orijinal varsayılana taşınır. */
+export function shouldMigrateToOrijinalLayout(raw: Partial<HomeLayout> | null | undefined): boolean {
+  if (!raw) return true;
+  return raw.presetId === 'ana-ekran' && (!raw.theme || raw.theme === 'modern');
+}
 
 export function normalizeHomeLayout(raw: Partial<HomeLayout> | null | undefined): HomeLayout {
   const base = { ...DEFAULT_HOME_LAYOUT, ...raw };
@@ -159,7 +208,7 @@ export function normalizeHomeLayout(raw: Partial<HomeLayout> | null | undefined)
     if (!seen.has(id)) order.push(id);
   }
   const hidden = (base.hiddenPanels ?? []).filter((id) => ALL_PANELS.includes(id));
-  const themes: HomeThemeId[] = ['modern', 'glass', 'compact', 'elektra', 'midnight'];
+  const themes: HomeThemeId[] = ['modern', 'glass', 'compact', 'elektra', 'midnight', 'orijinal'];
   return {
     presetId: base.presetId ?? 'ana-ekran',
     panelOrder: order,
@@ -193,9 +242,11 @@ export function applyHomePreset(presetId: HomePresetId): HomeLayout {
 }
 
 export function applyHomeLayoutSnapshot(layout: HomeLayout, templateId?: string): HomeLayout {
+  const layoutPreset = layout.presetId;
+  const isKnownPreset = HOME_PRESETS.some((p) => p.id === layoutPreset);
   return normalizeHomeLayout({
     ...layout,
-    presetId: templateId ?? layout.presetId ?? 'custom',
+    presetId: isKnownPreset ? layoutPreset : templateId ?? layoutPreset ?? 'custom',
   });
 }
 

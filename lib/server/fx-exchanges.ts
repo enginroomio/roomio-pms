@@ -50,7 +50,7 @@ export async function seedFxExchangesIfEmpty(propertyId?: string): Promise<void>
   const businessDate = await getBusinessDate(prop);
   await prisma.fxExchange.createMany({
     data: DEMO_FX_EXCHANGES.map((fx) => ({
-      id: fx.id,
+      id: `${prop}-${fx.id}`,
       propertyId: prop,
       businessDate,
       time: fx.time,

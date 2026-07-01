@@ -13,6 +13,7 @@ type Props = {
   sideTitle?: string;
   menuSearch?: string;
   menuItems?: ModuleNavItem[] | null;
+  hideTitle?: boolean;
   children: ReactNode;
 };
 
@@ -24,6 +25,7 @@ export function ModuleLayout({
   sideTitle,
   menuSearch = '',
   menuItems,
+  hideTitle,
   children,
 }: Props) {
   const pathname = usePathname();
@@ -34,7 +36,7 @@ export function ModuleLayout({
       <div className="roomio-page-header roomio-module-layout__head">
         <div>
           <div className="roomio-breadcrumb">{breadcrumb}</div>
-          <h1 className="roomio-page-title">{title}</h1>
+          {hideTitle ? null : <h1 className="roomio-page-title">{title}</h1>}
           {description ? <p className="roomio-page-desc">{description}</p> : null}
         </div>
         {actions}

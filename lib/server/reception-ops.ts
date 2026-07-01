@@ -160,17 +160,17 @@ export async function postManualCashEntryServer(
   };
 }
 
-export async function getCashLedgerReportServer(propertyId?: string) {
+export async function getCashLedgerReportServer(propertyId?: string, businessDate?: string) {
   await init();
   const prop = pid(propertyId);
-  const businessDate = await getBusinessDate(prop);
-  const entries = await getCashEntriesServer(prop, businessDate);
+  const date = businessDate ?? (await getBusinessDate(prop));
+  const entries = await getCashEntriesServer(prop, date);
   const tahsilat = entries.filter((e) => e.type === 'tahsilat').reduce((s, e) => s + e.amount, 0);
   const odeme = entries.filter((e) => e.type === 'odeme').reduce((s, e) => s + e.amount, 0);
   const depozit = entries.filter((e) => e.type === 'depozit').reduce((s, e) => s + e.amount, 0);
   const avans = entries.filter((e) => e.type === 'avans').reduce((s, e) => s + e.amount, 0);
   return {
-    businessDate,
+    businessDate: date,
     entries,
     summary: { tahsilat, odeme, depozit, avans, net: tahsilat + depozit + avans - odeme },
   };

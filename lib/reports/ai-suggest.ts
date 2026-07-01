@@ -13,6 +13,17 @@ export type ReportSuggestion = {
 };
 
 const RULES: { pattern: RegExp; moduleId: string; starterId?: string; name?: string }[] = [
+  { pattern: /\bGR\d{3,4}[A-Z]?\b/i, moduleId: 'eod' },
+  { pattern: /polis\s*listesi|GR222/i, moduleId: 'eod', starterId: 'eod-gr222' },
+  { pattern: /departman\s*işlem|GR310/i, moduleId: 'eod', starterId: 'eod-gr310' },
+  { pattern: /fatura\s*kontrol|GR502/i, moduleId: 'eod', starterId: 'eod-gr502' },
+  { pattern: /kasa\s*defteri|GRKASAISLEM/i, moduleId: 'eod', starterId: 'eod-grkasaislem' },
+  { pattern: /net\s*kasa|GR401N/i, moduleId: 'eod', starterId: 'eod-gr401n' },
+  { pattern: /folyo\s*bakiye|GRFOLYOBAKIYE/i, moduleId: 'eod', starterId: 'eod-grfolyobakiye2' },
+  { pattern: /giriş\s*listesi|GR101/i, moduleId: 'eod', starterId: 'eod-gr101' },
+  { pattern: /çıkış\s*listesi|GR102/i, moduleId: 'eod', starterId: 'eod-gr102' },
+  { pattern: /misafir\s*listesi|GR201/i, moduleId: 'eod', starterId: 'eod-gr201' },
+  { pattern: /oda\s*fiyat|GR205/i, moduleId: 'eod', starterId: 'eod-gr205' },
   { pattern: /konaklayan|inhouse|in-house|otelde/i, moduleId: 'rec', starterId: 'rec-inhouse' },
   { pattern: /giriş|varış|arrival|check.?in/i, moduleId: 'rec', starterId: 'rec-arrival' },
   { pattern: /çıkış|ayrıl|departure|check.?out/i, moduleId: 'rec', starterId: 'rec-departure' },
@@ -51,6 +62,19 @@ export function suggestReportFromPrompt(prompt: string): ReportSuggestion {
     const starter = rule.starterId
       ? m.starters.find((s) => s.id === rule.starterId) ?? m.starters[0]
       : m.starters[0];
+    const grMatch = text.match(/\b(GR[A-Z0-9]+|GRFOLYOBAKIYE2|GRKASAISLEM|GRMAIL|RGC|GRODAFIYATKON|GUNLUKINDIRIMIADE|MASTERFOLYOKONTORL)\b/i);
+    if (rule.moduleId === 'eod' && grMatch && !rule.starterId) {
+      const code = grMatch[1]!.toUpperCase();
+      const byCode = m.starters.find((s) => s.reportCode === code);
+      if (byCode) {
+        return {
+          name: byCode.name,
+          module: m.label,
+          columns: [...byCode.columns],
+          explanation: `“${code}” Elektra gün sonu raporu olarak eşleştirildi.`,
+        };
+      }
+    }
     return {
       name: rule.name ?? starter.name,
       module: m.label,

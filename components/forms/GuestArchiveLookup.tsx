@@ -110,6 +110,7 @@ export function GuestArchiveLookup({ values, onChange, autoApplySingle = true }:
                 <span className="roomio-text-muted">
                   {entry.source === 'egm' ? 'EGM' : 'KVKK arşiv'}
                   {entry.idNoMasked || entry.idNo ? ` · ${entry.idNoMasked ?? entry.idNo}` : ''}
+                  {entry.invoiceCount ? ` · ${entry.invoiceCount} fatura` : ''}
                 </span>
               </button>
             </li>

@@ -240,6 +240,10 @@
 
 .roomio-hk-table-card { padding: 14px; }
 
+.roomio-hk-table { table-layout: fixed; }
+
+.roomio-row-selected { background: var(--roomio-accent-soft) !important; }
+
 .roomio-hk-table__subhead th {
   font-size: 0.68rem;
   text-transform: uppercase;

@@ -2,8 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { GuestRelationsTabs } from '@/components/GuestRelationsTabs';
-import { PageHeader } from '@/components/PageHeader';
+import { GuestRelationsModuleShell } from '@/components/guest-relations/GuestRelationsModuleShell';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
@@ -59,13 +58,12 @@ export default function GuestReviewEntryPage() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Misafir İlişkileri > Misafir Yorum Girişi"
+    <GuestRelationsModuleShell
+      segment="Misafir Yorum Girişi"
       title="Misafir Yorum Girişi"
       description="Yeni misafir yorumu oluşturun."
       actions={<Button variant="secondary" href="/guest-relations/reviews">← Yorum Listesi</Button>}
     >
-      <GuestRelationsTabs />
       <form className="roomio-card roomio-form" onSubmit={(e) => void save(e)}>
         <h2 className="roomio-card-title">Yorum Bilgileri</h2>
         <label className="roomio-field"><span>Değerlendirme</span><StarRating value={rating} onChange={setRating} /></label>
@@ -85,6 +83,6 @@ export default function GuestReviewEntryPage() {
         </div>
         {msg ? <p className="roomio-page-desc roomio-text-warn">{msg}</p> : null}
       </form>
-    </PageHeader>
+    </GuestRelationsModuleShell>
   );
 }

@@ -1,14 +1,16 @@
 'use client';
 
-import { GuestRelationsTabs } from '@/components/GuestRelationsTabs';
+import { GuestRelationsModuleShell } from '@/components/guest-relations/GuestRelationsModuleShell';
 import { FacilityBookingsPanel } from '@/components/guest-relations/FacilityBookingsPanel';
-import { PageHeader } from '@/components/PageHeader';
 
 export default function RestaurantReservationPage() {
   return (
-    <PageHeader breadcrumb="Misafir İlişkileri > Restoran Rezervasyon" title="Restoran Rezervasyon" description="Misafir restoran rezervasyonları — kısayol: Shift+R">
-      <GuestRelationsTabs />
+    <GuestRelationsModuleShell
+      segment="Restoran Rezervasyon"
+      title="Restoran Rezervasyon"
+      description="Misafir restoran rezervasyonları — kısayol: Shift+R"
+    >
       <FacilityBookingsPanel kind="restaurant" title="Restoran" />
-    </PageHeader>
+    </GuestRelationsModuleShell>
   );
 }

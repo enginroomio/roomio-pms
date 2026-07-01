@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
+import type { EodArchive } from '@/lib/data/eod';
 import type { RoomBlock } from '@/lib/data/room-blocks';
 import type { FormLayout } from '@/lib/forms/form-catalog';
 import type { TaxRule } from '@/lib/tax/types';
@@ -8,7 +9,7 @@ import { DEFAULT_EXCHANGE_CONFIG } from '@/lib/exchange/config';
 import type { EgmGender, EgmIdType, EgmIdentityForm, EgmIdentityRecord, EgmNotifyStatus } from '@/lib/egm/types';
 import { computeEgmStatus } from '@/lib/egm/types';
 import { submitEgmToGateway } from '@/lib/integrations/egm/client';
-import type { EodArchive } from '@/lib/data/eod';
+import { dailyArchiveId } from '@/lib/server/eod-daily-archive';
 import type { Reservation } from '@/lib/types/reservation';
 import { PROPERTY } from '@/lib/navigation';
 import { DEFAULT_PROPERTY_ID, type PropertyInfo } from '@/lib/server/property-context';
@@ -45,6 +46,10 @@ export type IdentityNotification = {
   sentAt?: string;
   egmRef?: string;
   errorMessage?: string;
+  checkOutStatus?: 'sent' | 'error';
+  checkOutSentAt?: string;
+  checkOutEgmRef?: string;
+  checkOutErrorMessage?: string;
   createdAt: string;
 };
 
@@ -70,6 +75,10 @@ function mapIdentityRow(r: {
   sentAt: string | null;
   egmRef: string | null;
   errorMessage: string | null;
+  checkOutStatus?: string | null;
+  checkOutSentAt?: string | null;
+  checkOutEgmRef?: string | null;
+  checkOutErrorMessage?: string | null;
   createdAt: string;
 }): IdentityNotification {
   const form: Partial<EgmIdentityForm> = {
@@ -111,6 +120,10 @@ function mapIdentityRow(r: {
     sentAt: r.sentAt ?? undefined,
     egmRef: r.egmRef ?? undefined,
     errorMessage: r.errorMessage ?? undefined,
+    checkOutStatus: (r.checkOutStatus as IdentityNotification['checkOutStatus']) ?? undefined,
+    checkOutSentAt: r.checkOutSentAt ?? undefined,
+    checkOutEgmRef: r.checkOutEgmRef ?? undefined,
+    checkOutErrorMessage: r.checkOutErrorMessage ?? undefined,
     createdAt: r.createdAt,
   };
 }
@@ -138,6 +151,10 @@ function toEgmRecord(n: IdentityNotification): EgmIdentityRecord {
     sentAt: n.sentAt,
     egmRef: n.egmRef,
     errorMessage: n.errorMessage,
+    checkOutStatus: n.checkOutStatus,
+    checkOutSentAt: n.checkOutSentAt,
+    checkOutEgmRef: n.checkOutEgmRef,
+    checkOutErrorMessage: n.checkOutErrorMessage,
     createdAt: n.createdAt,
   };
 }
@@ -314,6 +331,10 @@ export async function init(): Promise<void> {
       void warmTcmbCache();
       startTcmbDailyScheduler();
     }
+    const { startEodDailyArchiveScheduler } = await import('@/lib/server/eod-daily-scheduler');
+    const { startCloudBackupScheduler } = await import('@/lib/server/cloud-backup/scheduler');
+    startEodDailyArchiveScheduler();
+    startCloudBackupScheduler();
   });
   await initPromise;
 }
@@ -540,7 +561,89 @@ export async function setBusinessDateServer(
   return { businessDate: newDate, previousDate };
 }
 
-export async function closeBusinessDay(closedBy: string, propertyId?: string): Promise<{ ok: true; archive: EodArchive; newDate: string }> {
+/**
+ * TGA/TIS mevzuat raporlarının gün sonu kapanışında otomatik gönderimi.
+ * Günlük bayrak her kapanışta, aylık bayrak yalnızca ay sonunda (yeni iş günü
+ * ayın 1'i olduğunda) tetiklenir. Gönderim hatası gün sonu kapanışını bloklamaz.
+ */
+async function runComplianceAutoSubmit(
+  closedBusinessDate: string,
+  newDate: string,
+  closedBy: string,
+  prop: string,
+): Promise<void> {
+  const isMonthBoundary = newDate.slice(8, 10) === '01';
+
+  try {
+    const { loadTgaConfig, submitTgaReport } = await import('@/lib/integrations/tga/client');
+    const tgaConfig = await loadTgaConfig();
+    if (tgaConfig.enabled && tgaConfig.autoSubmitDaily) {
+      const result = await submitTgaReport({ businessDate: closedBusinessDate, reportId: 'tga-daily-auto' }, tgaConfig);
+      await appendAuditLog({
+        module: 'reports',
+        action: 'compliance_auto_submit',
+        entityType: 'tga',
+        entityId: closedBusinessDate,
+        user: closedBy,
+        detail: result.message,
+        businessDate: closedBusinessDate,
+      }, prop);
+    }
+    if (tgaConfig.enabled && tgaConfig.autoSubmitMonthly && isMonthBoundary) {
+      const result = await submitTgaReport({ businessDate: closedBusinessDate, reportId: 'tga-monthly-auto' }, tgaConfig);
+      await appendAuditLog({
+        module: 'reports',
+        action: 'compliance_auto_submit',
+        entityType: 'tga',
+        entityId: `${closedBusinessDate}-monthly`,
+        user: closedBy,
+        detail: result.message,
+        businessDate: closedBusinessDate,
+      }, prop);
+    }
+  } catch {
+    // TGA otomatik gönderimi gün sonu kapanışını bloklamamalı
+  }
+
+  try {
+    const { loadTisConfig, submitTisReport } = await import('@/lib/integrations/tis/client');
+    const tisConfig = await loadTisConfig();
+    if (tisConfig.enabled && tisConfig.autoSubmitDaily) {
+      const result = await submitTisReport({ businessDate: closedBusinessDate, reportId: 'tis-daily-auto' }, tisConfig);
+      await appendAuditLog({
+        module: 'reports',
+        action: 'compliance_auto_submit',
+        entityType: 'tis',
+        entityId: closedBusinessDate,
+        user: closedBy,
+        detail: result.message,
+        businessDate: closedBusinessDate,
+      }, prop);
+    }
+    if (tisConfig.enabled && tisConfig.autoSubmitMonthly && isMonthBoundary) {
+      const result = await submitTisReport({ businessDate: closedBusinessDate, reportId: 'tis-monthly-auto' }, tisConfig);
+      await appendAuditLog({
+        module: 'reports',
+        action: 'compliance_auto_submit',
+        entityType: 'tis',
+        entityId: `${closedBusinessDate}-monthly`,
+        user: closedBy,
+        detail: result.message,
+        businessDate: closedBusinessDate,
+      }, prop);
+    }
+  } catch {
+    // TIS otomatik gönderimi gün sonu kapanışını bloklamamalı
+  }
+}
+
+export async function closeBusinessDay(closedBy: string, propertyId?: string): Promise<{
+  ok: true;
+  archive: EodArchive;
+  newDate: string;
+  archivedReports?: { gr: number; total: number };
+  cloudBackup?: import('@/lib/integrations/cloud-backup/types').CloudBackupResult | null;
+}> {
   await init();
   const prop = pid(propertyId);
   const property = await prisma.property.findUnique({ where: { id: prop } });
@@ -554,13 +657,17 @@ export async function closeBusinessDay(closedBy: string, propertyId?: string): P
   const { runNightPostingServer } = await import('@/lib/server/night-posting');
   const nightPost = await runNightPostingServer(prop, closedBy);
 
+  const archiveId = dailyArchiveId(prop, businessDate);
+  const closedAt = new Date().toISOString().replace('T', ' ').slice(0, 19);
+
   const archive: EodArchive = {
-    id: `arc-${Date.now()}`,
+    id: archiveId,
     businessDate,
-    closedAt: new Date().toISOString().replace('T', ' ').slice(0, 19),
+    closedAt,
     closedBy,
     occupancy,
     revenue,
+    status: 'closed',
   };
 
   const next = new Date(businessDate);
@@ -568,8 +675,28 @@ export async function closeBusinessDay(closedBy: string, propertyId?: string): P
   const newDate = next.toISOString().slice(0, 10);
 
   await prisma.$transaction([
-    prisma.eodArchive.create({
-      data: { id: archive.id, propertyId: prop, businessDate: archive.businessDate, closedAt: archive.closedAt, closedBy: archive.closedBy, occupancy: archive.occupancy, revenue: archive.revenue },
+    prisma.eodArchive.upsert({
+      where: { propertyId_businessDate: { propertyId: prop, businessDate } },
+      create: {
+        id: archiveId,
+        propertyId: prop,
+        businessDate: archive.businessDate,
+        closedAt: archive.closedAt,
+        closedBy: archive.closedBy,
+        occupancy: archive.occupancy,
+        revenue: archive.revenue,
+        status: 'closed',
+        generatedAt: closedAt,
+        reportCount: 0,
+      },
+      update: {
+        closedAt: archive.closedAt,
+        closedBy: archive.closedBy,
+        occupancy: archive.occupancy,
+        revenue: archive.revenue,
+        status: 'closed',
+        generatedAt: closedAt,
+      },
     }),
     prisma.appState.upsert({
       where: { propertyId: prop },
@@ -577,6 +704,38 @@ export async function closeBusinessDay(closedBy: string, propertyId?: string): P
       update: { businessDate: newDate, lastEodClose: archive.closedAt },
     }),
   ]);
+
+  let archivedReports: { gr: number; total: number } | undefined;
+  try {
+    const { archiveEodDayPackage } = await import('@/lib/server/eod-archive-package');
+    const result = await archiveEodDayPackage(archiveId, businessDate, closedBy, prop);
+    archivedReports = { gr: result.grCount, total: result.totalCount };
+    await prisma.eodArchive.update({
+      where: { id: archiveId },
+      data: { reportCount: result.totalCount, generatedAt: result.manifest.generatedAt },
+    });
+    await appendAuditLog({
+      module: 'eod',
+      action: 'eod_package_archived',
+      entityType: 'EodArchive',
+      entityId: archiveId,
+      user: closedBy,
+      detail: `${result.grCount} GR + gece denetim arşivlendi (toplam ${result.totalCount})`,
+      businessDate,
+    }, prop);
+  } catch (err) {
+    const { logApiError } = await import('@/lib/server/api-error');
+    logApiError('closeBusinessDay archive', err, { archiveId, businessDate, propertyId: prop });
+  }
+
+  let cloudBackup: import('@/lib/integrations/cloud-backup/types').CloudBackupResult | undefined;
+  try {
+    const { maybeBackupOnEodClose } = await import('@/lib/server/cloud-backup/service');
+    const backupResult = await maybeBackupOnEodClose(businessDate, closedBy, prop);
+    if (backupResult) cloudBackup = backupResult;
+  } catch {
+    // Bulut yedek gün kapanışını bloklamamalı
+  }
 
   await appendAuditLog({
     module: 'eod',
@@ -588,16 +747,29 @@ export async function closeBusinessDay(closedBy: string, propertyId?: string): P
     businessDate,
   }, prop);
 
+  await runComplianceAutoSubmit(businessDate, newDate, closedBy, prop);
+
   bustReadCaches(prop);
-  return { ok: true, archive, newDate };
+  return { ok: true, archive, newDate, archivedReports, cloudBackup };
 }
 
 export async function getEodArchiveServer(propertyId?: string): Promise<EodArchive[]> {
   await init();
-  return prisma.eodArchive.findMany({
+  const rows = await prisma.eodArchive.findMany({
     where: { propertyId: pid(propertyId) },
     orderBy: { businessDate: 'desc' },
   });
+  return rows.map((row) => ({
+    id: row.id,
+    businessDate: row.businessDate,
+    closedAt: row.closedAt,
+    closedBy: row.closedBy,
+    occupancy: row.occupancy,
+    revenue: row.revenue,
+    status: row.status as 'open' | 'closed',
+    generatedAt: row.generatedAt ?? undefined,
+    reportCount: row.reportCount,
+  }));
 }
 
 export async function getIdentityNotifications(propertyId?: string): Promise<IdentityNotification[]> {
@@ -730,6 +902,70 @@ export async function sendEgmIdentity(id: string): Promise<EgmIdentityRecord | n
     const row = await prisma.identityNotification.update({
       where: { id },
       data: { status: 'sent', sentAt, egmRef, errorMessage: gateway.simulated ? gateway.message : null },
+    });
+    return toEgmRecord(mapIdentityRow(row));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * EGM/KBS çıkış (departure) bildirimi — check-out tamamlandığında çağrılır.
+ * TIH servis programı (Elektra v5 köprüsü) aktifse onun üzerinden, değilse
+ * doğrudan EGM gateway'e gönderir; sonucu checkOut* alanlarına yazar.
+ * sendEgmIdentity'nin (giriş bildirimi) çıkış tarafındaki eşleniğidir.
+ */
+export async function sendEgmDeparture(id: string): Promise<EgmIdentityRecord | null> {
+  await init();
+  const sentAt = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  try {
+    const existing = await prisma.identityNotification.findUnique({ where: { id } });
+    if (!existing) return null;
+    const mapped = mapIdentityRow(existing);
+    if (!mapped.idNo?.trim()) {
+      // Kimlik bilgisi olmayan kayıt için EGM çıkış bildirimi yapılamaz.
+      return null;
+    }
+
+    const guestPayload = {
+      firstName: mapped.firstName,
+      lastName: mapped.lastName,
+      roomNo: mapped.roomNo,
+      nationality: mapped.nationality,
+      idNo: mapped.idNo,
+      idType: mapped.idType,
+      birthDate: mapped.birthDate,
+      birthPlace: mapped.birthPlace,
+      gender: mapped.gender,
+      fatherName: mapped.fatherName,
+      motherName: mapped.motherName,
+      checkIn: mapped.checkIn,
+      checkOut: mapped.checkOut,
+    };
+
+    const { loadTihConfig, submitTihEgm } = await import('@/lib/integrations/tih/client');
+    const tihConfig = await loadTihConfig();
+    const result = tihConfig.enabled
+      ? await submitTihEgm(guestPayload, tihConfig, 'departure')
+      : await submitEgmToGateway(guestPayload, undefined, 'departure');
+
+    if (!result.ok) {
+      await prisma.identityNotification.update({
+        where: { id },
+        data: { checkOutStatus: 'error', checkOutErrorMessage: result.message },
+      });
+      return null;
+    }
+
+    const egmRef = result.egmRef ?? `EGM-OUT-${Date.now().toString(36).toUpperCase()}`;
+    const row = await prisma.identityNotification.update({
+      where: { id },
+      data: {
+        checkOutStatus: 'sent',
+        checkOutSentAt: sentAt,
+        checkOutEgmRef: egmRef,
+        checkOutErrorMessage: result.simulated ? result.message : null,
+      },
     });
     return toEgmRecord(mapIdentityRow(row));
   } catch {

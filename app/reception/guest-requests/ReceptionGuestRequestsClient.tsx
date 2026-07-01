@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Check, ClipboardList, Plus } from 'lucide-react';
-import { PageHeader } from '@/components/PageHeader';
-import { ReceptionTabs } from '@/components/ReceptionTabs';
+import { ReceptionModuleShell } from '@/components/reception/ReceptionModuleShell';
 import { Button } from '@/components/ui';
 import { roomioFetch } from '@/lib/client/api';
 import { submitGuestRequest } from '@/lib/client/guest-request-submit';
@@ -87,13 +86,12 @@ export function ReceptionGuestRequestsClient() {
   const pending = requests.filter((r) => r.status === 'pending');
 
   return (
-    <PageHeader
-      breadcrumb="Resepsiyon > Misafir Talepleri"
+    <ReceptionModuleShell
+      segment="Misafir Talepleri"
       title="Misafir Talepleri"
       description="Havlu, yastık ve özel istekler katçı günlük raporuna otomatik düşer."
       actions={<Button variant="secondary" href="/housekeeping/reports">Katçı raporu</Button>}
     >
-      <ReceptionTabs />
 
       {error ? <p className="roomio-text-warn" style={{ marginTop: 12 }}>{error}</p> : null}
 
@@ -191,6 +189,6 @@ export function ReceptionGuestRequestsClient() {
           )}
         </div>
       </div>
-    </PageHeader>
+    </ReceptionModuleShell>
   );
 }

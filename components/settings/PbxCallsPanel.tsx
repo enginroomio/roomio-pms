@@ -9,6 +9,7 @@ import {
   savePbxCallLog,
   type PbxCallRecord,
 } from '@/lib/integrations/pbx/demo-call-log';
+import { maskGuestName, maskPhone } from '@/lib/kvkk/mask';
 
 function directionLabel(d: PbxCallRecord['direction']) {
   if (d === 'in') return 'Gelen';
@@ -90,8 +91,8 @@ export function PbxCallsPanel() {
                 <td>{directionLabel(r.direction)}</td>
                 <td><strong>{r.extension}</strong></td>
                 <td>{r.roomNo ?? '—'}</td>
-                <td>{r.guestName ?? '—'}</td>
-                <td>{r.remote}</td>
+                <td>{r.guestName ? maskGuestName(r.guestName) : '—'}</td>
+                <td>{maskPhone(r.remote)}</td>
                 <td>{r.durationSec > 0 ? `${r.durationSec}s` : '—'}</td>
                 <td><span className="roomio-badge">{statusLabel(r.status)}</span></td>
               </tr>

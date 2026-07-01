@@ -3,8 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { PageHeader } from '@/components/PageHeader';
-import { ReceptionTabs } from '@/components/ReceptionTabs';
+import { ReceptionModuleShell } from '@/components/reception/ReceptionModuleShell';
 import { Button } from '@/components/ui';
 import { formatMoney } from '@/lib/data/cash';
 import { ExchangeRatesTable } from '@/components/exchange/ExchangeRatesTable';
@@ -63,12 +62,11 @@ export default function DeparturesPageClient() {
 
   if (tab === 'fx' || tab === 'rates') {
     return (
-      <PageHeader
-        breadcrumb={`Ön Kasa > ${tab === 'rates' ? 'Günlük Kur' : 'Döviz Bozdurma'}`}
+      <ReceptionModuleShell
+        segment={tab === 'rates' ? 'Günlük Kur' : 'Döviz Bozdurma'}
         title={tab === 'rates' ? 'Günlük Kur Girişi' : 'Döviz Bozdurma Listesi'}
         description="Misafir döviz işlemleri ve güncel kurlar."
       >
-        <ReceptionTabs />
         <nav className="roomio-tabs" style={{ marginTop: 8 }}>
           <Link href="/reception/departures?tab=fx" className={`roomio-tab${tab === 'fx' ? ' is-active' : ''}`}>Bozdurma listesi</Link>
           <Link href="/reception/departures?tab=rates" className={`roomio-tab${tab === 'rates' ? ' is-active' : ''}`}>Günlük kurlar</Link>
@@ -85,7 +83,7 @@ export default function DeparturesPageClient() {
             </div>
           </>
         )}
-      </PageHeader>
+      </ReceptionModuleShell>
     );
   }
 
@@ -95,8 +93,8 @@ export default function DeparturesPageClient() {
   }
 
   return (
-    <PageHeader
-      breadcrumb="Resepsiyon > Bugün Çıkış"
+    <ReceptionModuleShell
+      segment="Bugün Çıkış"
       title="Bugün Çıkış Yapacaklar"
       description="Check-out, TESA kart iptali, 5651 WiFi oturumu kapatma ve UCM6301 santral güncellemesi."
       actions={
@@ -105,7 +103,6 @@ export default function DeparturesPageClient() {
         </Button>
       }
     >
-      <ReceptionTabs />
       {roomFilter ? (
         <p className="roomio-page-desc" role="status">
           Oda filtresi: <strong>{roomFilter}</strong>
@@ -160,6 +157,6 @@ export default function DeparturesPageClient() {
           </tbody>
         </table>
       </div>
-    </PageHeader>
+    </ReceptionModuleShell>
   );
 }

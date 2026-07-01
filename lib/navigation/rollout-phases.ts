@@ -41,6 +41,12 @@ export const ROLLOUT_PHASES: RolloutPhase[] = [
       { id: 'home-rack', label: 'Oda rack önizleme', href: '/' },
       { id: 'home-movements', label: 'Bugünkü varış / ayrılış', href: '/' },
       { id: 'home-rack-full', label: 'Tam oda rack (F12)', href: '/rooms' },
+      {
+        id: 'home-orijinal',
+        label: 'Orijinal PMS şablonları',
+        href: '/?design=1',
+        notes: 'Operasyon · Kompakt · Klasik — tarayıcı mockup',
+      },
     ],
   },
   {
@@ -174,6 +180,7 @@ export const ROLLOUT_PHASES: RolloutPhase[] = [
       { id: 'eod-fetch', label: 'Gün sonu raporlarını al', href: '/reports?tab=eod&action=fetch', screenRef: '359-401' },
       { id: 'eod-close', label: 'Günü kapat', href: '/reports?tab=eod&action=close' },
       { id: 'eod-archive', label: 'Eski gün sonu raporları', href: '/reports?tab=eod&action=archive' },
+      { id: 'eod-backup', label: 'Yedek al (bulut)', href: '/reports?tab=eod&action=backup' },
       { id: 'eod-prices', label: 'Oda fiyatlarını işle', href: '/reports?tab=eod&action=room-prices' },
     ],
   },

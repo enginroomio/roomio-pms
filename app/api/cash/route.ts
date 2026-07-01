@@ -9,7 +9,7 @@ import {
 import { getCashCloseReportServer } from '@/lib/server/cash-deposit';
 import { getCashLedgerReportServer, postManualCashEntryServer } from '@/lib/server/reception-ops';
 import { buildCashClosePdfKit, buildCashLedgerPdfKit } from '@/lib/server/pdf-templates';
-import { getProperty } from '@/lib/server/pms-store';
+import { getProperty, getBusinessDate } from '@/lib/server/pms-store';
 import { propertyIdFromRequest } from '@/lib/server/property-context';
 import { requireApiPermission } from '@/lib/auth/require-permission';
 import { isValidPositiveAmount } from '@/lib/server/money-validation';
@@ -25,10 +25,11 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const view = searchParams.get('view');
   const format = searchParams.get('format');
+  const businessDate = searchParams.get('businessDate') ?? undefined;
 
   try {
     if (view === 'ledger') {
-      const report = await getCashLedgerReportServer(propertyId);
+      const report = await getCashLedgerReportServer(propertyId, businessDate ?? undefined);
       if (format === 'pdf') {
         const hotel = (await getProperty(propertyId))?.name ?? 'Hotel';
         const pdf = await buildCashLedgerPdfKit(report, hotel);
@@ -61,11 +62,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ registers });
     }
 
+    const resolvedDate = businessDate ?? (await getBusinessDate(propertyId));
     const [entries, summary] = await Promise.all([
-      getCashEntriesServer(propertyId),
+      getCashEntriesServer(propertyId, resolvedDate),
       cashSummaryServer(propertyId),
     ]);
-    return NextResponse.json({ entries, summary });
+    return NextResponse.json({ entries, summary, businessDate: resolvedDate });
   } catch (err) {
     logApiError('GET /api/cash', err);
     return NextResponse.json({ error: 'cash fetch failed' }, { status: 500 });
