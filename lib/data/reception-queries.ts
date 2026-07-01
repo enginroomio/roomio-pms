@@ -1,4 +1,5 @@
 import { formatDate, formatMoney } from '@/lib/data/reservations';
+import { buildFolioChargeAmounts } from '@/lib/folio/charge-amounts';
 import type { Reservation } from '@/lib/types/reservation';
 import { PROPERTY } from '@/lib/navigation';
 import { getVacantRooms as buildVacantRooms } from '@/lib/rooms/inventory';
@@ -9,9 +10,15 @@ export type FolioLine = {
   id: string;
   date: string;
   description: string;
+  /** Bakiye hesabı — her zaman TL */
   amount: number;
   type: 'charge' | 'payment';
   window?: FolioWindow;
+  /** Orijinal döviz (konaklama vb.) */
+  currency?: string;
+  foreignAmount?: number;
+  /** Giriş günü TCMB alış */
+  exchangeRate?: number;
 };
 
 export type InHouseGuest = Reservation & {
@@ -37,9 +44,16 @@ function nightsBetween(checkIn: string, checkOut: string): number {
 
 function demoFolio(r: Reservation): { balance: number; lines: FolioLine[] } {
   const nights = nightsBetween(r.checkIn, r.checkOut);
-  const roomTotal = r.rate * Math.min(nights, 2);
+  const roomForeign = r.rate * Math.min(nights, 2);
+  const roomCharge = buildFolioChargeAmounts(roomForeign, r);
   const lines: FolioLine[] = [
-    { id: '1', date: r.checkIn, description: `Konaklama ${r.roomType}`, amount: roomTotal, type: 'charge' },
+    {
+      id: '1',
+      date: r.checkIn,
+      description: `Konaklama ${r.roomType}`,
+      type: 'charge',
+      ...roomCharge,
+    },
   ];
   if (r.mealPlan !== 'RO') {
     lines.push({

@@ -2,6 +2,7 @@ import { getConfigParamValue } from '@/lib/server/config-params';
 import { appendAuditLog } from '@/lib/server/audit-log';
 import { getExtraChargesServer } from '@/lib/server/extra-charges';
 import { postFolioLinesServer } from '@/lib/server/folio-cash';
+import { buildFolioChargeAmounts } from '@/lib/folio/charge-amounts';
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
 import { bustReadCaches } from '@/lib/server/perf-cache';
@@ -62,13 +63,14 @@ export async function runNightPostingServer(
     const roomExists = await prisma.folioLine.findUnique({ where: { id: roomLineId } });
     if (!roomExists) {
       const corpWindow = r.extraData?.payerType === 'Şirket' ? 'company' as const : 'guest' as const;
+      const nightCharge = buildFolioChargeAmounts(r.rate, r);
       await postFolioLinesServer(r.id, [{
         id: roomLineId,
         date: businessDate,
         description: `Gece oda ücreti — ${r.roomType} (${businessDate})`,
-        amount: r.rate,
         type: 'charge',
         window: corpWindow,
+        ...nightCharge,
       }], prop);
       roomCharges += 1;
     }

@@ -362,7 +362,7 @@ function mapReservation(r: {
     children: r.children,
     mealPlan: r.mealPlan,
     rate: r.rate,
-    currency: 'TRY',
+    currency: (r.currency ?? 'TRY') as Reservation['currency'],
     agency: r.agency,
     market: r.market,
     status: r.status as Reservation['status'],

@@ -553,6 +553,9 @@ model FolioLine {
   amount        Float
   type          String
   window        String   @default("guest")
+  currency      String   @default("TRY")
+  foreignAmount Float?
+  exchangeRate  Float?
   createdAt     String
   property      Property @relation(fields: [propertyId], references: [id])
 

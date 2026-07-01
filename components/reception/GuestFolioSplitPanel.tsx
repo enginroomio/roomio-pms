@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { FolioLine } from '@/lib/data/reception-queries';
 import { formatDate, formatMoney } from '@/lib/data/reception';
+import { FolioAmountCell } from '@/components/folio/FolioAmountCell';
 import { GuestFolioCharge } from '@/components/reception/GuestFolioCharge';
 import { GuestFolioPayment } from '@/components/reception/GuestFolioPayment';
 import { CompanyFolioInvoiceButton } from '@/components/reception/CompanyFolioInvoiceButton';
@@ -97,11 +98,12 @@ export function GuestFolioSplitPanel({
               <th>Açıklama</th>
               <th>Tip</th>
               <th>Tutar</th>
+              <th>TL karşılığı</th>
             </tr>
           </thead>
           <tbody>
             {lines.length === 0 ? (
-              <tr><td colSpan={4}>Bu pencerede hareket yok.</td></tr>
+              <tr><td colSpan={5}>Bu pencerede hareket yok.</td></tr>
             ) : (
               lines.map((line) => (
                 <tr key={line.id}>
@@ -109,7 +111,12 @@ export function GuestFolioSplitPanel({
                   <td>{line.description}</td>
                   <td>{line.type === 'charge' ? 'Harcama' : 'Tahsilat'}</td>
                   <td className={line.type === 'payment' ? 'roomio-text-credit' : ''}>
-                    {line.type === 'payment' ? '−' : ''}{formatMoney(line.amount)}
+                    {line.type === 'payment' ? '−' : ''}
+                    <FolioAmountCell line={line} part="foreign" />
+                  </td>
+                  <td className={line.type === 'payment' ? 'roomio-text-credit' : ''}>
+                    {line.type === 'payment' ? '−' : ''}
+                    <FolioAmountCell line={line} part="try" />
                   </td>
                 </tr>
               ))

@@ -1652,6 +1652,20 @@ body.roomio-rez-col-resizing {
   min-width: 0;
 }
 
+.roomio-rez-quick__fx {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--rz-line, var(--roomio-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--roomio-accent) 4%, transparent);
+}
+
+.roomio-rez-quick__fx-hint {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 .roomio-rez-quick .roomio-field > span {
   font-size: 0.68rem;
   font-weight: 500;

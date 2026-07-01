@@ -1,6 +1,7 @@
 import type { CashEntry, DepositRow, FxExchange, KasaCloseRow } from '@/lib/data/cash';
 import type { FolioLine } from '@/lib/data/reception-queries';
 import type { Reservation } from '@/lib/types/reservation';
+import { buildFolioChargeAmounts } from '@/lib/folio/charge-amounts';
 import { DEFAULT_PROPERTY_ID } from '@/lib/server/property-context';
 import { prisma } from '@/lib/server/prisma';
 import { bustReadCaches } from '@/lib/server/perf-cache';
@@ -28,6 +29,9 @@ function mapFolio(row: {
   amount: number;
   type: string;
   window?: string;
+  currency?: string;
+  foreignAmount?: number | null;
+  exchangeRate?: number | null;
 }): FolioLine {
   return {
     id: row.id,
@@ -36,6 +40,9 @@ function mapFolio(row: {
     amount: row.amount,
     type: row.type as FolioLine['type'],
     window: (row.window ?? 'guest') as FolioLine['window'],
+    currency: row.currency ?? 'TRY',
+    foreignAmount: row.foreignAmount ?? undefined,
+    exchangeRate: row.exchangeRate ?? undefined,
   };
 }
 
@@ -54,13 +61,15 @@ function nightsBetween(checkIn: string, checkOut: string): number {
 export function buildInitialFolioCharges(r: Reservation): (Omit<FolioLine, 'id'> & { window?: FolioLine['window'] })[] {
   const nights = nightsBetween(r.checkIn, r.checkOut);
   const corpWindow = r.extraData?.payerType === 'Şirket' ? 'company' as const : 'guest' as const;
+  const roomForeign = r.rate * Math.min(nights, 2);
+  const roomCharge = buildFolioChargeAmounts(roomForeign, r);
   const lines: (Omit<FolioLine, 'id'> & { window?: FolioLine['window'] })[] = [
     {
       date: r.checkIn,
       description: `Konaklama ${r.roomType}`,
-      amount: r.rate * Math.min(nights, 2),
       type: 'charge',
       window: corpWindow,
+      ...roomCharge,
     },
   ];
   if (r.mealPlan !== 'RO') {
@@ -132,6 +141,9 @@ export async function postFolioLinesServer(
       amount: line.amount,
       type: line.type,
       window: line.window ?? 'guest',
+      currency: line.currency ?? 'TRY',
+      foreignAmount: line.foreignAmount ?? null,
+      exchangeRate: line.exchangeRate ?? null,
       createdAt,
     })),
   });
@@ -285,6 +297,7 @@ export async function checkInReservationServer(
     status: row.status as Reservation['status'],
     createdAt: row.createdAt,
     notes: row.notes ?? undefined,
+    extraData: row.extraData ? (JSON.parse(row.extraData) as Record<string, string>) : undefined,
   };
   await ensureFolioForReservation(r, prop);
   if (extraChargeCodes.length) {

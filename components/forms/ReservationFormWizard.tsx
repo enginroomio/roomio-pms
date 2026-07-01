@@ -24,7 +24,7 @@ import {
   type FormLayout,
 } from '@/lib/forms/form-catalog';
 import { foreignToTry, formatDualMoney, formatMoney, rateMapFromRows, tryToForeign } from '@/lib/exchange/money';
-import { PAYMENT_CURRENCIES, type ExchangeRateSnapshot, type PaymentCurrency } from '@/lib/exchange/types';
+import { PAYMENT_CURRENCIES, CURRENCY_SYMBOLS, type ExchangeRateSnapshot, type PaymentCurrency } from '@/lib/exchange/types';
 import { calculateTaxes } from '@/lib/tax/calculate';
 import type { TaxRule } from '@/lib/tax/types';
 import { computeEgmStatus, splitGuestName } from '@/lib/egm/types';
@@ -624,7 +624,7 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
     const submissionValues: FormValues = {
       ...values,
       rateDate,
-      exchangeRate,
+      exchangeRate: currency === 'TRY' ? 1 : exchangeRate,
     };
     const coreKeys = new Set([
       'guestName', 'checkIn', 'checkOut', 'roomType', 'mealPlan', 'rate', 'currency',
@@ -1097,6 +1097,12 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
     const mealChips = ['RO', 'BB', 'HB', 'FB', 'AI'];
     const paymentChips = ['Kredi Kartı', 'Nakit', 'Havale'];
     const ratePlanChips = ['BAR-2026', 'CORP-2026', 'OTA promo'];
+    const currencyChips = ['TRY', 'EUR', 'USD'] as const;
+    const currencyChipLabels: Record<string, string> = {
+      TRY: `${CURRENCY_SYMBOLS.TRY} TL`,
+      EUR: `${CURRENCY_SYMBOLS.EUR} Euro`,
+      USD: `${CURRENCY_SYMBOLS.USD} USD`,
+    };
     const stayFields = fieldsForStep('stay');
     const pricingFields = fieldsForStep('pricing');
     const guestFields = fieldsForStep('guest');
@@ -1104,7 +1110,6 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
     const extraFields = fieldsForStep('extra');
     const pricingAdvFields = pricingFields.filter((f) => !PRICING_PRIMARY_KEYS.has(f.key) && f.key !== 'paymentType');
     const pickStay = (key: string) => stayFields.find((f) => f.key === key);
-    const pickPricing = (key: string) => pricingFields.find((f) => f.key === key);
 
     return (
       <div className={`roomio-rez-quick roomio-rez-new-wizard roomio-rez-new-screen${embedded ? ' roomio-rez-new-wizard--embedded' : ''}`}>
@@ -1276,7 +1281,31 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
                 description="Tutar girilince özet otomatik güncellenir"
               />
               <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2" style={{ marginBottom: 12 }}>
-                {pickPricing('rate') ? renderField(pickPricing('rate')!) : null}
+                <div>
+                  <label className="roomio-field" htmlFor="rez-quick-rate">
+                    <span>Gece fiyatı ({currency})</span>
+                    <div className="roomio-rez-quick__price-row">
+                      <input
+                        id="rez-quick-rate"
+                        className="roomio-input"
+                        type="number"
+                        min={0}
+                        step={currency === 'TRY' ? 100 : 0.01}
+                        value={rate}
+                        onChange={(e) => setValue('rate', Number(e.target.value))}
+                      />
+                    </div>
+                  </label>
+                  <span className="roomio-field" style={{ display: 'block', marginTop: 8 }}>
+                    <span>Para birimi</span>
+                  </span>
+                  <QuickChipGroup
+                    options={[...currencyChips]}
+                    labels={currencyChipLabels}
+                    value={currency}
+                    onChange={(v) => onCurrencyChange(v as PaymentCurrency)}
+                  />
+                </div>
                 <div>
                   <span className="roomio-field"><span>Ödeme tipi</span></span>
                   <QuickChipGroup
@@ -1285,6 +1314,39 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
                     onChange={(v) => setValue('paymentType', v)}
                   />
                 </div>
+              </div>
+              <div className="roomio-rez-quick__fx" aria-label="Döviz kuru">
+                <div className="roomio-rez-quick__grid roomio-rez-quick__grid--2">
+                  <label className="roomio-field">
+                    <span>Kur günü (giriş)</span>
+                    <input className="roomio-input" type="text" readOnly value={rateDate} />
+                  </label>
+                  <label className="roomio-field">
+                    <span>TCMB alış kuru</span>
+                    <input
+                      className="roomio-input"
+                      type="text"
+                      readOnly
+                      value={
+                        currency === 'TRY'
+                          ? '1,0000'
+                          : exchangeRate > 0
+                            ? `1 ${currency} = ${exchangeRate.toLocaleString('tr-TR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} TRY`
+                            : '—'
+                      }
+                    />
+                  </label>
+                </div>
+                {currency !== 'TRY' && exchangeRate > 0 ? (
+                  <p className="roomio-rez-quick__fx-hint">
+                    Gece fiyatı TL karşılığı:{' '}
+                    <strong>{formatMoney(foreignToTry(rate, currency, rateMap), 'TRY')}</strong>
+                    <span className="roomio-text-muted"> · giriş günü TCMB alış</span>
+                  </p>
+                ) : null}
+                {currency !== 'TRY' && !fxReady ? (
+                  <p className="roomio-field-hint">TCMB kuru yüklenince TL karşılığı ve folyo tutarı hesaplanır.</p>
+                ) : null}
               </div>
               <div>
                 <span className="roomio-field"><span>Rate plan</span></span>
