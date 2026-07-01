@@ -24,7 +24,7 @@ import {
   type FormLayout,
 } from '@/lib/forms/form-catalog';
 import { foreignToTry, formatDualMoney, formatMoney, rateMapFromRows, tryToForeign } from '@/lib/exchange/money';
-import { PAYMENT_CURRENCIES, CURRENCY_SYMBOLS, type ExchangeRateSnapshot, type PaymentCurrency } from '@/lib/exchange/types';
+import { PAYMENT_CURRENCIES, type ExchangeRateSnapshot, type PaymentCurrency } from '@/lib/exchange/types';
 import { calculateTaxes } from '@/lib/tax/calculate';
 import type { TaxRule } from '@/lib/tax/types';
 import { computeEgmStatus, splitGuestName } from '@/lib/egm/types';
@@ -36,6 +36,7 @@ import type { IdScanResult } from '@/lib/integrations/id-reader/types';
 import { QuickGuestFinder } from '@/components/forms/reservation-quick-entry/QuickGuestFinder';
 import {
   QuickChipGroup,
+  QuickCurrencyPicker,
   QuickJumpNav,
   QuickKbsChecklist,
   QuickSectionHead,
@@ -1097,12 +1098,6 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
     const mealChips = ['RO', 'BB', 'HB', 'FB', 'AI'];
     const paymentChips = ['Kredi Kartı', 'Nakit', 'Havale'];
     const ratePlanChips = ['BAR-2026', 'CORP-2026', 'OTA promo'];
-    const currencyChips = ['TRY', 'EUR', 'USD'] as const;
-    const currencyChipLabels: Record<string, string> = {
-      TRY: `${CURRENCY_SYMBOLS.TRY} TL`,
-      EUR: `${CURRENCY_SYMBOLS.EUR} Euro`,
-      USD: `${CURRENCY_SYMBOLS.USD} USD`,
-    };
     const stayFields = fieldsForStep('stay');
     const pricingFields = fieldsForStep('pricing');
     const guestFields = fieldsForStep('guest');
@@ -1290,7 +1285,7 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
                         className="roomio-input"
                         type="number"
                         min={0}
-                        step={currency === 'TRY' ? 100 : 0.01}
+                        step={currency === 'JPY' ? 1 : currency === 'TRY' ? 100 : 0.01}
                         value={rate}
                         onChange={(e) => setValue('rate', Number(e.target.value))}
                       />
@@ -1299,10 +1294,9 @@ export function ReservationFormWizard({ existing, seed, embedded, onComplete, on
                   <span className="roomio-field" style={{ display: 'block', marginTop: 8 }}>
                     <span>Para birimi</span>
                   </span>
-                  <QuickChipGroup
-                    options={[...currencyChips]}
-                    labels={currencyChipLabels}
+                  <QuickCurrencyPicker
                     value={currency}
+                    options={currencyOptions}
                     onChange={(v) => onCurrencyChange(v as PaymentCurrency)}
                   />
                 </div>

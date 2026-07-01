@@ -1666,6 +1666,26 @@ body.roomio-rez-col-resizing {
   line-height: 1.4;
 }
 
+.roomio-rez-quick__currency {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roomio-rez-quick__currency-list {
+  margin: 0;
+}
+
+.roomio-rez-quick__currency-list > span {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--rz-muted);
+  margin-bottom: 5px;
+}
+
 .roomio-rez-quick .roomio-field > span {
   font-size: 0.68rem;
   font-weight: 500;

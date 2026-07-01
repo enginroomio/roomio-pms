@@ -2,6 +2,58 @@
 
 import type { ReactNode } from 'react';
 import { Check, CircleCheck, CircleDashed } from 'lucide-react';
+import { CURRENCY_SYMBOLS } from '@/lib/exchange/types';
+
+const CURRENCY_SHORTCUTS = ['TRY', 'EUR', 'USD'] as const;
+
+const CURRENCY_SHORTCUT_LABELS: Record<string, string> = {
+  TRY: `${CURRENCY_SYMBOLS.TRY} TL`,
+  EUR: `${CURRENCY_SYMBOLS.EUR} Euro`,
+  USD: `${CURRENCY_SYMBOLS.USD} USD`,
+};
+
+function currencyOptionLabel(code: string): string {
+  const sym = CURRENCY_SYMBOLS[code];
+  return sym ? `${sym} ${code}` : code;
+}
+
+export function QuickCurrencyPicker({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+}) {
+  const list = options.length ? options : [...CURRENCY_SHORTCUTS];
+
+  return (
+    <div className="roomio-rez-quick__currency">
+      <QuickChipGroup
+        options={[...CURRENCY_SHORTCUTS]}
+        labels={CURRENCY_SHORTCUT_LABELS}
+        value={value}
+        onChange={onChange}
+      />
+      <label className="roomio-field roomio-rez-quick__currency-list">
+        <span>Tüm dövizler</span>
+        <select
+          className="roomio-select"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label="Döviz listesi"
+        >
+          {list.map((code) => (
+            <option key={code} value={code}>
+              {currencyOptionLabel(code)}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
+  );
+}
 
 export function QuickChipGroup({
   options,
