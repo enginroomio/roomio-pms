@@ -22,7 +22,11 @@ function wizardDialog(page: Page) {
 }
 
 function presetCard(page: Page, label: string) {
-  return page.locator('.roomio-home-wizard__card').filter({ hasText: label });
+  return page
+    .locator('.roomio-home-wizard__presets')
+    .first()
+    .locator('.roomio-home-wizard__card')
+    .filter({ hasText: label });
 }
 
 function archiveCard(page: Page, label: string) {
@@ -43,7 +47,11 @@ async function closeWizard(page: Page) {
 }
 
 async function applyPresetInWizard(page: Page, label: string, presetId: string) {
-  await presetCard(page, label).click();
+  const card = presetCard(page, label);
+  await expect(card).toBeVisible({ timeout: 15_000 });
+  await card.scrollIntoViewIfNeeded();
+  await card.click();
+  await expect(card).toHaveClass(/is-active/, { timeout: 15_000 });
   await expect(dashboard(page)).toHaveAttribute('data-home-preset', presetId, { timeout: 15_000 });
 }
 

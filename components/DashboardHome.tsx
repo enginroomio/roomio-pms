@@ -8,6 +8,7 @@ import { DailyRoomStatusPanel } from '@/components/dashboard/DailyRoomStatusPane
 import { PanelQuickNav, PanelHubPanel } from '@/components/panel/PanelHubPanels';
 import { DashboardKpiStrip } from '@/components/DashboardKpiStrip';
 import { DashboardWelcome } from '@/components/DashboardWelcome';
+import { DashboardWeatherChip } from '@/components/dashboard/DashboardWeatherChip';
 import { HomeDesignWizard } from '@/components/dashboard/HomeDesignWizard';
 import { HomeDraggablePanel } from '@/components/dashboard/HomeDraggablePanel';
 import { OperationsAlertStrip } from '@/components/OperationsAlertStrip';
@@ -127,7 +128,12 @@ export function DashboardHome({ initial }: Props) {
       case 'portfolio':
         return <PropertyPortfolioStrip />;
       case 'alerts':
-        return <OperationsAlertStrip />;
+        return (
+          <>
+            {layout.presetId === 'orijinal-operasyon' ? <DashboardWeatherChip /> : null}
+            <OperationsAlertStrip />
+          </>
+        );
       case 'quickActions':
         return <QuickActions />;
       case 'kpiStrip':
