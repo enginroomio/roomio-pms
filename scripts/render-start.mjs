@@ -32,6 +32,12 @@ console.log('[render] Veritabanı şeması…');
 execSync(`npx prisma db push --schema=${schema} --skip-generate`, { stdio: 'inherit', cwd: ROOT });
 
 const port = process.env.PORT ?? '3100';
+const jwt = process.env.ROOMIO_JWT_SECRET?.trim() ?? '';
+const authRequired = process.env.ROOMIO_AUTH_REQUIRED === '1';
+if (process.env.NODE_ENV === 'production' && authRequired && (jwt.length < 32 || jwt.includes('replace-with'))) {
+  console.warn('[render] ⚠ ROOMIO_JWT_SECRET eksik veya zayıf — /api/health ok:false olur.');
+  console.warn('[render]   Düzeltme: npm run render:paste-env → Render Environment → Manual Deploy');
+}
 console.log(`[render] Roomio başlatılıyor — PORT=${port}`);
 
 if (existsSync(join(standalone, 'server.js'))) {

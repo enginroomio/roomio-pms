@@ -8,6 +8,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 
 function gitShortSha() {
+  const fromRender = process.env.RENDER_GIT_COMMIT?.trim();
+  if (fromRender) return fromRender.slice(0, 7);
+  const fromGh = process.env.GITHUB_SHA?.trim();
+  if (fromGh) return fromGh.slice(0, 7);
   try {
     return execSync('git rev-parse --short HEAD', { cwd: ROOT, encoding: 'utf8' }).trim();
   } catch {
